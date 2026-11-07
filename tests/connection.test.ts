@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { isAllowedNavigation, normalizeMixerAddress, probeMixer, readSavedMixers, rememberMixer } from '../src/connection';
+import { normalizeMixerAddress, probeMixer, readSavedMixers, rememberMixer } from '../src/connection';
 
 test('mixer addresses accept local IPs, DNS, ports, HTTPS and IPv6', () => {
   assert.equal(normalizeMixerAddress(' 192.168.1.10:8082 '), 'http://192.168.1.10:8082/');
@@ -48,13 +48,4 @@ test('recent mixers are capped, deduplicated and survive corrupted storage', () 
   assert.deepEqual(readSavedMixers(JSON.stringify([{ url: 'file:///bad', lastConnected: 1 }])), []);
   assert.equal(readSavedMixers(JSON.stringify(items)).length, 5);
   assert.equal(readSavedMixers(JSON.stringify(items))[0].url, 'http://mixer6.local/');
-});
-
-test('embedded mixer cannot navigate into other servers or native URL schemes', () => {
-  const mixer = 'http://192.168.1.10:8082/';
-  assert(isAllowedNavigation(mixer + 'admin', mixer));
-  assert(isAllowedNavigation('about:blank', mixer));
-  for (const target of ['http://evil.example/', 'https://192.168.1.10:8082/', 'file:///private', 'javascript:alert(1)', 'intent://native-app']) {
-    assert.equal(isAllowedNavigation(target, mixer), false, target);
-  }
 });

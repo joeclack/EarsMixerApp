@@ -3,7 +3,7 @@ import { version } from './package.json';
 
 const config: ExpoConfig = {
   name: 'EarsMixer', slug: 'earsmixer-app', version,
-  orientation: 'default', userInterfaceStyle: 'dark',
+  orientation: 'default', userInterfaceStyle: 'automatic',
   icon: './assets/icon.png',
   ios: {
     supportsTablet: true, bundleIdentifier: 'com.joeclack.earsmixerapp',
@@ -20,9 +20,11 @@ const config: ExpoConfig = {
     permissions: ['android.permission.INTERNET', 'android.permission.ACCESS_NETWORK_STATE'],
     adaptiveIcon: { foregroundImage: './assets/icon.png', backgroundColor: '#101215' },
   },
+  scheme: 'earsmixer',
   plugins: [
+    'expo-router',
     ['expo-camera', { cameraPermission: 'Scan the connection QR code from your EarsMixer server.', microphonePermission: false, recordAudioAndroid: false }],
-    ['expo-build-properties', { android: { usesCleartextTraffic: true } }],
+    ['expo-build-properties', { android: { usesCleartextTraffic: true }, ios: { deploymentTarget: '16.4' } }],
   ],
   web: { favicon: './assets/favicon.png', bundler: 'metro' },
 };

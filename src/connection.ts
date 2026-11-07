@@ -38,14 +38,6 @@ export function rememberMixer(previous: SavedMixer[], url: string, now = Date.no
   return [{ url: normalized, lastConnected: now }, ...previous.filter(mixer => mixer.url !== normalized)].slice(0, 5);
 }
 
-export function isAllowedNavigation(target: string, mixer: string): boolean {
-  if (target === 'about:blank') return true;
-  try {
-    const url = new URL(target);
-    return ['http:', 'https:'].includes(url.protocol) && !url.username && !url.password && url.origin === new URL(mixer).origin;
-  } catch { return false; }
-}
-
 type ProbeOptions = { fetchImpl?: typeof fetch; timeoutMs?: number; signal?: AbortSignal };
 
 export async function probeMixer(input: string, { fetchImpl = fetch, timeoutMs = 7000, signal }: ProbeOptions = {}): Promise<string> {
