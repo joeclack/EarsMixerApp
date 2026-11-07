@@ -2,8 +2,10 @@ node_modules/
 .expo/
 dist/
 web-build/
-android/
-ios/
+/android/
+/ios/
+modules/**/build/
+modules/**/.gradle/
 *.keystore
 *.jks
 *.mobileprovision

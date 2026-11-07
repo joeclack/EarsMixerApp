@@ -1,0 +1,7 @@
+{
+  "name": "earsmixer-discovery",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Local DNS-SD discovery for EarsMixer",
+  "license": "MIT"
+}

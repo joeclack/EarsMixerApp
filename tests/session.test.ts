@@ -66,7 +66,7 @@ test('sign-out restores guest settings and session expiration exposes sign-in', 
 });
 test('device settings persist without storing account passwords', async t => {
   const { session, storage } = setup(t);
-  await session.hydrate(); session.setSettings({ appearance: 'dark', haptics: false });
+  await session.hydrate(); session.setSettings({ appearance: 'dark' });
   await session.connect('mixer.local'); await session.authenticate('alice', 'very-private-password', true);
   await delay(10);
   assert.equal(JSON.parse(storage.get('earsmixer.native.settings.v1')!).appearance, 'dark');

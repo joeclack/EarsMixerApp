@@ -1,0 +1,5 @@
+{
+  "platforms": ["apple", "android"],
+  "apple": { "modules": ["EarsMixerDiscoveryModule"] },
+  "android": { "modules": ["expo.modules.earsmixerdiscovery.EarsMixerDiscoveryModule"] }
+}

@@ -13,7 +13,7 @@ export default function ChannelOrder() {
     session.preferences({ channelOrder: ids });
   }
   return <ScrollView contentInsetAdjustmentBehavior="automatic" contentContainerStyle={{ padding: 20 }}>
-    <Section footer="Your order is saved with your layout.">
+    <Section>
       {channels.map((channel, index) => <Row key={channel.channel} title={channel.label}>
         <View style={{ flexDirection: 'row' }}>
           {[-1, 1].map(direction => <Pressable key={direction} accessibilityRole="button" accessibilityLabel={'Move ' + channel.label + (direction < 0 ? ' up' : ' down')}
@@ -22,7 +22,7 @@ export default function ChannelOrder() {
           </Pressable>)}
         </View>
       </Row>)}
-      {!channels.length && <Text style={{ padding: 20, color: theme.muted }}>Connect to your mixer to arrange its channels.</Text>}
+      {!channels.length && <Text style={{ padding: 20, color: theme.muted }}>Connect to a mixer to reorder channels.</Text>}
     </Section>
   </ScrollView>;
 }

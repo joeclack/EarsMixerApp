@@ -31,7 +31,6 @@ function Navigation() {
         sheetCornerRadius: 32, sheetExpandsWhenScrolledToEdge: true, contentStyle: { backgroundColor: 'transparent' },
       }} />
       <Stack.Screen name="scan" options={{ presentation: 'fullScreenModal', headerShown: false }} />
-      <Stack.Screen name="mixes" options={{ title: 'Choose your mix', presentation: 'formSheet', sheetAllowedDetents: [0.5, 0.9], sheetGrabberVisible: true }} />
       <Stack.Screen name="layout" options={{ title: 'Channel order', presentation: 'modal' }} />
     </Stack>
   </ThemeProvider>;
