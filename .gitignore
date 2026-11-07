@@ -1,0 +1,14 @@
+node_modules/
+.expo/
+dist/
+web-build/
+android/
+ios/
+*.keystore
+*.jks
+*.mobileprovision
+*.p12
+.env*
+!.env.example
+.DS_Store
+credentials.json
