@@ -38,6 +38,8 @@ jobs:
           gh api "repos/$REPOSITORY/contents/package.json?ref=$sha" --jq .content | base64 --decode > package.json
           version=$(jq -r '.version' package.json)
           [[ "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]
+          tag_sha=$(gh api "repos/$REPOSITORY/git/ref/tags/v$version" --jq '.object.sha')
+          [[ "$tag_sha" == "$sha" ]] || { echo 'The version tag must point to the verified build commit.'; exit 1; }
           echo "sha=$sha" >> "$GITHUB_OUTPUT"
           echo "version=$version" >> "$GITHUB_OUTPUT"
       - uses: actions/download-artifact@v4
@@ -72,4 +74,4 @@ jobs:
 
           iOS source and EAS configuration are included. Standalone iPhone/TestFlight distribution requires Apple Developer signing credentials. Expo Go can be used for development; see the README.
           NOTES
-          gh release create "v$APP_VERSION" "$apk" "$apk.sha256" --repo "$REPOSITORY" --target "$BUILD_SHA" --prerelease --title "EarsMixer App $APP_VERSION preview" --notes-file notes.md
+          gh release create "v$APP_VERSION" "$apk" "$apk.sha256" --repo "$REPOSITORY" --verify-tag --prerelease --title "EarsMixer App $APP_VERSION preview" --notes-file notes.md
