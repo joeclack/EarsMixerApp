@@ -8,6 +8,7 @@ iOS and Android companion for [EarsMixer](https://github.com/joeclack/EarsMixer)
 - Scan the existing mixer QR code; camera access is requested only when scanning.
 - Remember up to five servers on the device and reconnect with one tap.
 - Use the existing mixer in a persistent native WebView: AUX selection, handle-only faders, pan, favourites and layouts come from your running server.
+- With EarsMixer server 1.4.0 or newer, sign in under **Mixer controls → Your profile** to share your name and saved layout between web and mobile. Accounts and layouts are stored in the server's local SQLite database; no cloud account is required.
 - Retry, reload or change servers. Android Back returns to server selection.
 - Support phones and tablets in portrait and landscape.
 
