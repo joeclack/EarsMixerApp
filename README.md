@@ -27,6 +27,8 @@ Install Expo Go on your phone and scan the development QR code printed by Expo. 
 
 ## Android preview APK
 
+**[Download an Android preview](https://github.com/joeclack/EarsMixerApp/releases)** from Releases. Install the APK on an ARM64 Android phone or tablet connected to your mixer network.
+
 After successful checks on `main`, GitHub Actions builds a standalone preview. Open **Actions → Mobile checks and Android preview**, choose a successful run and download **EarsMixerApp-android-preview** from Artifacts. Extract and install the APK on an ARM64 Android device. It includes the JavaScript bundle and does not need Metro or an Expo account. The preview uses the generated development signing key and is not a Google Play production build.
 
 For local native development with an Android SDK installed, run `npm run android`.

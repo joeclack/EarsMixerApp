@@ -1,0 +1,75 @@
+name: Publish Android preview
+
+on:
+  workflow_dispatch:
+    inputs:
+      run_id:
+        description: Successful Mobile checks and Android preview run ID
+        required: true
+        type: string
+
+permissions:
+  contents: write
+  actions: read
+
+concurrency:
+  group: android-preview-release
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      GH_TOKEN: ${{ github.token }}
+      REPOSITORY: ${{ github.repository }}
+      RUN_ID: ${{ inputs.run_id }}
+    steps:
+      - name: Verify the build and read its version
+        id: build
+        shell: bash
+        run: |
+          set -euo pipefail
+          [[ "$RUN_ID" =~ ^[0-9]+$ ]]
+          gh api "repos/$REPOSITORY/actions/runs/$RUN_ID" > run.json
+          jq -e --arg repo "$REPOSITORY" '.conclusion == "success" and .head_repository.full_name == $repo and .head_branch == "main" and .path == ".github/workflows/mobile.yml"' run.json
+          sha=$(jq -r '.head_sha' run.json)
+          [[ "$sha" =~ ^[a-f0-9]{40}$ ]]
+          gh api "repos/$REPOSITORY/contents/package.json?ref=$sha" --jq .content | base64 --decode > package.json
+          version=$(jq -r '.version' package.json)
+          [[ "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]
+          echo "sha=$sha" >> "$GITHUB_OUTPUT"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+      - uses: actions/download-artifact@v4
+        with:
+          name: EarsMixerApp-android-preview
+          path: preview
+          run-id: ${{ inputs.run_id }}
+          github-token: ${{ github.token }}
+      - name: Publish the verified APK
+        shell: bash
+        env:
+          BUILD_SHA: ${{ steps.build.outputs.sha }}
+          APP_VERSION: ${{ steps.build.outputs.version }}
+        run: |
+          set -euo pipefail
+          mapfile -t files < <(find preview -name '*.apk' -type f)
+          [[ "${#files[@]}" == 1 ]]
+          apk="EarsMixerApp-$APP_VERSION-android-arm64.apk"
+          mv "${files[0]}" "$apk"
+          unzip -l "$apk" > apk-files.txt
+          grep -q 'assets/index.android.bundle' apk-files.txt
+          grep -q 'lib/arm64-v8a/' apk-files.txt
+          sha256sum "$apk" > "$apk.sha256"
+          cat > notes.md <<'NOTES'
+          Android preview of the EarsMixer mobile client. Connect by server address or scan the connection QR code, keep recent servers, and use the same mixer controls as the web app.
+
+          With EarsMixer server 1.4.0 or newer, sign in under Your profile to restore your name and saved layout between web and mobile. All accounts and layouts remain on your local EarsMixer server.
+
+          Download the APK and install it on an ARM64 Android phone or tablet. Connect the phone to the same network as your EarsMixer server. This standalone build includes its JavaScript bundle; Metro and an Expo account are not required.
+
+          This internal preview uses the generated development signing key and is not a Google Play release. Automated checks and native compilation have passed; physical-device testing remains to be done.
+
+          iOS source and EAS configuration are included. Standalone iPhone/TestFlight distribution requires Apple Developer signing credentials. Expo Go can be used for development; see the README.
+          NOTES
+          gh release create "v$APP_VERSION" "$apk" "$apk.sha256" --repo "$REPOSITORY" --target "$BUILD_SHA" --prerelease --title "EarsMixer App $APP_VERSION preview" --notes-file notes.md

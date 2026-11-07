@@ -3,6 +3,9 @@ name: Mobile checks and Android preview
 on:
   push:
     branches: [main]
+    paths-ignore:
+      - '**/*.md'
+      - '.github/workflows/publish-preview.yml'
   pull_request:
   workflow_dispatch:
 
