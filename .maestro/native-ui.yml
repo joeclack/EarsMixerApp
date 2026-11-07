@@ -1,0 +1,24 @@
+appId: com.joeclack.earsmixerapp
+---
+- launchApp:
+    clearState: true
+- extendedWaitUntil:
+    visible: "Your mix is waiting on your network."
+    timeout: 30000
+- takeScreenshot: screenshots/ios-connect-sheet
+- tapOn:
+    id: mixer-address
+- inputText: "http://127.0.0.1:8082"
+- hideKeyboard
+- tapOn:
+    id: action-connect
+- extendedWaitUntil:
+    visible: "Kick"
+    timeout: 30000
+- takeScreenshot: screenshots/ios-mixer
+- tapOn: "Profile"
+- assertVisible: "Your personal mix"
+- takeScreenshot: screenshots/ios-profile
+- tapOn: "Settings"
+- assertVisible: "Haptic feedback"
+- takeScreenshot: screenshots/ios-settings

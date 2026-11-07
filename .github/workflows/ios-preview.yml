@@ -1,0 +1,84 @@
+name: iOS native build and UI
+on:
+  pull_request:
+  push:
+    branches: [main]
+    paths-ignore:
+      - '**/*.md'
+      - '.github/workflows/publish-preview.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  ios-simulator:
+    runs-on: macos-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm test
+      - name: Generate the iOS app
+        run: npx expo prebuild --platform ios --no-install
+      - name: Install CocoaPods
+        working-directory: ios
+        run: pod install
+      - name: Build for iPhone Simulator
+        run: |
+          set -o pipefail
+          xcodebuild -version
+          xcodebuild -workspace ios/EarsMixer.xcworkspace -scheme EarsMixer \
+            -configuration Release -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' \
+            -derivedDataPath build CODE_SIGNING_ALLOWED=NO build > ios-build.log 2>&1 || { tail -100 ios-build.log; exit 1; }
+      - name: Boot an iOS simulator
+        run: |
+          xcrun simctl list devices available --json > devices.json
+          device=$(python3 -c "import json; d=json.load(open('devices.json'))['devices']; print(next(x['udid'] for runtime in sorted(d, reverse=True) if 'iOS' in runtime for x in d[runtime] if x['name'].startswith('iPhone')))")
+          xcrun simctl boot "$device"
+          xcrun simctl bootstatus "$device" -b
+          xcrun simctl status_bar "$device" override --time '9:41' --dataNetwork wifi --wifiMode active --wifiBars 3 --batteryState charged --batteryLevel 100
+          xcrun simctl ui "$device" appearance light
+          xcrun simctl install "$device" build/Build/Products/Release-iphonesimulator/EarsMixer.app
+      - uses: actions/checkout@v4
+        with:
+          repository: joeclack/EarsMixer
+          ref: v1.4.0
+          path: test-server
+      - name: Start the demo server
+        working-directory: test-server
+        run: |
+          git config --global --add 'url.https://github.com/.insteadOf' 'ssh://git@github.com/'
+          npm ci
+          nohup npm run dev > ../mixer-demo.log 2>&1 &
+          curl --retry 20 --retry-connrefused --retry-delay 1 -fsS http://127.0.0.1:8082/api/connection > /dev/null
+      - name: Install Maestro
+        run: curl -fsSL https://get.maestro.mobile.dev | bash
+      - name: Test native screens and capture screenshots
+        run: |
+          mkdir -p screenshots
+          "$HOME/.maestro/bin/maestro" test --debug-output maestro-results .maestro/native-ui.yml
+          xcrun simctl ui booted appearance dark
+          xcrun simctl io booted screenshot screenshots/ios-settings-dark.png
+      - name: Archive simulator app
+        if: success()
+        run: ditto -c -k --sequesterRsrc --keepParent build/Build/Products/Release-iphonesimulator/EarsMixer.app EarsMixer-iOS-simulator.zip
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: EarsMixer-iOS-preview
+          path: |
+            EarsMixer-iOS-simulator.zip
+            screenshots/
+            maestro-results/
+            ios-build.log
+            mixer-demo.log
+          if-no-files-found: warn
+          retention-days: 14
