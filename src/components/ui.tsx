@@ -24,19 +24,21 @@ export function Glass({ children, style, ...props }: ViewProps) {
     return <GlassView glassEffectStyle="regular" colorScheme={theme.scheme} style={style} {...props}>{children}</GlassView>;
   return <View style={[{ backgroundColor: theme.panel }, style]} {...props}>{children}</View>;
 }
-export function Page({ title, children, scroll = true }: React.PropsWithChildren<{ title: string; scroll?: boolean }>) {
+export function Page({ title, children, scroll = true, compactHeader = true, toolbar }: React.PropsWithChildren<{ title: string; scroll?: boolean; compactHeader?: boolean; toolbar?: React.ReactNode }>) {
   const theme = useTheme();
   const { state, mix } = useSession();
   const options = {
-    title, headerLargeTitleEnabled: true, headerTransparent: Platform.OS === 'ios',
+    title, headerLargeTitleEnabled: !compactHeader, headerTransparent: Platform.OS === 'ios' && !compactHeader,
+    headerTitleStyle: { color: theme.text },
     headerShadowVisible: false, headerLargeTitleShadowVisible: false, headerTintColor: theme.tint,
-    headerStyle: { backgroundColor: Platform.OS === 'ios' ? 'transparent' : theme.bg },
-    headerRight: () => <Pressable accessibilityRole="button" accessibilityLabel="Connect to mixer" onPress={() => router.push('/connect')} style={styles.headerButton}>
+    headerStyle: { backgroundColor: Platform.OS === 'ios' && !compactHeader ? 'transparent' : theme.bg },
+    ...(!toolbar && { headerRight: () => <Pressable accessibilityRole="button" accessibilityLabel="Connect to mixer" onPress={() => router.push('/connect')} style={styles.headerButton}>
       <Icon name={{ ios: mix.status === 'connected' ? 'wifi' : 'wifi.slash', android: 'wifi', web: 'wifi' }} color={mix.status === 'connected' ? theme.green : theme.tint} />
-    </Pressable>,
+    </Pressable> }),
   };
   return <View style={{ flex: 1, backgroundColor: theme.bg }}>
     <Stack.Screen options={options} />
+    {toolbar}
     {scroll ? <ScrollView contentInsetAdjustmentBehavior="automatic" keyboardShouldPersistTaps="handled" automaticallyAdjustKeyboardInsets
       contentContainerStyle={styles.page}>{children}</ScrollView> : children}
     {!state.hydrated && <View style={styles.loading}><ActivityIndicator /></View>}
@@ -69,9 +71,9 @@ export function EmptyMixer({ profile = false }: { profile?: boolean }) {
     <Glass style={{ width: 96, height: 96, borderRadius: 30, alignItems: 'center', justifyContent: 'center' }}>
       <Icon name={{ ios: profile ? 'person.crop.circle' : 'headphones', android: profile ? 'account_circle' : 'headphones', web: profile ? 'account_circle' : 'headphones' }} size={46} />
     </Glass>
-    <Text style={{ color: theme.text, fontSize: 27, fontWeight: '700', textAlign: 'center' }}>{profile ? 'Your mix, remembered' : 'Make it your mix'}</Text>
+    <Text style={{ color: theme.text, fontSize: 27, fontWeight: '700', textAlign: 'center' }}>{profile ? 'Not connected' : 'No mixer connected'}</Text>
     <Text style={{ color: theme.muted, fontSize: 17, lineHeight: 25, textAlign: 'center', maxWidth: 300 }}>
-      {profile ? 'Connect to your mixer to sign in and bring your layout with you.' : 'Connect to EarsMixer on your network. Your channels will appear here.'}
+      {profile ? 'Connect to a mixer to sign in.' : 'Select a server to view channels.'}
     </Text>
     <NativeButton title="Connect to mixer" symbol="wifi" onPress={() => router.push('/connect')} prominent />
   </View>;

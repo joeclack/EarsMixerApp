@@ -49,6 +49,16 @@ npx eas-cli build --platform ios --profile preview
 
 Register physical iPhones for internal distribution as prompted by EAS. Preview, simulator and production profiles are provided. Store submission and production signing are not automated.
 
+## Nearby mixers
+
+Open **Connect** to browse nearby EarsMixer servers. Select a result to connect; the app checks the resolved address and port before opening a mixer session. Discovery does not change audio levels or connect to a server without a tap. It stops when the sheet closes or the app enters the background.
+
+This requires the EarsMixer server’s Bonjour discovery update and a **new native app build**. The local `earsmixer-discovery` Expo module uses Apple Bonjour and Android Network Service Discovery. Expo Go and browsers cannot load it; use manual addresses or QR codes there. For native development, run `npm run ios` on macOS or `npm run android`, or create a signed EAS build for a physical iPhone.
+
+Allow **Local Network** access in iOS Settings. Both devices must be on a network that permits multicast (UDP 5353). If no server appears, use **Search again**, enter its address or scan its QR code.
+
+The Mixer toolbar contains the AUX menu and connection status. Compact channels use shorter rows with the level beside the channel name. Haptics are enabled; the mobile mixer uses one column on all displays. Saved web layout preferences remain compatible.
+
 ## Network permissions
 
 The app requests iOS local-network access and camera access for QR scanning, without microphone access. Android cleartext traffic and iOS ATS HTTP access are enabled because musicians connect to their own HTTP mixer servers at arbitrary network addresses and DNS names. HTTPS certificates are still validated normally.

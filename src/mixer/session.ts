@@ -3,7 +3,7 @@ import { MixerClient, type Socket } from './client';
 import { emptyPreferences, readPreferences, type Account, type Preferences, type User } from './model';
 
 type Storage = { getItem(key: string): Promise<string | null>; setItem(key: string, value: string): Promise<void> };
-export type Settings = { appearance: 'system' | 'light' | 'dark'; haptics: boolean };
+export type Settings = { appearance: 'system' | 'light' | 'dark' };
 export type Sync = 'guest' | 'saved' | 'saving' | 'pending' | 'conflict' | 'error' | 'unavailable';
 type Draft = { userId: string; preferences: Preferences; revision: number };
 export type SessionState = {
@@ -17,7 +17,7 @@ export class AccountError extends Error {
 export class MixerSession {
   readonly mixer: MixerClient;
   state: SessionState = {
-    hydrated: false, server: null, recent: [], settings: { appearance: 'system', haptics: true },
+    hydrated: false, server: null, recent: [], settings: { appearance: 'system' },
     user: null, preferences: emptyPreferences(), revision: 0, sync: 'guest', busy: false, connecting: false, message: '',
   };
   private listeners = new Set<() => void>();
@@ -43,7 +43,6 @@ export class MixerSession {
       try { settings = JSON.parse(raw || '{}'); } catch {}
       this.patch({ recent: readSavedMixers(recent), settings: {
         appearance: ['light', 'dark'].includes(settings.appearance || '') ? settings.appearance as 'light' | 'dark' : 'system',
-        haptics: settings.haptics !== false,
       } });
     } catch { this.patch({ message: 'Saved settings could not be loaded. You can still connect.' }); }
     this.patch({ hydrated: true });

@@ -8,7 +8,8 @@ const config: ExpoConfig = {
   ios: {
     supportsTablet: true, bundleIdentifier: 'com.joeclack.earsmixerapp',
     infoPlist: {
-      NSLocalNetworkUsageDescription: 'Connect to your EarsMixer server on the same network to control your monitor mix.',
+      NSLocalNetworkUsageDescription: 'Find nearby EarsMixer servers and connect to control your monitor mix.',
+      NSBonjourServices: ['_earsmixer._tcp'],
       // The address is user-configured and mixer networks commonly use HTTP,
       // including qualified DNS names. No TLS certificate validation is disabled.
       NSAppTransportSecurity: { NSAllowsArbitraryLoads: true },

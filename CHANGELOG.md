@@ -1,5 +1,13 @@
 # Changelog
 
+## Unreleased
+
+- Discover nearby servers with native iOS Bonjour and Android NSD; retain manual and QR connections.
+- Move AUX selection into a native toolbar menu alongside connection status. Remove the AUX sheet and connected-address label.
+- Use compact page headers, shorter compact channel rows and a single-column mixer.
+- Remove haptic and grid settings; keep haptics enabled. Place Disconnect beside the server address.
+- Simplify Profile, Settings and connection text.
+
 ## 0.2.0 — Native interface
 
 - Replace the embedded web mixer with native Mixer, Profile and Settings screens on Expo SDK 58.

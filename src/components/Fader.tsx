@@ -7,12 +7,12 @@ import { clamp, levelText } from '../mixer/model';
 import type { DragToken } from '../mixer/client';
 
 export default function Fader({ channel, label, color }: { channel: number; label: string; color: string }) {
-  const { session, state, mix } = useSession();
+  const { session, mix } = useSession();
   const theme = useTheme();
   const [width, setWidth] = useState(0);
   const [dragging, setDragging] = useState(false);
-  const latest = useRef({ width, state, mix });
-  latest.current = { width, state, mix };
+  const latest = useRef({ width, mix });
+  latest.current = { width, mix };
   const drag = useRef<{ token: DragToken; start: number; moved: boolean } | null>(null);
   const cancel = () => {
     if (drag.current) session.mixer.cancelDrag(drag.current.token);
@@ -35,7 +35,7 @@ export default function Fader({ channel, label, color }: { channel: number; labe
       if (!current.moved && Math.abs(gesture.dx) < 3) return;
       if (!current.moved) {
         current.moved = true; setDragging(true);
-        if (latest.current.state.settings.haptics) void Haptics.selectionAsync().catch(() => {});
+        void Haptics.selectionAsync().catch(() => {});
       }
       session.mixer.drag(current.token, clamp(current.start + gesture.dx / (latest.current.width - 32)));
     },

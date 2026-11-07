@@ -8,9 +8,9 @@ import Segmented from '../../../src/components/Segmented';
 import type { Sync } from '../../../src/mixer/session';
 
 const messages: Record<Sync, string> = {
-  guest: 'Guest layout · saved on this device', saved: 'Your layout is up to date', saving: 'Saving your layout…',
+  guest: 'Guest layout · saved on this device', saved: 'Layout saved', saving: 'Saving…',
   pending: 'Layout changes waiting to save', conflict: 'This layout changed on another device',
-  error: 'Your layout needs to be synced', unavailable: 'Account service is unavailable',
+  error: 'Layout not saved', unavailable: 'Account service is unavailable',
 };
 export default function Profile() {
   const { session, state } = useSession(), theme = useTheme();
@@ -29,16 +29,16 @@ export default function Profile() {
         <Glass style={{ width: 88, height: 88, borderRadius: 44, alignItems: 'center', justifyContent: 'center' }}>
           <Icon name={{ ios: 'person.crop.circle.fill', android: 'account_circle', web: 'account_circle' }} size={64} />
         </Glass>
-        <Text style={{ color: theme.text, fontSize: 26, fontWeight: '700' }}>{state.user?.displayName || 'Your personal mix'}</Text>
-        <Text style={{ color: theme.muted, fontSize: 15 }}>{state.user ? '@' + state.user.username : 'Your name. Your channels. Your layout.'}</Text>
+        <Text style={{ color: theme.text, fontSize: 26, fontWeight: '700' }}>{state.user?.displayName || 'Account'}</Text>
+        {state.user && <Text style={{ color: theme.muted, fontSize: 15 }}>@{state.user.username}</Text>}
       </View>
       {state.user ? <>
-        <Section title="Personal information">
+        <Section title="Account details">
           <Text style={{ color: theme.muted, paddingHorizontal: 16, paddingTop: 13, fontSize: 13 }}>Display name</Text>
           <TextInput accessibilityLabel="Display name" value={displayName} onChangeText={setDisplayName} maxLength={80} autoComplete="nickname" style={input} />
           <View style={{ padding: 12, alignItems: 'flex-start' }}><NativeButton title="Save name" disabled={state.busy || !displayName.trim()} onPress={() => void action(() => session.rename(displayName))} /></View>
         </Section>
-        <Section title="Saved layout" footer="Channel order, favourites, selected mix and view settings follow your account. Audio levels are never recalled.">
+        <Section title="Saved layout">
           <Row title={messages[state.sync]} detail={state.sync === 'conflict' ? 'Load the server copy, or choose to replace it with this layout.' : 'Saved on ' + new URL(state.server).host}>
             <Icon name={{ ios: state.sync === 'saved' ? 'checkmark.icloud' : 'icloud.and.arrow.up', android: 'cloud_done', web: 'cloud_done' }} color={state.sync === 'conflict' ? theme.orange : theme.tint} />
           </Row>
@@ -57,8 +57,8 @@ export default function Profile() {
       </> : <>
         <View style={{ marginBottom: 20 }}><Segmented label="Account action" value={register ? 'register' : 'login'} onChange={value => { setRegister(value === 'register'); setError(''); }}
           options={[{ value: 'login', label: 'Sign in' }, { value: 'register', label: 'Create account' }]} /></View>
-        <Section footer={register ? 'Your current layout will be saved to your new account on this mixer.' : 'Use the same account as the EarsMixer web app.'}>
-          {register && <TextInput accessibilityLabel="Display name" placeholder="Your name" placeholderTextColor={theme.muted} value={displayName} onChangeText={setDisplayName} autoComplete="nickname" maxLength={80} style={input} />}
+        <Section>
+          {register && <TextInput accessibilityLabel="Display name" placeholder="Display name" placeholderTextColor={theme.muted} value={displayName} onChangeText={setDisplayName} autoComplete="nickname" maxLength={80} style={input} />}
           <TextInput accessibilityLabel="Username" placeholder="Username" placeholderTextColor={theme.muted} value={username} onChangeText={setUsername}
             autoCapitalize="none" autoCorrect={false} autoComplete="username" textContentType="username" maxLength={32} style={input} />
           <TextInput accessibilityLabel="Password" placeholder="Password" placeholderTextColor={theme.muted} value={password} onChangeText={setPassword}
@@ -68,7 +68,7 @@ export default function Profile() {
           prominent disabled={state.busy || username.trim().length < 3 || password.length < 8} onPress={() => void action(async () => {
             await session.authenticate(username.trim(), password, register, displayName); setPassword('');
           })} />
-        <Message>Forgot your password? Your mixer administrator can reset it while keeping your saved layout.</Message>
+        <Message>Contact the mixer administrator to reset your password.</Message>
       </>}
       <Message error>{error}</Message>
       <Message>{state.message}</Message>

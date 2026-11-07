@@ -9,14 +9,14 @@ export default function ChannelOrder() {
   const channels = orderedChannels(mix.config, state.preferences);
   return <Host style={{ flex: 1 }} colorScheme={theme.scheme}>
     <List modifiers={[environment('editMode', 'active')]}>
-      <Section footer={<Text>Drag the handles to arrange your channels. Your order is saved with your layout.</Text>}>
+      <Section footer={<Text>Drag to reorder.</Text>}>
         <List.ForEach data={channels} keyExtractor={channel => String(channel.channel)} onMove={(indices, destination) => {
           const moving = channels.filter((_item, index) => indices.includes(index));
           const remaining = channels.filter((_item, index) => !indices.includes(index));
           remaining.splice(destination - indices.filter(index => index < destination).length, 0, ...moving);
           session.preferences({ channelOrder: remaining.map(channel => channel.channel) });
         }}>{({ item }) => <Text>{item.label}</Text>}</List.ForEach>
-        {!channels.length && <Text>Connect to your mixer to arrange its channels.</Text>}
+        {!channels.length && <Text>Connect to a mixer to reorder channels.</Text>}
       </Section>
     </List>
   </Host>;
