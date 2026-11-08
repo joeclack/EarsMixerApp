@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.7.0 — Icon faders
+
+- Bring the icon's sculpted graphite cap into the live faders: textured concave grip, teal indicator, silver centre stripe and stronger contact shadow.
+- Add a deeply recessed dark housing with a reflected lower rim and a bright, softly glowing teal track in both orientations and appearances.
+- Keep the compact row height, use the same cap proportions rotated for portrait, and reserve travel clearance for the larger handle at both endpoints.
+- Retain direct UI-thread gestures and incoming desk animation. Cache the cap as a native image rather than rebuilding its material during value updates.
+
 ## 0.6.1 — App surfaces
 
 - Use the textured charcoal/silver background throughout Settings, first-time setup, connection and template sheets, channel editing, QR scanning and startup.

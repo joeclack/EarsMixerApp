@@ -4,6 +4,8 @@ import Animated, { useSharedValue, useAnimatedStyle, cancelAnimation, Easing, wi
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import { scheduleOnRN, scheduleOnUI } from 'react-native-worklets';
 import FaderHandleSurface from './FaderHandleSurface';
+import { LinearGradient } from 'expo-linear-gradient';
+import { FADER_CAP_HEIGHT, FADER_CAP_WIDTH, FADER_INSET, FADER_TRACK_CENTER, FADER_LIGHT } from './faderGeometry';
 import { DragHaptics } from '../mixer/dragHaptics';
 import * as Haptics from 'expo-haptics';
 import { useFaderSession } from '../mixer/context';
@@ -11,11 +13,9 @@ import { useTheme } from '../theme';
 import { clamp, levelText, dbToPosition } from '../mixer/model';
 import type { DragToken } from '../mixer/client';
 
-export default memo(function Fader({ channel, label, color, vertical = false, length = 200 }: { channel: number; label: string; color: string; vertical?: boolean; length?: number }) {
+export default memo(function Fader({ channel, label, vertical = false, length = 200 }: { channel: number; label: string; vertical?: boolean; length?: number }) {
   const { session, mix } = useFaderSession(channel);
-  const theme = useTheme();
   const [width, setWidth] = useState(0);
-  const [dragging, setDragging] = useState(false);
   const ready = mix.status === 'connected' && mix.values[channel] !== undefined;
   const position = session.mixer.position(channel);
   const thumb = useSharedValue(position);
@@ -24,12 +24,12 @@ export default memo(function Fader({ channel, label, color, vertical = false, le
   const lastDispatch = useSharedValue(0);
   const drag = useRef<DragToken | null>(null);
   const haptics = useRef(new DragHaptics(() => { if (session.state.settings.haptics) void Haptics.selectionAsync().catch(() => {}); })).current;
-  const inset = 26;
+  const inset = FADER_INSET;
   const travel = Math.max(0, width - inset * 2);
   const begin = useCallback((initial: number, epoch: number) => {
     if (epoch !== session.mixer.state.epoch) return;
     drag.current = session.mixer.beginDrag(channel);
-    haptics.begin(initial); setDragging(!!drag.current);
+    haptics.begin(initial);
   }, [session, channel, haptics]);
   const update = useCallback((next: number) => {
     if (!drag.current || drag.current.epoch !== session.mixer.state.epoch) return;
@@ -41,12 +41,12 @@ export default memo(function Fader({ channel, label, color, vertical = false, le
       if (success) { session.mixer.drag(drag.current, next); session.mixer.flush(drag.current); }
       session.mixer.cancelDrag(drag.current);
     }
-    drag.current = null; haptics.end(success); active.value = false; thumb.value = session.mixer.position(channel); setDragging(false);
+    drag.current = null; haptics.end(success); active.value = false; thumb.value = session.mixer.position(channel);
   }, [session, channel, haptics, active, thumb]);
   useEffect(() => {
     active.value = false;
     if (drag.current) session.mixer.cancelDrag(drag.current);
-    drag.current = null; haptics.end(); setDragging(false);
+    drag.current = null; haptics.end();
   }, [mix.epoch, width, vertical, session, haptics, active]);
   useEffect(() => () => { if (drag.current) session.mixer.cancelDrag(drag.current); haptics.end(); }, [session, haptics]);
   useEffect(() => {
@@ -100,11 +100,16 @@ export default memo(function Fader({ channel, label, color, vertical = false, le
   const fillStyle = useAnimatedStyle(() => vertical ? { height: travel * thumb.value } : { width: travel * thumb.value });
   return <View onLayout={event => setWidth(vertical ? event.nativeEvent.layout.height : event.nativeEvent.layout.width)} style={{ height: vertical ? length : 56, width: vertical ? 64 : undefined, alignSelf: vertical ? 'center' : undefined, opacity: session.mixer.displayValue(channel) !== undefined ? 1 : 0.35 }}>
     <View pointerEvents="none" style={vertical
-      ? { position: 'absolute', top: inset, bottom: inset, left: 34, width: 6, borderRadius: 3, backgroundColor: '#050A0D', justifyContent: 'flex-end' }
-      : { position: 'absolute', left: inset, right: inset, top: 25, height: 6, borderRadius: 3, backgroundColor: '#050A0D' }}>
-      <Animated.View style={[vertical ? { width: 6 } : { height: 6 }, { borderRadius: 3, backgroundColor: color, opacity: 0.6 }, fillStyle]} />
+      ? { position: 'absolute', top: inset, bottom: inset, left: FADER_TRACK_CENTER - 4, width: 8, borderRadius: 4, backgroundColor: '#010709', justifyContent: 'flex-end' }
+      : { position: 'absolute', left: inset, right: inset, top: 24, height: 8, borderRadius: 4, backgroundColor: '#010709' }}>
+      <Animated.View style={[vertical ? { width: 8 } : { height: 8 }, { borderRadius: 4, backgroundColor: FADER_LIGHT,
+        boxShadow: [{ offsetX: 0, offsetY: 0, blurRadius: 6, spreadDistance: 1, color: '#12E6B970' }] }, fillStyle]}>
+        <LinearGradient pointerEvents="none" colors={['#048E7B', '#1BEABD', '#7CFFE2', '#13D9AF']}
+          locations={[0, 0.3, 0.6, 1]} start={vertical ? { x: 0, y: 0.5 } : { x: 0.5, y: 0 }}
+          end={vertical ? { x: 1, y: 0.5 } : { x: 0.5, y: 1 }} style={{ position: 'absolute', inset: 0, borderRadius: 4 }} />
+      </Animated.View>
     </View>
-    <FaderScale width={width} travel={travel} vertical={vertical} parameter={mix.parameter} color={color} />
+    <FaderScale width={width} travel={travel} vertical={vertical} parameter={mix.parameter} color={FADER_LIGHT} />
     <GestureDetector gesture={gesture}><Animated.View accessible accessibilityRole="adjustable" accessibilityLabel={label + (mix.parameter === 'pan' ? ' pan' : ' level')}
       accessibilityState={{ disabled: !ready }} accessibilityValue={{ min: 0, max: 100, now: Math.round(position * 100), text: levelText(session.mixer.displayValue(channel), mix.parameter) }}
       accessibilityActions={[{ name: 'increment' }, { name: 'decrement' }]} onAccessibilityAction={event => {
@@ -112,12 +117,12 @@ export default memo(function Fader({ channel, label, color, vertical = false, le
         session.mixer.drag(token, clamp(position + (event.nativeEvent.actionName === 'increment' ? 0.02 : -0.02))); session.mixer.flush(token); session.mixer.cancelDrag(token);
         if (session.state.settings.haptics) void Haptics.selectionAsync().catch(() => {});
       }}
-      style={[{ position: 'absolute', left: vertical ? 23 : 4, top: vertical ? 4 : 14,
-        width: vertical ? 28 : 44, height: vertical ? 44 : 28, borderRadius: 4,
-        backgroundColor: '#18232B', borderWidth: 1, borderColor: dragging ? '#728893' : '#435560',
-        shadowColor: '#000000', shadowOffset: { width: 0, height: 3 }, shadowOpacity: 0.4, shadowRadius: 3, elevation: 4,
-        alignItems: 'center', justifyContent: 'center' }, thumbStyle]}>
-      <FaderHandleSurface vertical={vertical} color={color} ready={ready} dragging={dragging} />
+      style={[{ position: 'absolute', left: vertical ? FADER_TRACK_CENTER - FADER_CAP_WIDTH / 2 : 4,
+        top: vertical ? 4 : (56 - FADER_CAP_WIDTH) / 2,
+        width: vertical ? FADER_CAP_WIDTH : FADER_CAP_HEIGHT, height: vertical ? FADER_CAP_HEIGHT : FADER_CAP_WIDTH,
+        borderRadius: 8, backgroundColor: '#182125',
+        shadowColor: '#000000', shadowOffset: { width: 1, height: 4 }, shadowOpacity: 0.7, shadowRadius: 4, elevation: 8 }, thumbStyle]}>
+      <FaderHandleSurface vertical={vertical} ready={ready} />
     </Animated.View></GestureDetector>
   </View>;
 });
@@ -132,7 +137,8 @@ export const FaderValue = memo(function FaderValue({ channel }: { channel: numbe
 const FaderScale = memo(function FaderScale({ width, travel, vertical, parameter, color }: {
   width: number; travel: number; vertical: boolean; parameter: 'level' | 'pan'; color: string;
 }) {
-  const theme = useTheme(), inset = 26;
+  const inset = FADER_INSET;
+  const scaleText = '#849BA5', scaleLine = '#26383F';
   const scale = parameter === 'level'
     ? [-40, -20, -10, 0, 10].map(db => ({ position: dbToPosition(db), label: db === 0 ? '0 dB' : db > 0 ? '+' + db : String(db), major: db === 0 }))
     : [{ position: 0, label: 'L', major: false }, { position: 0.5, label: 'C', major: true }, { position: 1, label: 'R', major: false }];
@@ -140,18 +146,18 @@ const FaderScale = memo(function FaderScale({ width, travel, vertical, parameter
       {Array.from({ length: 21 }, (_, index) => {
         const point = inset + travel * (vertical ? 1 - index / 20 : index / 20);
         return <View key={index} style={vertical
-          ? { position: 'absolute', top: point, left: 23, width: index % 5 === 0 ? 9 : 5, height: 1, backgroundColor: theme.line }
-          : { position: 'absolute', left: point, top: 42, width: 1, height: index % 5 === 0 ? 8 : 4, backgroundColor: theme.line }} />;
+          ? { position: 'absolute', top: point, left: 23, width: index % 5 === 0 ? 9 : 5, height: 1, backgroundColor: scaleLine }
+          : { position: 'absolute', left: point, top: 42, width: 1, height: index % 5 === 0 ? 8 : 4, backgroundColor: scaleLine }} />;
       })}
       {scale.map(mark => {
         const point = inset + travel * (vertical ? 1 - mark.position : mark.position);
         return <View key={mark.label} style={vertical
           ? { position: 'absolute', top: point - 6, left: 0, width: 33, height: 12, justifyContent: 'center' }
           : { position: 'absolute', left: Math.max(0, Math.min(width - 28, point - 14)), top: 0, width: 28, height: 25, alignItems: 'center' }}>
-          <Text style={{ color: mark.major ? theme.text : theme.muted, fontSize: 8, fontWeight: mark.major ? '700' : '400', fontVariant: ['tabular-nums'] }}>{mark.label}</Text>
+          <Text style={{ color: mark.major ? '#E6F1F3' : scaleText, fontSize: 8, fontWeight: mark.major ? '700' : '400', fontVariant: ['tabular-nums'] }}>{mark.label}</Text>
           <View style={vertical
-            ? { position: 'absolute', left: 23, width: 9, height: 1, backgroundColor: mark.major ? color : theme.muted }
-            : { width: 1, height: 8, marginTop: 2, backgroundColor: mark.major ? color : theme.muted }} />
+            ? { position: 'absolute', left: 23, width: 9, height: 1, backgroundColor: mark.major ? color : scaleText }
+            : { width: 1, height: 8, marginTop: 2, backgroundColor: mark.major ? color : scaleText }} />
         </View>;
       })}
     </View>;

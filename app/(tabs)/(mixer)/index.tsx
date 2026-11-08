@@ -8,6 +8,8 @@ import { orderedChannels, hiddenChannels, type Channel } from '../../../src/mixe
 import { Page, EmptyMixer, Icon } from '../../../src/components/ui';
 import NativeButton from '../../../src/components/NativeButton';
 import Fader, { FaderValue } from '../../../src/components/Fader';
+import FaderHousing from '../../../src/components/FaderHousing';
+import { FADER_INSET } from '../../../src/components/faderGeometry';
 import MixerToolbar from '../../../src/components/MixerToolbar';
 import AuxPresence from '../../../src/components/AuxPresence';
 
@@ -20,8 +22,8 @@ export default function Mixer() {
   const [bankHeight, setBankHeight] = useState(height);
   const topPadding = landscape ? insets.top + 12 : 20;
   const bottomPadding = insets.bottom + (landscape ? 12 : 20);
-  const cardHeight = Math.max(120, bankHeight - topPadding - bottomPadding);
-  const stripHeight = Math.max(40, cardHeight - 96);
+  const cardHeight = Math.max(96 + FADER_INSET * 2, bankHeight - topPadding - bottomPadding);
+  const stripHeight = Math.max(FADER_INSET * 2, cardHeight - 96);
   useFocusEffect(useCallback(() => {
     // Cached positions remain visible while fresh desk values are requested.
     if (session.mixer.state.status === 'connected') session.mixer.refresh();
@@ -34,13 +36,10 @@ export default function Mixer() {
       <Text numberOfLines={landscape ? 2 : 1} style={{ color: theme.text, fontSize: landscape ? 12 : 15, minHeight: landscape ? 34 : undefined, textAlign: landscape ? 'center' : 'left', fontWeight: '600', flex: landscape ? undefined : 1 }}>{item.label}</Text>
       <FaderValue channel={item.channel} />
     </View>
-    <View style={{ alignSelf: landscape ? 'center' : 'stretch', width: landscape ? 64 : undefined,
-      borderRadius: 999, backgroundColor: theme.panel, borderWidth: 0.5, borderColor: theme.line,
-      boxShadow: [{ offsetX: 0, offsetY: 0, blurRadius: 5, spreadDistance: 1, color: theme.dark ? '#00000050' : '#00000018', inset: true }],
-      paddingHorizontal: landscape ? 0 : 16, paddingVertical: landscape ? 12 : 4, overflow: 'hidden' }}>
-      <Fader channel={item.channel} label={item.label} color={theme.tint} vertical={landscape} length={stripHeight} />
-    </View>
-  </View>, [landscape, cardHeight, stripHeight, theme.dark, theme.panel, theme.line, theme.text, theme.muted, theme.tint]);
+    <FaderHousing vertical={landscape}>
+      <Fader channel={item.channel} label={item.label} vertical={landscape} length={stripHeight} />
+    </FaderHousing>
+  </View>, [landscape, cardHeight, stripHeight, theme.text]);
   return <Page title={mix.config?.aux.find(aux => aux.channel === mix.aux)?.label || 'Mixer'} scroll={false} compactHeader hideHeader={landscape} toolbar={<MixerToolbar />}>
     <AuxPresence />
     {!state.server ? <EmptyMixer /> : <FlatList key={landscape ? 'strips' : 'rows'} horizontal={landscape} onLayout={event => setBankHeight(event.nativeEvent.layout.height)} extraData={state.preferences}
