@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Restyle portrait and landscape faders with rectangular caps, backlit grip slits, and labelled scales including 0 dB.
+
 - Add an offline demo with 20 channels, four AUX mixes, local fader/pan control and example templates. Start it from Connect or Settings without contacting a mixer server.
 
 - Replace bottom tabs with a toolbar Settings button and a Settings page that navigates back to Mixer.

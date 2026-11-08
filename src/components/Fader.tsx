@@ -40,7 +40,7 @@ export default function Fader({ channel, label, color, vertical = false, length 
     },
     onPanResponderMove: (_event, gesture) => {
       const current = drag.current;
-      if (!current || current.token.epoch !== session.mixer.state.epoch || latest.current.width <= 32) return;
+      if (!current || current.token.epoch !== session.mixer.state.epoch || latest.current.width <= (latest.current.vertical ? 52 : 40)) return;
       const movement = latest.current.vertical ? -gesture.dy : gesture.dx;
       const cross = latest.current.vertical ? gesture.dx : gesture.dy;
       if (!current.moved && Math.abs(cross) > Math.abs(movement) + 5) { cancel(); return; }
@@ -48,7 +48,7 @@ export default function Fader({ channel, label, color, vertical = false, length 
       if (!current.moved) {
         current.moved = true; setDragging(true);
       }
-      const travel = latest.current.width - (latest.current.vertical ? 40 : 32);
+      const travel = latest.current.width - (latest.current.vertical ? 52 : 40);
       const position = clamp(current.start + movement / travel);
       // Keep a movement-driven feedback loop alive for the gesture. Network
       // values and release/settling never trigger feedback.
@@ -69,17 +69,36 @@ export default function Fader({ channel, label, color, vertical = false, length 
   }), [channel, session]);
   const ready = mix.status === 'connected' && mix.values[channel] !== undefined;
   const position = session.mixer.position(channel);
-  return <View onLayout={event => setWidth(vertical ? event.nativeEvent.layout.height : event.nativeEvent.layout.width)} style={{ height: vertical ? length : 48, width: vertical ? 56 : undefined, alignSelf: vertical ? 'center' : undefined, justifyContent: 'center', opacity: session.mixer.displayValue(channel) !== undefined ? 1 : 0.35 }}>
-    {vertical && <View pointerEvents="none" style={{ position: 'absolute', top: 20, bottom: 20, left: 0, right: 0, justifyContent: 'space-between' }}>
-      {Array.from({ length: 9 }, (_, index) => <View key={index} style={{ height: 1, width: index % 2 ? 8 : 14, backgroundColor: theme.line }} />)}
-    </View>}
-    <View pointerEvents="none" style={vertical ? { position: 'absolute', top: 20, bottom: 20, width: 6, left: 25, borderRadius: 4, backgroundColor: theme.secondary, justifyContent: 'flex-end' } : { height: 6, borderRadius: 4, marginHorizontal: 16, backgroundColor: theme.secondary }}>
-      <View style={vertical ? { height: (position * 100) + '%' as any, width: 6, borderRadius: 4, backgroundColor: color } : { width: (position * 100) + '%' as any, height: 6, borderRadius: 4, backgroundColor: color }} />
+  const inset = vertical ? 26 : 20;
+  const travel = Math.max(0, width - inset * 2);
+  const scale = mix.parameter === 'level'
+    ? [-40, -20, -10, 0, 10].map(db => ({ position: dbToPosition(db), label: db === 0 ? '0 dB' : db > 0 ? '+' + db : String(db), major: db === 0 }))
+    : [{ position: 0, label: 'L', major: false }, { position: 0.5, label: 'C', major: true }, { position: 1, label: 'R', major: false }];
+  return <View onLayout={event => setWidth(vertical ? event.nativeEvent.layout.height : event.nativeEvent.layout.width)} style={{ height: vertical ? length : 72, width: vertical ? 64 : undefined, alignSelf: vertical ? 'center' : undefined, opacity: session.mixer.displayValue(channel) !== undefined ? 1 : 0.35 }}>
+    <View pointerEvents="none" style={vertical
+      ? { position: 'absolute', top: inset, bottom: inset, left: 34, width: 6, borderRadius: 3, backgroundColor: '#050A0D', justifyContent: 'flex-end' }
+      : { position: 'absolute', left: inset, right: inset, top: 33, height: 6, borderRadius: 3, backgroundColor: '#050A0D' }}>
+      <View style={vertical ? { height: (position * 100) + '%' as any, width: 6, borderRadius: 3, backgroundColor: color, opacity: 0.6 } : { width: (position * 100) + '%' as any, height: 6, borderRadius: 3, backgroundColor: color, opacity: 0.6 }} />
     </View>
-    {vertical && mix.parameter === 'level' && <View pointerEvents="none" style={{ position: 'absolute', left: 0, top: 20 + Math.max(0, width - 40) * (1 - dbToPosition(0)) - 7, height: 14, justifyContent: 'center' }}>
-      <Text style={{ color: theme.text, fontSize: 9, fontWeight: '600' }}>0 dB</Text>
-      <View style={{ position: 'absolute', left: 23, width: 12, height: 1, backgroundColor: theme.text }} />
-    </View>}
+    <View pointerEvents="none" style={{ position: 'absolute', top: 0, bottom: 0, left: 0, right: 0 }}>
+      {Array.from({ length: 21 }, (_, index) => {
+        const point = inset + travel * (vertical ? 1 - index / 20 : index / 20);
+        return <View key={index} style={vertical
+          ? { position: 'absolute', top: point, left: 23, width: index % 5 === 0 ? 9 : 5, height: 1, backgroundColor: theme.line }
+          : { position: 'absolute', left: point, top: 49, width: 1, height: index % 5 === 0 ? 8 : 4, backgroundColor: theme.line }} />;
+      })}
+      {scale.map(mark => {
+        const point = inset + travel * (vertical ? 1 - mark.position : mark.position);
+        return <View key={mark.label} style={vertical
+          ? { position: 'absolute', top: point - 6, left: 0, width: 33, height: 12, justifyContent: 'center' }
+          : { position: 'absolute', left: Math.max(0, Math.min(width - 28, point - 14)), top: 0, width: 28, height: 25, alignItems: 'center' }}>
+          <Text style={{ color: mark.major ? theme.text : theme.muted, fontSize: 8, fontWeight: mark.major ? '700' : '400', fontVariant: ['tabular-nums'] }}>{mark.label}</Text>
+          <View style={vertical
+            ? { position: 'absolute', left: 23, width: 9, height: 1, backgroundColor: mark.major ? color : theme.muted }
+            : { width: 1, height: 8, marginTop: 2, backgroundColor: mark.major ? color : theme.muted }} />
+        </View>;
+      })}
+    </View>
     <View {...responder.panHandlers} accessible accessibilityRole="adjustable" accessibilityLabel={label + (mix.parameter === 'pan' ? ' pan' : ' level')}
       accessibilityState={{ disabled: !ready }} accessibilityValue={{ min: 0, max: 100, now: Math.round(position * 100), text: levelText(session.mixer.displayValue(channel), mix.parameter) }}
       accessibilityActions={[{ name: 'increment' }, { name: 'decrement' }]} onAccessibilityAction={event => {
@@ -87,9 +106,18 @@ export default function Fader({ channel, label, color, vertical = false, length 
         session.mixer.drag(token, clamp(position + (event.nativeEvent.actionName === 'increment' ? 0.02 : -0.02))); session.mixer.flush(token);
         void Haptics.selectionAsync().catch(() => {});
       }}
-      style={{ position: 'absolute', left: vertical ? 9 : Math.max(0, width - 32) * position, top: vertical ? 4 + Math.max(0, width - 40) * (1 - position) : undefined, width: 32, height: 32, borderRadius: vertical ? 6 : 16,
-        backgroundColor: '#FFFFFF', borderWidth: 0.5, borderColor: '#00000012',
-        shadowColor: '#000000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: dragging ? 0.24 : 0.15, shadowRadius: dragging ? 7 : 3, elevation: 3,
-        transform: [{ scale: dragging ? 1.12 : 1 }] }} />
+      style={{ position: 'absolute', left: vertical ? 23 : 4 + travel * position, top: vertical ? 4 + travel * (1 - position) : 14,
+        width: vertical ? 28 : 32, height: 44, borderRadius: 4,
+        backgroundColor: '#18232B', borderWidth: 1, borderColor: dragging ? '#728893' : '#435560',
+        shadowColor: '#000000', shadowOffset: { width: 0, height: 3 }, shadowOpacity: 0.4, shadowRadius: 3, elevation: 4,
+        alignItems: 'center', justifyContent: 'center' }}>
+      <View pointerEvents="none" style={{ position: 'absolute', left: 2, right: 2, top: 1, height: 2, borderRadius: 1, backgroundColor: '#A5B8BF', opacity: 0.35 }} />
+      <View pointerEvents="none" style={{ flexDirection: vertical ? 'column' : 'row', gap: 4 }}>
+        {Array.from({ length: vertical ? 5 : 4 }, (_, index) => <View key={index} style={{ width: vertical ? 18 : 2, height: vertical ? 2 : 26, backgroundColor: '#03090C', borderRadius: 1 }}>
+          <View style={{ flex: 1, backgroundColor: color, opacity: ready ? (index === 2 || dragging ? 1 : 0.65) : 0.25,
+            borderRadius: 1, shadowColor: color, shadowOpacity: 0.9, shadowRadius: dragging ? 5 : 3, shadowOffset: { width: 0, height: 0 } }} />
+        </View>)}
+      </View>
+    </View>
   </View>;
 }
