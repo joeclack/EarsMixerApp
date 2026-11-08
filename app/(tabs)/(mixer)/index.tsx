@@ -15,7 +15,7 @@ export default function Mixer() {
   const theme = useTheme();
   const { width, height } = useWindowDimensions();
   const landscape = width > height;
-  const stripHeight = Math.max(90, height - 220);
+  const stripHeight = Math.max(90, height - 170);
   useFocusEffect(useCallback(() => {
     // Cached positions remain visible while fresh desk values are requested.
     if (session.mixer.state.status === 'connected') session.mixer.refresh();
@@ -49,7 +49,7 @@ export default function Mixer() {
   return <Page title="Mixer" scroll={false} compactHeader toolbar={<MixerToolbar />}>
     {!state.server ? <EmptyMixer /> : <FlatList key={landscape ? 'strips' : 'rows'} horizontal={landscape} extraData={state.preferences}
       data={channels} renderItem={renderChannel} keyExtractor={item => String(item.channel)} contentInsetAdjustmentBehavior="never"
-      contentContainerStyle={{ padding: 20, paddingBottom: landscape ? 70 : 130 }} keyboardShouldPersistTaps="handled"
+      contentContainerStyle={{ padding: 20, paddingBottom: landscape ? 20 : 130 }} keyboardShouldPersistTaps="handled"
       ListHeaderComponent={!landscape ? <View style={{ gap: 17, marginBottom: 20 }}>
         <Segmented label="Fader mode" value={mix.parameter} options={[{ value: 'level', label: 'Level' }, { value: 'pan', label: 'Pan' }]} onChange={value => session.mixer.setParameter(value === 'pan' ? 'pan' : 'level')} />
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
