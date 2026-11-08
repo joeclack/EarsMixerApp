@@ -9,6 +9,7 @@ appId: com.joeclack.earsmixerapp
 - tapOn:
     text: "Allow"
     optional: true
+- tapOn: "Manual"
 - scrollUntilVisible:
     element:
       id: mixer-address

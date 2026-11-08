@@ -6,6 +6,7 @@ import { useTheme } from '../src/theme';
 import { useSession } from '../src/mixer/context';
 import { Icon, Message, Row } from '../src/components/ui';
 import NativeButton from '../src/components/NativeButton';
+import Segmented from '../src/components/Segmented';
 import { useNearbyMixers } from '../src/discovery/useNearbyMixers';
 import { reachableMixer, type NearbyMixer } from '../src/discovery/browser';
 export default function Connect() {
@@ -14,6 +15,7 @@ export default function Connect() {
   const insets = useSafeAreaInsets();
   const [address, setAddress] = useState(state.server || state.recent[0]?.url || '');
   const [error, setError] = useState('');
+  const [mode, setMode] = useState('auto');
   const nearby = useNearbyMixers();
   const [resolving, setResolving] = useState(false);
   const pending = useRef<AbortController | null>(null);
@@ -53,6 +55,10 @@ export default function Connect() {
         </Pressable>
       </View>
       <View style={{ marginBottom: 24 }}>
+        <Segmented label="Connection method" value={mode} options={[{ value: 'auto', label: 'Auto' }, { value: 'manual', label: 'Manual' }]}
+          onChange={value => { if (!busy) { Keyboard.dismiss(); setError(''); setMode(value); } }} />
+      </View>
+      {mode === 'auto' ? <View style={{ marginBottom: 24 }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
           <Text accessibilityRole="header" style={{ color: theme.muted, fontSize: 13, fontWeight: '600' }}>NEARBY MIXERS</Text>
           {nearby.status === 'searching' ? <ActivityIndicator accessibilityLabel="Searching for nearby mixers" color={theme.tint} /> :
@@ -63,17 +69,16 @@ export default function Connect() {
         {nearby.mixers.map(mixer => <Row key={mixer.id} title={mixer.name} detail={new URL(mixer.urls[0]).host}
           onPress={() => { if (!busy) void connectNearby(mixer); }} />)}
         {!nearby.mixers.length && <Text style={{ color: theme.muted, fontSize: 15, lineHeight: 21 }}>
-          {nearby.message || (nearby.status === 'searching' ? 'Looking for mixers on your network…' : 'No mixers found. Enter an address or scan a QR code.')}
+          {nearby.message || (nearby.status === 'searching' ? 'Looking for mixers on your network…' : 'No mixers found. Try Manual.')}
         </Text>}
         {!!nearby.mixers.length && !!nearby.message && <Message>{nearby.message}</Message>}
-      </View>
+      </View> : <>
       <View style={{ backgroundColor: theme.panel, borderRadius: 18, paddingHorizontal: 16, flexDirection: 'row', gap: 12, alignItems: 'center' }}>
         <Icon name={{ ios: 'network', android: 'wifi', web: 'wifi' }} color={theme.muted} />
         <TextInput testID="mixer-address" accessibilityLabel="Mixer address" value={address} onChangeText={setAddress} placeholder="192.168.1.100:8082" placeholderTextColor={theme.muted}
           autoCapitalize="none" autoCorrect={false} keyboardType="url" returnKeyType="go" editable={!busy} onSubmitEditing={() => { if (!busy) void connect(); }}
           style={{ flex: 1, color: theme.text, fontSize: 17, minHeight: 56, paddingVertical: 16 }} />
       </View>
-      <Message error>{error}</Message>
       <View style={{ flexDirection: 'row', gap: 10, flexWrap: 'wrap', marginTop: 5, marginBottom: 24 }}>
         <NativeButton title={busy ? 'Connecting…' : 'Connect'} symbol="wifi" prominent disabled={busy || !address.trim()} onPress={() => void connect()} />
         <NativeButton title="Scan code" symbol="qrcode.viewfinder" disabled={busy} onPress={() => router.push('/scan')} />
@@ -86,7 +91,8 @@ export default function Connect() {
             style={{ width: 44, height: 44, alignItems: 'center', justifyContent: 'center' }}><Icon name={{ ios: 'minus.circle', android: 'remove_circle_outline', web: 'remove_circle_outline' }} size={20} color={theme.muted} /></Pressable>
         </View>)}
       </>}
-      <Text style={{ color: theme.muted, fontSize: 13, lineHeight: 20, marginTop: 14 }}>Use the same network as the server.</Text>
+      </>}
+      <Message error>{error}</Message>
     </ScrollView>
   </View>;
 }
