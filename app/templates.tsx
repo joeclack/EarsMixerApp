@@ -31,13 +31,16 @@ export default function Templates() {
     <Text style={{ color: theme.muted, fontSize: 15, marginBottom: 20 }}>Choose a layout. Desk levels stay unchanged.</Text>
     {loading && <ActivityIndicator color={theme.tint} />}
     {!loading && !error && !templates.length && <Message>No templates available on this mixer.</Message>}
-    <View style={{ gap: 14, alignItems: 'flex-start' }}>
-      {templates.map(template => <NativeButton key={template.id} title={template.name} bordered disabled={applying || loading} onPress={() => {
+    <View>
+      {templates.map(template => <View key={template.id} style={{ flexDirection: 'row', alignItems: 'center', gap: 16, minHeight: 60, paddingVertical: 8, borderBottomWidth: 0.5, borderBottomColor: theme.line }}>
+        <Text style={{ flex: 1, color: theme.text, fontSize: 17 }}>{template.name}</Text>
+        <NativeButton title="Select" disabled={applying || loading} onPress={() => {
         setApplying(true); setError('');
         void session.applyTemplate(template.id).then(() => { if (alive.current) router.back(); })
           .catch(error => { if (alive.current) setError(error instanceof Error ? error.message : 'Could not load this template.'); })
           .finally(() => { if (alive.current) setApplying(false); });
-      }} />)}
+      }} />
+      </View>)}
     </View>
     <Message error>{error}</Message>
     {!!error && <NativeButton title="Retry" disabled={applying} onPress={() => setRetry(value => value + 1)} />}
