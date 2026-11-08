@@ -8,6 +8,11 @@ import { findStartupMixers, reachableMixer } from '../src/discovery/startup';
 import type { DiscoveryNative } from '../src/discovery/browser';
 import { useTheme } from '../src/theme';
 
+const sheetOptions = {
+  headerShown: false, presentation: (Platform.OS === 'web' ? 'modal' : 'formSheet') as 'modal' | 'formSheet',
+  sheetAllowedDetents: [0.6, 0.9], sheetGrabberVisible: true,
+};
+
 export const unstable_settings = { initialRouteName: '(tabs)' };
 function Navigation() {
   const { session, state } = useSession();
@@ -56,12 +61,8 @@ function Navigation() {
     <Stack screenOptions={{ contentStyle: { backgroundColor: theme.bg }, headerTintColor: theme.tint }}>
       <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
       <Stack.Screen name="setup" options={{ headerShown: false, presentation: 'fullScreenModal', gestureEnabled: false }} />
-      <Stack.Screen name="connect" options={{
-        headerShown: false, presentation: Platform.OS === 'web' ? 'modal' : 'formSheet',
-        sheetAllowedDetents: [0.58, 0.92], sheetInitialDetentIndex: 0, sheetGrabberVisible: true,
-        sheetCornerRadius: 32, sheetExpandsWhenScrolledToEdge: true, contentStyle: { backgroundColor: 'transparent' },
-      }} />
-      <Stack.Screen name="templates" options={{ headerShown: false, presentation: Platform.OS === 'web' ? 'modal' : 'formSheet', sheetAllowedDetents: [0.6, 0.9], sheetGrabberVisible: true }} />
+      <Stack.Screen name="connect" options={sheetOptions} />
+      <Stack.Screen name="templates" options={sheetOptions} />
       <Stack.Screen name="scan" options={{ presentation: 'fullScreenModal', headerShown: false }} />
       <Stack.Screen name="layout" options={{ title: 'Channel order', presentation: 'modal' }} />
     </Stack>

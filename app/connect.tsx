@@ -43,8 +43,7 @@ export default function Connect() {
     try { await session.connect(value); router.back(); }
     catch (error) { setError(error instanceof Error ? error.message : 'Could not connect.'); }
   }
-  return <View style={{ flex: 1, minHeight: 0, backgroundColor: 'transparent' }}>
-    <ScrollView keyboardShouldPersistTaps="handled" automaticallyAdjustKeyboardInsets contentContainerStyle={{ padding: 24, paddingTop: 32, paddingBottom: Math.max(insets.bottom, 12) + 24 }}>
+  return <ScrollView keyboardShouldPersistTaps="handled" automaticallyAdjustKeyboardInsets contentContainerStyle={{ padding: 24, paddingTop: 32, paddingBottom: insets.bottom + 24 }}>
       <View style={{ flexDirection: 'row', gap: 12, alignItems: 'center', marginBottom: 20 }}>
         <View style={{ flex: 1 }}>
           <Text accessibilityRole="header" style={{ color: theme.text, fontSize: 28, fontWeight: '700', letterSpacing: -0.6 }}>Connect to mixer</Text>
@@ -91,6 +90,5 @@ export default function Connect() {
       </>}
       </>}
       <Message error>{error}</Message>
-    </ScrollView>
-  </View>;
+  </ScrollView>;
 }
