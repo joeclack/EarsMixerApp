@@ -39,10 +39,12 @@ export default function SetupWalkthrough() {
     })().catch(() => {}).finally(() => { if (!controller.signal.aborted) setChecking(false); });
     return () => { controller.abort(); setChecking(false); };
   }, [step, session]);
-  return <SafeAreaView style={{ flex: 1, backgroundColor: theme.bg }}>
-    <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-    <ScrollView style={{ flex: 1 }} keyboardShouldPersistTaps="handled" automaticallyAdjustKeyboardInsets contentContainerStyle={{ flexGrow: 1, padding: 28, gap: 24, justifyContent: 'flex-start', maxWidth: 600, width: '100%', alignSelf: 'center' }}>
+  return <SafeAreaView edges={['top', 'bottom', 'left', 'right']} style={{ flex: 1, backgroundColor: theme.bg }}>
+    <View style={{ paddingHorizontal: 28, paddingTop: 16, paddingBottom: 12, maxWidth: 600, width: '100%', alignSelf: 'center' }}>
       <Text accessibilityLiveRegion="polite" style={{ color: theme.muted, fontSize: 14 }}>Step {step + 1} of {steps.length}</Text>
+    </View>
+    <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+    <ScrollView contentInsetAdjustmentBehavior="never" automaticallyAdjustContentInsets={false} style={{ flex: 1 }} keyboardShouldPersistTaps="handled" automaticallyAdjustKeyboardInsets contentContainerStyle={{ flexGrow: 1, padding: 28, gap: 24, justifyContent: 'flex-start', maxWidth: 600, width: '100%', alignSelf: 'center' }}>
       <Icon name={{ ios: current.symbol, android: step === 0 ? 'account_circle' : step === 1 ? 'wifi' : step === 2 ? 'tune' : 'star', web: step === 0 ? 'account_circle' : step === 1 ? 'wifi' : step === 2 ? 'tune' : 'star' }} size={48} />
       <Text accessibilityRole="header" style={{ color: theme.text, fontSize: 30, fontWeight: '700' }}>{current.title}</Text>
       {!!current.body && <Text style={{ color: theme.muted, fontSize: 17, lineHeight: 26 }}>{current.body}</Text>}
