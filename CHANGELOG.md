@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Move fader gestures and track animation onto the UI thread; isolate channel readouts and theme/navigation subscriptions from unrelated level updates.
+- Add bounded three-tick haptic bursts for fast position jumps.
+
 - Restyle portrait and landscape faders with rectangular caps, backlit grip slits, and labelled scales including 0 dB.
 
 - Add an offline demo with 20 channels, four AUX mixes, local fader/pan control and example templates. Start it from Connect or Settings without contacting a mixer server.

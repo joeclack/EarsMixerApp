@@ -1,8 +1,9 @@
 import React, { useEffect, useRef } from 'react';
 import { ActivityIndicator, Appearance, Platform, View } from 'react-native';
 import { Stack, ThemeProvider, DarkTheme, DefaultTheme, router, useRootNavigationState, usePathname } from 'expo-router';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { StatusBar } from 'expo-status-bar';
-import { MixerProvider, useSession } from '../src/mixer/context';
+import { MixerProvider, useSessionState } from '../src/mixer/context';
 import { requireOptionalNativeModule } from 'expo';
 import { findStartupMixers, reachableMixer } from '../src/discovery/startup';
 import type { DiscoveryNative } from '../src/discovery/browser';
@@ -15,7 +16,7 @@ const sheetOptions = {
 
 export const unstable_settings = { initialRouteName: '(tabs)' };
 function Navigation() {
-  const { session, state } = useSession();
+  const { session, state } = useSessionState();
   const theme = useTheme();
   const navigation = useRootNavigationState();
   const prompted = useRef(false);
@@ -69,4 +70,4 @@ function Navigation() {
     </Stack>
   </ThemeProvider>;
 }
-export default function RootLayout() { return <MixerProvider><Navigation /></MixerProvider>; }
+export default function RootLayout() { return <GestureHandlerRootView style={{ flex: 1 }}><MixerProvider><Navigation /></MixerProvider></GestureHandlerRootView>; }

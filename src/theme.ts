@@ -1,9 +1,9 @@
 import { useColorScheme } from 'react-native';
-import { useSession } from './mixer/context';
+import { useAppearance } from './mixer/context';
 export function useTheme() {
   const system = useColorScheme();
-  const { state } = useSession();
-  const dark = (state.settings.appearance === 'system' ? system : state.settings.appearance) === 'dark';
+  const appearance = useAppearance();
+  const dark = (appearance === 'system' ? system : appearance) === 'dark';
   return {
     dark, scheme: dark ? 'dark' as const : 'light' as const,
     bg: dark ? '#0B1015' : '#EEF2F3', panel: dark ? '#182129' : '#FFFFFF',
