@@ -78,8 +78,10 @@ The iOS native build workflow compiles a simulator app and runs the Maestro scre
 
 ## Device-local preferences
 
-The mobile app uses an optional nickname and stores appearance, channel order, favourites, selected AUX and compact mode on the device automatically. No account or password is required. Layouts are kept separately for each server. Last-known levels and pan are cached for display while reconnecting. Fresh desk values replace them before dragging is enabled; cached values are never sent to the desk. Removing the app removes its local layouts.
+The mobile app uses an optional nickname and stores appearance, channel order, hidden channels, selected AUX and compact mode on the device automatically. No account or password is required. Layouts are kept separately for each server. Last-known levels and pan are cached for display while reconnecting. Fresh desk values replace them before dragging is enabled; cached values are never sent to the desk. Removing the app removes its local layouts.
 
 Landscape uses vertical channel strips; portrait uses horizontal faders. Recent server addresses are checked alongside native Bonjour discovery. Native discovery requires a rebuilt app and the server discovery update; Expo Go can check recent addresses and use QR/manual connections.
 
 The last successful server connection is saved locally. Choosing Disconnect clears that automatic reconnect target.
+
+Use Edit channels to hide unwanted channels or show them again. Visibility is saved per AUX on the device. Legacy favourites-based templates preserve their visible channel selection when loaded.

@@ -24,7 +24,7 @@ export default function SettingsContent() {
       </Section>
       <Section title="Mixer">
         <Toggle label="Compact channels" systemImage="rectangle.compress.vertical" isOn={state.preferences.compact} onIsOnChange={compact => session.preferences({ compact })} />
-        <Button label="Channel order" systemImage="line.3.horizontal" onPress={() => router.push('/layout')} />
+        <Button label="Edit channels" systemImage="line.3.horizontal" onPress={() => router.push('/layout')} />
       </Section>
       <Section title="Connection">
         <HStack spacing={12}>

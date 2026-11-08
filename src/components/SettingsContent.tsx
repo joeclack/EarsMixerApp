@@ -18,7 +18,7 @@ export default function SettingsContent() {
       onChange={value => session.setSettings({ appearance: value as 'system' | 'light' | 'dark' })} /></Section>
     <Section title="Mixer">
       <Row title="Compact channels"><Switch value={state.preferences.compact} onValueChange={compact => session.preferences({ compact })} /></Row>
-      <Row title="Channel order" onPress={() => router.push('/layout')} />
+      <Row title="Edit channels" onPress={() => router.push('/layout')} />
     </Section>
     <Section title="Connection"><View style={{ flexDirection: 'row', alignItems: 'center' }}>
       <View style={{ flex: 1 }}><Row title={state.server ? new URL(state.server).host : 'Connect'} onPress={() => router.push('/connect')} /></View>

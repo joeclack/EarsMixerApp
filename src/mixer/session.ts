@@ -1,7 +1,7 @@
 import { normalizeMixerAddress, probeMixer, readSavedMixers, rememberMixer, type SavedMixer } from '../connection';
 import { requestTemplates, templatePreferences, type MixerTemplate } from './templates';
 import { MixerClient, type Socket } from './client';
-import { emptyPreferences, readPreferences, type Preferences, parseConfig } from './model';
+import { emptyPreferences, readPreferences, type Preferences, parseConfig, hiddenChannels } from './model';
 type Storage = { getItem(key: string): Promise<string | null>; setItem(key: string, value: string): Promise<void>; getAllKeys?(): Promise<readonly string[]>; multiRemove?(keys: string[]): Promise<void> };
 export type Settings = { appearance: 'system' | 'light' | 'dark'; nickname: string };
 export type SessionState = {
@@ -129,6 +129,14 @@ export class MixerSession {
     if (forgetConnection) { this.patch({ lastServer: null }); void this.persist('earsmixer.native.last-server.v1', null); }
     ++this.attempt; this.mixer.disconnect();
     this.patch({ server: null, connecting: false, preferences: emptyPreferences(), message: '' });
+  }
+  setChannelHidden(channel: number, hidden: boolean) {
+    const aux = this.mixer.state.aux;
+    if (aux === null) return;
+    const previous = hiddenChannels(this.mixer.state.config, this.state.preferences, aux);
+    const channels = hidden ? [...new Set([...previous, channel])] : previous.filter(id => id !== channel);
+    this.mixer.cancelWrites();
+    this.preferences({ hiddenByAux: { ...this.state.preferences.hiddenByAux, [aux]: channels } });
   }
   preferences(update: Partial<Preferences>) {
     const preferences = readPreferences({ ...this.state.preferences, ...update });

@@ -12,7 +12,7 @@ export function useResetDeviceData(onReset?: () => void) {
   };
   const confirm = () => {
     if (resetting) return;
-    const message = 'Clear this device’s nickname, layouts, favourites, settings, saved connections and caches? Desk levels and pan will not change.';
+    const message = 'Clear this device’s nickname, layouts, hidden channels, settings, saved connections and caches? Desk levels and pan will not change.';
     if (Platform.OS === 'web') { if (window.confirm(message)) void reset(); }
     else Alert.alert('Reset device data?', message, [
       { text: 'Cancel', style: 'cancel' }, { text: 'Reset', style: 'destructive', onPress: () => void reset() },

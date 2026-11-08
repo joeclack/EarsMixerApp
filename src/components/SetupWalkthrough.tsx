@@ -15,7 +15,7 @@ const steps = [
   { title: 'Connect to a mixer', symbol: 'wifi' as const, body: 'Make sure you are on the correct Wi-Fi.', bullets: [] },
   { title: 'Choose a template (optional)', symbol: 'square.stack' as const, body: '', bullets: ['Tap Templates in the top toolbar.', 'Choose a saved layout, or keep your own.', 'Templates never change desk levels.'] },
   { title: 'Adjust your mix', symbol: 'slider.horizontal.3' as const, body: '', bullets: ['Choose your AUX in the toolbar.', 'Drag a handle to change level or pan.', 'Rotate for vertical faders.'] },
-  { title: 'Keep your layout', symbol: 'star' as const, body: '', bullets: ['Star favourites. Tap Edit to reorder.', 'Layouts save automatically on this phone.', 'Reconnects to your last mixer.'] },
+  { title: 'Keep your layout', symbol: 'eye.slash' as const, body: '', bullets: ['Tap Edit to reorder or hide channels.', 'Layouts save automatically on this phone.', 'Reconnects to your last mixer.'] },
 ];
 export default function SetupWalkthrough() {
   const { session, state, mix } = useSession(), theme = useTheme();

@@ -8,6 +8,7 @@ export default function LayoutEditor() {
   const { session } = useSession(), theme = useTheme();
   useFocusEffect(useCallback(() => { session.mixer.cancelWrites(); }, [session]));
   return <View style={{ flex: 1, backgroundColor: theme.bg }}>
+    <Stack.Screen options={{ title: 'Edit channels' }} />
     {Platform.OS === 'web' ? <Stack.Screen options={{ headerRight: () =>
       <Pressable accessibilityRole="button" onPress={() => router.back()} style={{ padding: 12 }}>
         <Text style={{ color: theme.tint, fontSize: 17 }}>Done</Text>
