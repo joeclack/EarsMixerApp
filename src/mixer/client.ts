@@ -31,8 +31,8 @@ export class MixerClient {
     this.valueCache = cache;
     this.emit({});
   }
-  private remember(channel: number, value: number) {
-    const key = this.state.aux + ":" + this.state.parameter;
+  private remember(channel: number, value: number, parameter: Parameter = this.state.parameter) {
+    const key = this.state.aux + ":" + parameter;
     this.valueCache = { ...this.valueCache, [key]: { ...this.valueCache[key], [channel]: value } };
     this.cacheRevision++;
   }
@@ -104,6 +104,21 @@ export class MixerClient {
   }
   setParameter(parameter: Parameter) {
     if (parameter !== this.state.parameter) { this.emit({ parameter }); this.refresh(); }
+  }
+  setAllLevelsOff(expectedAux: number | null): boolean {
+    const { aux, config } = this.state;
+    if (!aux || aux !== expectedAux || !config || this.state.status !== 'connected' || this.socket?.readyState !== 1) return false;
+    // Cancel older drag sends first so they cannot restore a level after setting sends to off.
+    this.cancelWrites();
+    const values = { ...this.state.values };
+    let success = true;
+    for (const channel of config.channels) {
+      if (!this.send({ address: this.address(channel.channel, aux, 'level'), args: [-150] })) { success = false; break; }
+      this.remember(channel.channel, -150, 'level');
+      if (this.state.parameter === 'level') values[channel.channel] = -150;
+    }
+    this.emit(this.state.status === 'connected' ? { values } : {});
+    return success;
   }
   cancelWrites() {
     for (const entry of this.pending.values()) clearTimeout(entry.timer);

@@ -1,3 +1,4 @@
+import { useSetAllLevelsOff } from './useSetAllLevelsOff';
 import { Pressable, View } from 'react-native';
 import { router, Stack } from 'expo-router';
 import { useSession } from '../mixer/context';
@@ -7,6 +8,7 @@ import { Icon, styles } from './ui';
 export default function MixerToolbar() {
   const { session, state, mix } = useSession();
   const theme = useTheme();
+  const setAllLevelsOff = useSetAllLevelsOff();
   return <Stack.Screen options={{ headerRight: () => <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
     <Pressable accessibilityRole="button" accessibilityLabel={(mix.status === 'connected' ? 'Connected' : 'Disconnected') + '. Connect to mixer'}
       onPress={() => router.push('/connect')} style={styles.headerButton}>
@@ -27,6 +29,7 @@ export default function MixerToolbar() {
           onClick={event => { session.mixer.setParameter(mode); event.currentTarget.closest('details')?.removeAttribute('open'); }}>{mode === 'level' ? 'Level' : 'Pan'}</button>)}
         <button onClick={event => { event.currentTarget.closest('details')?.removeAttribute('open'); router.push('/templates'); }}>Templates</button>
         <button onClick={event => { event.currentTarget.closest('details')?.removeAttribute('open'); router.push('/layout'); }}>Edit channels</button>
+        <button disabled={mix.status !== 'connected' || !mix.aux} onClick={event => { event.currentTarget.closest('details')?.removeAttribute('open'); setAllLevelsOff(); }} style={{ color: theme.danger }}>Set all levels to off</button>
       </div>
     </details>}
 

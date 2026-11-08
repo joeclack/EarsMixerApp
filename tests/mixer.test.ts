@@ -114,3 +114,23 @@ test('optimistic dragging updates immediately and ignores delayed desk values un
   assert.equal(client.state.values[1], -15);
   unsubscribe();
 });
+
+test('set all levels off writes minus infinity for every channel in the current AUX and leaves pan alone', async t => {
+  const { client, level, writes } = setup(t);
+  level(-12);
+  const drag = client.beginDrag(1)!;
+  client.drag(drag, 0.9);
+  assert.equal(client.setAllLevelsOff(1), true);
+  await delay(40);
+  assert.equal(writes().length, 2);
+  assert(writes().every(message => message.address.includes('/Aux_Send/1/send_level') && message.args[0] === -150));
+  assert.equal(client.state.values[1], -150);
+  assert.equal(client.state.values[2], -150);
+  client.setParameter('pan'); level(0.75, 1, 1, 'pan');
+  assert.equal(client.setAllLevelsOff(1), true);
+  assert.equal(client.state.values[1], 0.75);
+  assert.equal(writes().length, 4);
+  assert(writes().every(message => message.address.endsWith('/send_level') && message.args[0] === -150));
+  assert.equal(client.setAllLevelsOff(2), false);
+  assert.equal(writes().length, 4);
+});

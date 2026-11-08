@@ -1,3 +1,4 @@
+import { useSetAllLevelsOff } from './useSetAllLevelsOff';
 import { Platform, Pressable, Text } from 'react-native';
 import { router, Stack } from 'expo-router';
 import { useSession } from '../mixer/context';
@@ -7,6 +8,7 @@ import { Icon, styles } from './ui';
 export default function MixerToolbar() {
   const { session, state, mix } = useSession();
   const theme = useTheme();
+  const setAllLevelsOff = useSetAllLevelsOff();
   const selected = mix.config?.aux.find(aux => aux.channel === mix.aux);
   const label = selected?.label || 'Choose mix';
   const status = mix.status === 'connected' ? 'Connected' : mix.status === 'disconnected' ? 'Disconnected' : 'Connecting';
@@ -38,6 +40,7 @@ export default function MixerToolbar() {
       </Stack.Toolbar.Menu>
       <Stack.Toolbar.MenuAction onPress={() => router.push('/templates')}>Templates</Stack.Toolbar.MenuAction>
       <Stack.Toolbar.MenuAction onPress={() => router.push('/layout')}>Edit channels</Stack.Toolbar.MenuAction>
+      <Stack.Toolbar.MenuAction destructive disabled={mix.status !== 'connected' || !mix.aux} onPress={setAllLevelsOff}>Set all levels to off</Stack.Toolbar.MenuAction>
     </Stack.Toolbar.Menu>}
     {Platform.OS === 'ios' ? <Stack.Toolbar.Button icon="gearshape" accessibilityLabel="Settings" onPress={() => router.push('/settings')} /> :
       <Stack.Toolbar.View><Pressable accessibilityRole="button" accessibilityLabel="Settings" onPress={() => router.push('/settings')} style={styles.headerButton}>
