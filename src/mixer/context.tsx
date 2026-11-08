@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useState, useSyncExternalStore } from 'react';
+import React, { createContext, useCallback, useContext, useEffect, useState, useSyncExternalStore } from 'react';
 import { Alert, AppState, Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { MixerSession } from './session';
@@ -38,7 +38,8 @@ export function useSessionState() {
 }
 export function useSession() {
   const { session, state } = useSessionState();
-  const mix = useSyncExternalStore(session.mixer.subscribe, () => session.mixer.state, () => session.mixer.state);
+  // Pages and toolbars observe configuration/status, never the stream of channel values.
+  const mix = useSyncExternalStore(session.mixer.subscribeControls, session.mixer.controlsSnapshot, session.mixer.controlsSnapshot);
   return { session, state, mix };
 }
 
@@ -50,10 +51,8 @@ export function useAppearance() {
 export function useFaderSession(channel: number) {
   const session = useContext(Context);
   if (!session) throw new Error('Missing mixer provider');
-  const snapshot = () => {
-    const state = session.mixer.state;
-    return [state.status, state.epoch, state.aux, state.parameter, state.values[channel], session.mixer.displayValue(channel)].join('|');
-  };
-  useSyncExternalStore(session.mixer.subscribe, snapshot, snapshot);
+  const subscribe = useCallback((fn: () => void) => session.mixer.subscribeChannel(channel, fn), [session, channel]);
+  const snapshot = useCallback(() => session.mixer.channelSnapshot(channel), [session, channel]);
+  useSyncExternalStore(subscribe, snapshot, snapshot);
   return { session, mix: session.mixer.state };
 }

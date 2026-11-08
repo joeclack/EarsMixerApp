@@ -13,6 +13,7 @@ export type MixState = {
   config: MixerConfig | null; aux: number | null; parameter: Parameter;
   values: Record<number, number>; epoch: number;
 };
+export type MixerControls = Omit<MixState, 'values'>;
 export type DragToken = { epoch: number; aux: number; channel: number; parameter: Parameter };
 export type ValueCache = Record<string, Record<number, number>>;
 export class MixerClient {
@@ -66,6 +67,22 @@ export class MixerClient {
   private username: string | null = null;
   private desiredAux: number | null = null;
   private listeners = new Set<() => void>();
+  private controlListeners = new Set<() => void>();
+  private controls: MixerControls = this.readControls();
+  private channels = new Map<number, { snapshot: string; listeners: Set<() => void> }>();
+  private readControls(): MixerControls { const { values: _values, ...controls } = this.state; return controls; }
+  controlsSnapshot = () => this.controls;
+  subscribeControls = (fn: () => void) => { this.controlListeners.add(fn); return () => { this.controlListeners.delete(fn); }; };
+  channelSnapshot(channel: number) {
+    const { status, epoch, aux, parameter, values } = this.state;
+    return [status, epoch, aux, parameter, values[channel], this.displayValue(channel)].join('|');
+  }
+  subscribeChannel(channel: number, fn: () => void) {
+    let entry = this.channels.get(channel);
+    if (!entry) { entry = { snapshot: this.channelSnapshot(channel), listeners: new Set() }; this.channels.set(channel, entry); }
+    entry.listeners.add(fn);
+    return () => { entry.listeners.delete(fn); if (!entry.listeners.size) this.channels.delete(channel); };
+  }
   private retry: ReturnType<typeof setTimeout> | null = null;
   private query: ReturnType<typeof setTimeout> | null = null;
   private timeout: ReturnType<typeof setTimeout> | null = null;
@@ -75,7 +92,20 @@ export class MixerClient {
   private queryGeneration = 0;
   constructor(private socketFactory: (url: string) => Socket) {}
   subscribe = (fn: () => void) => { this.listeners.add(fn); return () => { this.listeners.delete(fn); }; };
-  private emit(update: Partial<MixState>) { this.state = { ...this.state, ...update }; this.listeners.forEach(fn => fn()); }
+  private emit(update: Partial<MixState>) {
+    this.state = { ...this.state, ...update };
+    const changed = this.controls.status !== this.state.status || this.controls.config !== this.state.config ||
+      this.controls.aux !== this.state.aux || this.controls.parameter !== this.state.parameter ||
+      this.controls.epoch !== this.state.epoch || this.controls.peers !== this.state.peers;
+    if (changed) this.controls = this.readControls();
+    // Deliver positions before React's page/store subscribers. No polling or debounce.
+    for (const [channel, entry] of this.channels) {
+      const snapshot = this.channelSnapshot(channel);
+      if (snapshot !== entry.snapshot) { entry.snapshot = snapshot; entry.listeners.forEach(fn => fn()); }
+    }
+    this.listeners.forEach(fn => fn());
+    if (changed) this.controlListeners.forEach(fn => fn());
+  }
   connect(url: string, preserveConfig = false) { this.disconnect(preserveConfig); this.url = url; this.attempt = 0; this.open(); }
   disconnect(preserveConfig = false) {
     this.url = null;
@@ -127,10 +157,10 @@ export class MixerClient {
     this.desiredAux = aux;
     const available = this.state.config?.aux || [];
     const selected = available.find(a => a.channel === aux)?.channel ?? available[0]?.channel ?? null;
-    if (selected !== this.state.aux) { this.liveLevels = {}; this.emit({ aux: selected, peers: [] }); this.refresh(); }
+    if (selected !== this.state.aux) { this.liveLevels = {}; this.emit({ aux: selected, peers: [], values: {} }); this.refresh(); }
   }
   setParameter(parameter: Parameter) {
-    if (parameter !== this.state.parameter) { this.emit({ parameter }); this.refresh(); }
+    if (parameter !== this.state.parameter) { this.emit({ parameter, values: {} }); this.refresh(); }
   }
   setAllLevelsOff(expectedAux: number | null): boolean {
     const { aux, config } = this.state;

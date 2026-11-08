@@ -1,8 +1,8 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { View, Text } from 'react-native';
-import Animated, { useSharedValue, useAnimatedStyle } from 'react-native-reanimated';
+import Animated, { useSharedValue, useAnimatedStyle, cancelAnimation, Easing, withTiming } from 'react-native-reanimated';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
-import { scheduleOnRN } from 'react-native-worklets';
+import { scheduleOnRN, scheduleOnUI } from 'react-native-worklets';
 import FaderHandleSurface from './FaderHandleSurface';
 import { DragHaptics } from '../mixer/dragHaptics';
 import * as Haptics from 'expo-haptics';
@@ -11,7 +11,7 @@ import { useTheme } from '../theme';
 import { clamp, levelText, dbToPosition } from '../mixer/model';
 import type { DragToken } from '../mixer/client';
 
-export default function Fader({ channel, label, color, vertical = false, length = 200 }: { channel: number; label: string; color: string; vertical?: boolean; length?: number }) {
+export default memo(function Fader({ channel, label, color, vertical = false, length = 200 }: { channel: number; label: string; color: string; vertical?: boolean; length?: number }) {
   const { session, mix } = useFaderSession(channel);
   const theme = useTheme();
   const [width, setWidth] = useState(0);
@@ -49,7 +49,29 @@ export default function Fader({ channel, label, color, vertical = false, length 
     drag.current = null; haptics.end(); setDragging(false);
   }, [mix.epoch, width, vertical, session, haptics, active]);
   useEffect(() => () => { if (drag.current) session.mixer.cancelDrag(drag.current); haptics.end(); }, [session, haptics]);
-  useEffect(() => { if (!active.value) thumb.value = position; }, [position, mix.epoch, width, vertical, thumb, active]);
+  useEffect(() => {
+    let context = '';
+    let previous: number | undefined;
+    const applyPosition = (next: number, snap: boolean) => {
+      'worklet';
+      if (snap) { active.value = false; cancelAnimation(thumb); thumb.value = next; }
+      else if (!active.value) thumb.value = withTiming(next, { duration: 32, easing: Easing.linear });
+    };
+    const syncPosition = () => {
+      const current = session.mixer.state;
+      const nextContext = [current.aux, current.parameter, current.epoch, current.status, current.values[channel] !== undefined].join('|');
+      const next = session.mixer.position(channel);
+      const snap = context !== nextContext;
+      context = nextContext;
+      if (!snap && next === previous) return;
+      previous = next;
+      // Queue the newest target straight to the animation thread, without waiting
+      // for a React render/effect. Touch gestures retain control while dragging.
+      scheduleOnUI(applyPosition, next, snap);
+    };
+    syncPosition();
+    return session.mixer.subscribeChannel(channel, syncPosition);
+  }, [session, channel, thumb, active, vertical, width]);
   const epoch = mix.epoch;
   const gesture = useMemo(() => {
     const pan = Gesture.Pan().enabled(ready && travel > 0).minDistance(3);
@@ -57,6 +79,7 @@ export default function Fader({ channel, label, color, vertical = false, length 
     else pan.activeOffsetX([-3, 3]).failOffsetY([-8, 8]);
     return pan.onStart(() => {
       'worklet';
+      cancelAnimation(thumb);
       active.value = true; start.value = thumb.value; lastDispatch.value = 0;
       scheduleOnRN(begin, start.value, epoch);
     }).onUpdate(event => {
@@ -75,16 +98,45 @@ export default function Fader({ channel, label, color, vertical = false, length 
   }, [ready, travel, vertical, mix.epoch, thumb, start, active, lastDispatch, begin, update, finish]);
   const thumbStyle = useAnimatedStyle(() => ({ transform: vertical ? [{ translateY: travel * (1 - thumb.value) }] : [{ translateX: travel * thumb.value }] }));
   const fillStyle = useAnimatedStyle(() => vertical ? { height: travel * thumb.value } : { width: travel * thumb.value });
-  const scale = mix.parameter === 'level'
-    ? [-40, -20, -10, 0, 10].map(db => ({ position: dbToPosition(db), label: db === 0 ? '0 dB' : db > 0 ? '+' + db : String(db), major: db === 0 }))
-    : [{ position: 0, label: 'L', major: false }, { position: 0.5, label: 'C', major: true }, { position: 1, label: 'R', major: false }];
   return <View onLayout={event => setWidth(vertical ? event.nativeEvent.layout.height : event.nativeEvent.layout.width)} style={{ height: vertical ? length : 56, width: vertical ? 64 : undefined, alignSelf: vertical ? 'center' : undefined, opacity: session.mixer.displayValue(channel) !== undefined ? 1 : 0.35 }}>
     <View pointerEvents="none" style={vertical
       ? { position: 'absolute', top: inset, bottom: inset, left: 34, width: 6, borderRadius: 3, backgroundColor: '#050A0D', justifyContent: 'flex-end' }
       : { position: 'absolute', left: inset, right: inset, top: 25, height: 6, borderRadius: 3, backgroundColor: '#050A0D' }}>
       <Animated.View style={[vertical ? { width: 6 } : { height: 6 }, { borderRadius: 3, backgroundColor: color, opacity: 0.6 }, fillStyle]} />
     </View>
-    <View pointerEvents="none" style={{ position: 'absolute', top: 0, bottom: 0, left: 0, right: 0 }}>
+    <FaderScale width={width} travel={travel} vertical={vertical} parameter={mix.parameter} color={color} />
+    <GestureDetector gesture={gesture}><Animated.View accessible accessibilityRole="adjustable" accessibilityLabel={label + (mix.parameter === 'pan' ? ' pan' : ' level')}
+      accessibilityState={{ disabled: !ready }} accessibilityValue={{ min: 0, max: 100, now: Math.round(position * 100), text: levelText(session.mixer.displayValue(channel), mix.parameter) }}
+      accessibilityActions={[{ name: 'increment' }, { name: 'decrement' }]} onAccessibilityAction={event => {
+        const token = session.mixer.beginDrag(channel); if (!token) return;
+        session.mixer.drag(token, clamp(position + (event.nativeEvent.actionName === 'increment' ? 0.02 : -0.02))); session.mixer.flush(token); session.mixer.cancelDrag(token);
+        if (session.state.settings.haptics) void Haptics.selectionAsync().catch(() => {});
+      }}
+      style={[{ position: 'absolute', left: vertical ? 23 : 4, top: vertical ? 4 : 14,
+        width: vertical ? 28 : 44, height: vertical ? 44 : 28, borderRadius: 4,
+        backgroundColor: '#18232B', borderWidth: 1, borderColor: dragging ? '#728893' : '#435560',
+        shadowColor: '#000000', shadowOffset: { width: 0, height: 3 }, shadowOpacity: 0.4, shadowRadius: 3, elevation: 4,
+        alignItems: 'center', justifyContent: 'center' }, thumbStyle]}>
+      <FaderHandleSurface vertical={vertical} color={color} ready={ready} dragging={dragging} />
+    </Animated.View></GestureDetector>
+  </View>;
+});
+
+export const FaderValue = memo(function FaderValue({ channel }: { channel: number }) {
+  const { session, mix } = useFaderSession(channel);
+  const theme = useTheme();
+  return <Text style={{ color: theme.muted, fontSize: 12, fontVariant: ['tabular-nums'] }}>{levelText(session.mixer.displayValue(channel), mix.parameter)}</Text>;
+});
+
+
+const FaderScale = memo(function FaderScale({ width, travel, vertical, parameter, color }: {
+  width: number; travel: number; vertical: boolean; parameter: 'level' | 'pan'; color: string;
+}) {
+  const theme = useTheme(), inset = 26;
+  const scale = parameter === 'level'
+    ? [-40, -20, -10, 0, 10].map(db => ({ position: dbToPosition(db), label: db === 0 ? '0 dB' : db > 0 ? '+' + db : String(db), major: db === 0 }))
+    : [{ position: 0, label: 'L', major: false }, { position: 0.5, label: 'C', major: true }, { position: 1, label: 'R', major: false }];
+  return <View pointerEvents="none" style={{ position: 'absolute', top: 0, bottom: 0, left: 0, right: 0 }}>
       {Array.from({ length: 21 }, (_, index) => {
         const point = inset + travel * (vertical ? 1 - index / 20 : index / 20);
         return <View key={index} style={vertical
@@ -102,26 +154,5 @@ export default function Fader({ channel, label, color, vertical = false, length 
             : { width: 1, height: 8, marginTop: 2, backgroundColor: mark.major ? color : theme.muted }} />
         </View>;
       })}
-    </View>
-    <GestureDetector gesture={gesture}><Animated.View accessible accessibilityRole="adjustable" accessibilityLabel={label + (mix.parameter === 'pan' ? ' pan' : ' level')}
-      accessibilityState={{ disabled: !ready }} accessibilityValue={{ min: 0, max: 100, now: Math.round(position * 100), text: levelText(session.mixer.displayValue(channel), mix.parameter) }}
-      accessibilityActions={[{ name: 'increment' }, { name: 'decrement' }]} onAccessibilityAction={event => {
-        const token = session.mixer.beginDrag(channel); if (!token) return;
-        session.mixer.drag(token, clamp(position + (event.nativeEvent.actionName === 'increment' ? 0.02 : -0.02))); session.mixer.flush(token);
-        if (session.state.settings.haptics) void Haptics.selectionAsync().catch(() => {});
-      }}
-      style={[{ position: 'absolute', left: vertical ? 23 : 4, top: vertical ? 4 : 14,
-        width: vertical ? 28 : 44, height: vertical ? 44 : 28, borderRadius: 4,
-        backgroundColor: '#18232B', borderWidth: 1, borderColor: dragging ? '#728893' : '#435560',
-        shadowColor: '#000000', shadowOffset: { width: 0, height: 3 }, shadowOpacity: 0.4, shadowRadius: 3, elevation: 4,
-        alignItems: 'center', justifyContent: 'center' }, thumbStyle]}>
-      <FaderHandleSurface vertical={vertical} color={color} ready={ready} dragging={dragging} />
-    </Animated.View></GestureDetector>
-  </View>;
-}
-
-export function FaderValue({ channel }: { channel: number }) {
-  const { session, mix } = useFaderSession(channel);
-  const theme = useTheme();
-  return <Text style={{ color: theme.muted, fontSize: 12, fontVariant: ['tabular-nums'] }}>{levelText(session.mixer.displayValue(channel), mix.parameter)}</Text>;
-}
+    </View>;
+});

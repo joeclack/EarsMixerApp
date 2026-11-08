@@ -158,3 +158,46 @@ test('AUX presence accepts only current peers, updates names and clears on switc
   assert.deepEqual(peers(), []);
   assert.equal(writes().length, 0);
 });
+
+test('desk position bursts reach only the moving channel immediately without publishing page controls', t => {
+  const { client, level, socket } = setup(t);
+  level(-40, 1); level(-20, 2);
+  const controls = client.controlsSnapshot();
+  let pageUpdates = 0, otherChannelUpdates = 0;
+  const positions: number[] = [];
+  const unsubscribePage = client.subscribeControls(() => pageUpdates++);
+  const unsubscribeChannel = client.subscribeChannel(1, () => positions.push(client.position(1)));
+  const unsubscribeOther = client.subscribeChannel(2, () => otherChannelUpdates++);
+  for (let i = 1; i <= 120; i++) {
+    level(-40 + i / 3, 1);
+    assert.equal(positions.length, i); // No render, timer or polling is needed to deliver the target.
+  }
+  assert.equal(positions.at(-1), dbToPosition(0));
+  assert.equal(client.controlsSnapshot(), controls);
+  assert.equal(pageUpdates, 0); assert.equal(otherChannelUpdates, 0);
+  level(0, 1); // Identical repeated packets do not notify the handle again.
+  assert.equal(positions.length, 120);
+  socket.receive({ address: '/Aux_Outputs/1/Buss_Trim/name', args: ['Drums'] });
+  assert.equal(pageUpdates, 1); assert.equal(client.controlsSnapshot().config?.aux[0].label, 'Drums');
+  unsubscribeChannel(); level(-10, 1);
+  assert.equal(positions.length, 120);
+  unsubscribePage(); unsubscribeOther();
+});
+
+test('AUX and mode switches publish empty fresh values atomically rather than values from the previous mix', t => {
+  const { client, level } = setup(t);
+  level(-10, 1);
+  const observed: number[] = [];
+  const unsubscribe = client.subscribeChannel(1, () => {
+    if (client.state.values[1] !== undefined) observed.push(client.state.values[1]);
+  });
+  client.selectAux(2);
+  assert.deepEqual(observed, []);
+  level(-20, 1, 2);
+  observed.length = 0;
+  client.setParameter('pan');
+  assert.deepEqual(observed, []);
+  level(0.7, 1, 2, 'pan');
+  assert.deepEqual(observed, [0.7]);
+  unsubscribe();
+});
