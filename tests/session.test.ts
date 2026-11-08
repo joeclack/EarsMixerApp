@@ -10,6 +10,8 @@ test('nickname, appearance and per-server layouts automatically persist without 
     () => ({ readyState: 1, send() {}, close() {}, onopen: null, onclose: null, onmessage: null, onerror: null }) as Socket,
     (async (url: string) => { requests.push(url); return Response.json({ url, qr: 'data:image/png;base64,AAA' }); }) as typeof fetch);
   const first = make(); await first.hydrate();
+  assert.equal(first.state.setupComplete, false);
+  await first.completeSetup();
   first.setSettings({ nickname: 'Drummer', appearance: 'dark' });
   await first.connect('one.local');
   first.preferences({ channelOrder: [3, 1, 2], selectedAux: 2, compact: true });
@@ -19,6 +21,7 @@ test('nickname, appearance and per-server layouts automatically persist without 
   assert.deepEqual(first.state.preferences.channelOrder, [3, 1, 2]);
   first.disconnect(false);
   const second = make(); await second.hydrate();
+  assert.equal(second.state.setupComplete, true);
   assert.equal(second.state.lastServer, 'http://one.local/');
   await second.connect('one.local');
   assert.equal(second.state.settings.nickname, 'Drummer');
@@ -79,6 +82,7 @@ test('device reset removes local profiles and caches without writing desk levels
   const session = new MixerSession({ getItem: async key => data.get(key) || null, setItem: async (key, value) => { data.set(key, value); },
     getAllKeys: async () => [...data.keys()], multiRemove: async keys => { keys.forEach(key => data.delete(key)); } }, () => socket,
     (async (url: string) => Response.json({ url, qr: 'data:image/png;base64,AAA' })) as typeof fetch);
+  await session.completeSetup();
   session.setSettings({ nickname: 'Joe', appearance: 'dark' });
   await session.connect('mixer.local'); socket.onopen?.();
   socket.onmessage?.({ data: JSON.stringify({ config: { channels: [{ channel: 1, label: 'Kick', order: 1 }], aux: [{ channel: 2, label: 'Drums' }] } }) });
@@ -88,6 +92,7 @@ test('device reset removes local profiles and caches without writing desk levels
   session.mixer.drag(drag, 0.8);
   await session.resetDeviceData();
   assert.deepEqual([...data], [['unrelated.setting', 'keep']]);
+  assert.equal(session.state.setupComplete, false);
   assert.equal(session.state.settings.nickname, '');
   assert.equal(session.state.server, null);
   assert.deepEqual(session.state.preferences.favouritesByAux, {});

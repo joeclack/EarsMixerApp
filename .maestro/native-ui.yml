@@ -2,6 +2,10 @@ appId: com.joeclack.earsmixerapp
 ---
 - launchApp:
     clearState: true
+- tapOn: "Next"
+- tapOn: "Next"
+- tapOn: "Next"
+- tapOn: "Find mixer"
 - extendedWaitUntil:
     visible: "Select a server or enter its address."
     timeout: 30000

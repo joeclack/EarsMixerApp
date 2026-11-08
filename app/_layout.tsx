@@ -6,6 +6,7 @@ import { MixerProvider, useSession } from '../src/mixer/context';
 import { requireOptionalNativeModule } from 'expo';
 import { findStartupMixers, reachableMixer } from '../src/discovery/startup';
 import type { DiscoveryNative } from '../src/discovery/browser';
+import SetupWalkthrough from '../src/components/SetupWalkthrough';
 import { useTheme } from '../src/theme';
 
 export const unstable_settings = { initialRouteName: '(tabs)' };
@@ -18,6 +19,7 @@ function Navigation() {
     if (Platform.OS !== 'web') Appearance.setColorScheme(state.settings.appearance === 'system' ? 'unspecified' : state.settings.appearance);
   }, [state.settings.appearance]);
   useEffect(() => {
+    if (!state.setupComplete) { prompted.current = false; return; }
     if (!state.hydrated || !navigation?.key || prompted.current) return;
     prompted.current = true;
     const controller = new AbortController();
@@ -39,11 +41,11 @@ function Navigation() {
       if (!controller.signal.aborted) router.push('/connect');
     })();
     return () => controller.abort();
-  }, [state.hydrated, navigation?.key, session]);
+  }, [state.hydrated, state.setupComplete, navigation?.key, session]);
   if (!state.hydrated) return <View style={{ flex: 1, justifyContent: 'center', backgroundColor: theme.bg }}><ActivityIndicator /></View>;
   return <ThemeProvider value={theme.dark ? DarkTheme : DefaultTheme}>
     <StatusBar style={theme.dark ? 'light' : 'dark'} />
-    <Stack screenOptions={{ contentStyle: { backgroundColor: theme.bg }, headerTintColor: theme.tint }}>
+    {!state.setupComplete ? <SetupWalkthrough /> : <Stack screenOptions={{ contentStyle: { backgroundColor: theme.bg }, headerTintColor: theme.tint }}>
       <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
       <Stack.Screen name="connect" options={{
         headerShown: false, presentation: Platform.OS === 'web' ? 'modal' : 'formSheet',
@@ -52,7 +54,7 @@ function Navigation() {
       }} />
       <Stack.Screen name="scan" options={{ presentation: 'fullScreenModal', headerShown: false }} />
       <Stack.Screen name="layout" options={{ title: 'Channel order', presentation: 'modal' }} />
-    </Stack>
+    </Stack>}
   </ThemeProvider>;
 }
 export default function RootLayout() { return <MixerProvider><Navigation /></MixerProvider>; }
