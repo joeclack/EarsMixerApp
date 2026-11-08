@@ -5,6 +5,7 @@ appId: com.joeclack.earsmixerapp
 - tapOn: "Next"
 - tapOn: "Next"
 - tapOn: "Next"
+- tapOn: "Next"
 - tapOn: "Find mixer"
 - extendedWaitUntil:
     visible: "Select a server or enter its address."

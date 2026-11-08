@@ -1,4 +1,5 @@
 import { normalizeMixerAddress, probeMixer, readSavedMixers, rememberMixer, type SavedMixer } from '../connection';
+import { requestTemplates, templatePreferences, type MixerTemplate } from './templates';
 import { MixerClient, type Socket } from './client';
 import { emptyPreferences, readPreferences, type Preferences, parseConfig } from './model';
 type Storage = { getItem(key: string): Promise<string | null>; setItem(key: string, value: string): Promise<void>; getAllKeys?(): Promise<readonly string[]>; multiRemove?(keys: string[]): Promise<void> };
@@ -58,6 +59,20 @@ export class MixerSession {
     const json = JSON.stringify(value);
     this.queue = this.queue.then(() => this.storage.setItem(key, json)).catch(() => this.patch({ message: 'Could not save to this device.' }));
     return this.queue;
+  }
+  async templates(signal?: AbortSignal): Promise<MixerTemplate[]> {
+    if (!this.state.server) throw new Error('Connect to a mixer first.');
+    return requestTemplates(this.state.server, undefined, this.fetcher, signal);
+  }
+  async applyTemplate(id: string) {
+    if (!this.state.server || !/^[a-f0-9]{64}$/.test(id)) throw new Error('Choose a template from the connected mixer.');
+    const server = this.state.server, attempt = this.attempt;
+    const data = await requestTemplates(server, id, this.fetcher);
+    if (server !== this.state.server || attempt !== this.attempt) throw new Error('The mixer connection changed. Choose a template again.');
+    const preferences = templatePreferences(data.config, this.state.preferences.compact);
+    this.mixer.cancelWrites();
+    this.preferences(preferences);
+    await this.queue;
   }
   async restartSetup() {
     this.mixer.cancelWrites();

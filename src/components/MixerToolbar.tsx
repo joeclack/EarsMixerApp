@@ -5,7 +5,7 @@ import { useTheme } from '../theme';
 import { Icon, styles } from './ui';
 
 export default function MixerToolbar() {
-  const { session, mix } = useSession();
+  const { session, state, mix } = useSession();
   const theme = useTheme();
   const selected = mix.config?.aux.find(aux => aux.channel === mix.aux);
   const label = selected?.label || 'Choose mix';
@@ -18,6 +18,7 @@ export default function MixerToolbar() {
       </Stack.Toolbar.View>
     </Stack.Toolbar>
     <Stack.Toolbar placement="right" tintColor={theme.tint}>
+    {state.server && <Stack.Toolbar.Button accessibilityLabel="Templates" onPress={() => router.push('/templates')}>Templates</Stack.Toolbar.Button>}
     {!!mix.config?.aux.length && <Stack.Toolbar.Menu title="Choose your mix" accessibilityLabel={'Choose your mix, ' + label}
       disabled={mix.status !== 'connected' || !mix.config?.aux.length}>
       <Stack.Toolbar.Label>{label.length > 18 ? label.slice(0, 17) + '…' : label}</Stack.Toolbar.Label>

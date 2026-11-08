@@ -52,6 +52,7 @@ function Navigation() {
         sheetAllowedDetents: [0.58, 0.92], sheetInitialDetentIndex: 0, sheetGrabberVisible: true,
         sheetCornerRadius: 32, sheetExpandsWhenScrolledToEdge: true, contentStyle: { backgroundColor: 'transparent' },
       }} />
+      <Stack.Screen name="templates" options={{ headerShown: false, presentation: Platform.OS === 'web' ? 'modal' : 'formSheet', sheetAllowedDetents: [0.6, 0.9], sheetGrabberVisible: true }} />
       <Stack.Screen name="scan" options={{ presentation: 'fullScreenModal', headerShown: false }} />
       <Stack.Screen name="layout" options={{ title: 'Channel order', presentation: 'modal' }} />
     </Stack>}

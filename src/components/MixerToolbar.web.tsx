@@ -1,13 +1,14 @@
-import { Pressable, View } from 'react-native';
+import { Pressable, View, Text } from 'react-native';
 import { router, Stack } from 'expo-router';
 import { useSession } from '../mixer/context';
 import { useTheme } from '../theme';
 import { Icon, styles } from './ui';
 
 export default function MixerToolbar() {
-  const { session, mix } = useSession();
+  const { session, state, mix } = useSession();
   const theme = useTheme();
   return <Stack.Screen options={{ headerRight: () => <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+    {state.server && <Pressable accessibilityRole="button" onPress={() => router.push('/templates')} style={styles.headerButton}><Text style={{ color: theme.tint }}>Templates</Text></Pressable>}
     {!!mix.config?.aux.length && <select aria-label="Choose your mix" disabled={mix.status !== 'connected' || !mix.config?.aux.length} value={mix.aux || ''}
       onChange={event => session.preferences({ selectedAux: Number(event.target.value) })}
       style={{ color: theme.tint, background: theme.panel, border: 'none', borderRadius: 12, padding: 10, maxWidth: 180, fontSize: 15 }}>
