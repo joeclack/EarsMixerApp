@@ -1,4 +1,3 @@
-import { levelOverview } from '../mixer/recentStates';
 import React from 'react';
 import { useResetDeviceData } from './useResetDeviceData';
 import ProfileCard from './ProfileCard';
@@ -25,8 +24,7 @@ export default function SettingsContent() {
       {!Object.keys(state.recentStates).length && <Row title="No saved levels" />}
       {Object.entries(state.recentStates).sort(([, a], [, b]) => b.editedAt - a.editedAt).map(([key, saved]) => <View key={key} style={{ padding: 16, gap: 6 }}>
         <Text style={{ color: theme.text, fontWeight: '600' }}>{saved.name}</Text>
-        <Text style={{ color: theme.muted }}>{new URL(saved.server).host + ' · ' + new Date(saved.editedAt).toLocaleString()}</Text>
-        <Text numberOfLines={4} style={{ color: theme.muted }}>{levelOverview(saved)}</Text>
+        <Text style={{ color: theme.muted }}>{new Date(saved.editedAt).toLocaleString()}</Text>
       </View>)}
     </Section>
     <Section title="Connection"><View style={{ flexDirection: 'row', alignItems: 'center' }}>

@@ -21,6 +21,3 @@ export function readLevelStates(raw: string | null): Record<string, SavedLevelSt
   } catch {}
   return result;
 }
-export function levelOverview(state: SavedLevelState) {
-  return Object.entries(state.levels).map(([id, value]) => `${state.labels[Number(id)] || 'Channel ' + id}: ${value <= -150 ? 'Off' : Number(value.toFixed(1)) + ' dB'}`).join(' · ');
-}

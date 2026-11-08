@@ -1,4 +1,3 @@
-import { levelOverview } from '../mixer/recentStates';
 import React from 'react';
 import { useResetDeviceData } from './useResetDeviceData';
 import { Host, Form, Section, Toggle, Picker, Text, Button, LabeledContent, VStack, HStack, Spacer, TextField, useNativeState } from '@expo/ui/swift-ui';
@@ -31,8 +30,7 @@ export default function SettingsContent() {
         {!Object.keys(state.recentStates).length && <Text>No saved levels</Text>}
         {Object.entries(state.recentStates).sort(([, a], [, b]) => b.editedAt - a.editedAt).map(([key, saved]) => <VStack key={key} alignment="leading" spacing={6}>
           <Text>{saved.name}</Text>
-          <Text>{new URL(saved.server).host + ' · ' + new Date(saved.editedAt).toLocaleString()}</Text>
-          <Text modifiers={[lineLimit(4)]}>{levelOverview(saved)}</Text>
+          <Text>{new Date(saved.editedAt).toLocaleString()}</Text>
         </VStack>)}
       </Section>
       <Section title="Connection">

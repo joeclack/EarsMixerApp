@@ -2,7 +2,7 @@
 
 iOS and Android companion for [EarsMixer](https://github.com/joeclack/EarsMixer). Connect your phone to the same network as the EarsMixer server, enter its address or scan the QR code from the server's admin dashboard/tray, then control your monitor mix.
 
-## Native interface · 0.5.0
+## Native interface · 0.5.1
 
 - Native Mixer screen with a Settings gear in its toolbar. Settings opens as a page with a back button to Mixer.
 - SwiftUI glass buttons, segmented controls, settings forms and drag-to-reorder lists on iOS, with SF Symbols and automatic light/dark appearance.
@@ -78,7 +78,7 @@ The iOS native build workflow compiles a simulator app and runs the Maestro scre
 
 ## Device-local preferences
 
-The mobile app uses an optional nickname and stores appearance, channel order, hidden channels, selected AUX and haptic feedback on the device automatically. No account or password is required. Layouts are kept separately for each server. Last-known levels and pan are cached for display while reconnecting. Fresh desk values replace them before dragging is enabled; the display cache is never sent to the desk automatically. A separate level state is saved per server/AUX after edits on this phone. When opening, reconnecting or switching AUX, differing fresh desk levels trigger a restore choice. Only confirming **Load saved levels** applies saved send levels, including hidden channels; pan stays unchanged. Settings → Recent states shows level summaries and last-edit times. Removing the app removes its local layouts.
+The mobile app uses an optional nickname and stores appearance, channel order, hidden channels, selected AUX and haptic feedback on the device automatically. No account or password is required. Layouts are kept separately for each server. Last-known levels and pan are cached for display while reconnecting. Fresh desk values replace them before dragging is enabled; the display cache is never sent to the desk automatically. A separate level state is saved per server/AUX after edits on this phone. When opening, reconnecting or switching AUX, differing fresh desk levels trigger a restore choice. Only confirming **Load saved levels** applies saved send levels, including hidden channels; pan stays unchanged. Settings → Recent states shows AUX names and last-edit times. Removing the app removes its local layouts.
 
 Landscape uses vertical channel strips; portrait uses horizontal faders. Recent server addresses are checked alongside native Bonjour discovery. Native discovery requires a rebuilt app and the server discovery update; Expo Go can check recent addresses and use QR/manual connections.
 

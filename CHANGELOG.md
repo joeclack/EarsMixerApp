@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.5.1 — Recent states
+
+- Simplify Recent states in Settings to show only the AUX name and last-edited timestamp.
+
 ## 0.5.0 — AUX presence
 
 - Show profile circles and nicknames for other connected users on the selected AUX. Tap the circles to see everyone.
