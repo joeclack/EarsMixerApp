@@ -29,7 +29,7 @@ export default function Mixer() {
     const next = favourites.channels.includes(channel) ? favourites.channels.filter(id => id !== channel) : [...favourites.channels, channel];
     session.preferences({ favouritesByAux: { ...state.preferences.favouritesByAux, [mix.aux]: { ...favourites, channels: next } } });
   };
-  const renderChannel = ({ item }: { item: Channel }) => <View testID={'channel-' + item.channel} style={{ width: landscape ? 132 : undefined, marginRight: landscape ? 10 : 0, borderTopWidth: 3, borderTopColor: theme.tint, paddingHorizontal: compact ? 12 : 17, paddingVertical: compact ? 6 : 17, borderRadius: compact ? 14 : 20, backgroundColor: theme.panel, marginBottom: compact ? 6 : 10 }}>
+  const renderChannel = ({ item }: { item: Channel }) => <View testID={'channel-' + item.channel} style={{ width: landscape ? 132 : undefined, marginRight: landscape ? 10 : 0, paddingHorizontal: compact ? 12 : 17, paddingVertical: compact ? 6 : 17, borderRadius: compact ? 14 : 20, backgroundColor: theme.panel, marginBottom: compact ? 6 : 10 }}>
     <View style={{ flexDirection: landscape ? 'column' : 'row', alignItems: 'center', gap: 10 }}>
       <Text style={{ color: theme.muted, fontSize: 12, fontVariant: ['tabular-nums'], minWidth: 20 }}>{String(item.channel).padStart(2, '0')}</Text>
       <Text numberOfLines={compact ? 1 : 2} style={{ color: theme.text, fontSize: compact ? 15 : 17, fontWeight: '600', flex: landscape ? undefined : 1 }}>{item.label}</Text>
