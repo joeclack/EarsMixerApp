@@ -7,7 +7,7 @@ import { Icon, Message } from './ui';
 import NativeButton from './NativeButton';
 
 const steps = [
-  { title: 'Set your nickname', symbol: 'person.crop.circle' as const, body: 'This name identifies your connection to the mixer. No account or password is needed.' },
+  { title: 'Set your nickname', symbol: 'person.crop.circle' as const, body: 'This name identifies your connection to the mixer.' },
   { title: 'Connect to a mixer', symbol: 'wifi' as const, body: 'Join the same Wi-Fi network as the server. The app connects automatically when it finds one mixer. If there are several, choose yours. You can also enter an address or scan a QR code.' },
   { title: 'Adjust your mix', symbol: 'slider.horizontal.3' as const, body: 'Choose your AUX in the top toolbar. Drag a fader handle to change its level. Use Pan to adjust stereo position. Turn your phone sideways for vertical faders.' },
   { title: 'Keep your layout', symbol: 'star' as const, body: 'Star channels you use most and tap Edit to reorder them. Your layout, favourites and selected AUX save automatically on this phone. The app remembers your last mixer and reconnects next time. Desk levels always come from the live mixer.' },
