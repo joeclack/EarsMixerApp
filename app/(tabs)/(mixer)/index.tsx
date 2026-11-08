@@ -35,7 +35,7 @@ export default function Mixer() {
     </View>
     <View style={{ alignSelf: landscape ? 'center' : 'stretch', width: landscape ? 64 : undefined,
       borderRadius: 999, backgroundColor: theme.panel, borderWidth: 0.5, borderColor: theme.line,
-      boxShadow: [{ offsetX: 0, offsetY: 2, blurRadius: 5, spreadDistance: 0, color: theme.dark ? '#00000050' : '#00000018', inset: true }],
+      boxShadow: [{ offsetX: 0, offsetY: 0, blurRadius: 5, spreadDistance: 1, color: theme.dark ? '#00000050' : '#00000018', inset: true }],
       paddingHorizontal: landscape ? 0 : 16, paddingVertical: landscape ? 12 : 4, overflow: 'hidden' }}>
       <Fader channel={item.channel} label={item.label} color={theme.tint} vertical={landscape} length={stripHeight} />
     </View>
