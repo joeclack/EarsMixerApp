@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.6.0 — Mixer surface
+
+- Add a matte charcoal mixer background with fine static grain, soft blue-grey lighting, a faint teal wash and subtle edge shading.
+- Adapt the surface to a light silver finish in light mode and retain the transparent toolbar and existing faders.
+- Keep the decorative background fixed behind the channel list, with no animation or touch handling.
+
 ## 0.5.3 — Live desk faders
 
 - Deliver received desk positions directly to the animation thread, with a short 32 ms interpolation between updates. Keep finger dragging immediate and stop desk animation when grabbing a handle.

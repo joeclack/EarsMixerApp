@@ -2,7 +2,7 @@
 
 iOS and Android companion for [EarsMixer](https://github.com/joeclack/EarsMixer). Connect your phone to the same network as the EarsMixer server, enter its address or scan the QR code from the server's admin dashboard/tray, then control your monitor mix.
 
-## Native interface · 0.5.3
+## Native interface · 0.6.0
 
 - Native Mixer screen with a Settings gear in its toolbar. Settings opens as a page with a back button to Mixer.
 - SwiftUI glass buttons, segmented controls, settings forms and drag-to-reorder lists on iOS, with SF Symbols and automatic light/dark appearance.

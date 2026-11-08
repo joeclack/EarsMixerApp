@@ -11,12 +11,13 @@ export function Icon({ name, size = 22, color }: { name: SymbolViewProps['name']
   const theme = useTheme();
   return <SymbolView name={name} size={size} tintColor={color || theme.tint} style={{ width: size, height: size }} />;
 }
-export function Page({ title, children, scroll = true, compactHeader = true, toolbar, hideHeader = false }: React.PropsWithChildren<{ title: string; scroll?: boolean; compactHeader?: boolean; toolbar?: React.ReactNode; hideHeader?: boolean }>) {
+export function Page({ title, children, scroll = true, compactHeader = true, toolbar, hideHeader = false, background }: React.PropsWithChildren<{ title: string; scroll?: boolean; compactHeader?: boolean; toolbar?: React.ReactNode; hideHeader?: boolean; background?: React.ReactNode }>) {
   const theme = useTheme();
   const { state, mix } = useSession();
   const headerHeight = useHeaderHeight();
+  const headerTransparent = Platform.OS === 'ios' || Boolean(background);
   const options = {
-    headerShown: !hideHeader, title, headerLargeTitleEnabled: !compactHeader, headerTransparent: Platform.OS === 'ios',
+    headerShown: !hideHeader, title, headerLargeTitleEnabled: !compactHeader, headerTransparent,
     headerTitleStyle: { color: theme.text },
     ...(toolbar && { title: '', headerTitle: '', headerBackVisible: false,
       ...(Platform.OS === 'web' && { headerLeft: () => <Text accessibilityRole="header" style={{ color: theme.text, fontSize: 20, fontWeight: '700' }}>{title}</Text> }) }),
@@ -27,6 +28,7 @@ export function Page({ title, children, scroll = true, compactHeader = true, too
     </Pressable> }),
   };
   return <View style={{ flex: 1, backgroundColor: theme.bg }}>
+    {background}
     <Stack.Screen options={options} />
     {!hideHeader && toolbar}
     {!hideHeader && !toolbar && Platform.OS === 'ios' && <Stack.Toolbar placement="right">
@@ -34,7 +36,7 @@ export function Page({ title, children, scroll = true, compactHeader = true, too
         accessibilityLabel="Connect to mixer" onPress={() => router.push('/connect')} />
     </Stack.Toolbar>}
     {scroll ? <ScrollView contentInsetAdjustmentBehavior="automatic" keyboardShouldPersistTaps="handled" automaticallyAdjustKeyboardInsets
-      contentContainerStyle={styles.page}>{children}</ScrollView> : <View style={{ flex: 1, paddingTop: !hideHeader && Platform.OS === 'ios' ? headerHeight : 0 }}>{children}</View>}
+      contentContainerStyle={styles.page}>{children}</ScrollView> : <View style={{ flex: 1, paddingTop: !hideHeader && headerTransparent ? headerHeight : 0 }}>{children}</View>}
     {!state.hydrated && <View style={styles.loading}><ActivityIndicator /></View>}
   </View>;
 }
