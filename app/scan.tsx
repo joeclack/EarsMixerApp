@@ -23,7 +23,8 @@ export default function Scan() {
         const address = normalizeMixerAddress(data);
         scanning.current = true; setBusy(true); setError('');
         await session.connect(address);
-        router.dismissAll();
+        if (session.state.setupComplete) router.dismissAll();
+        else router.dismissTo('/setup');
       } catch (error) { setError(error instanceof Error ? error.message : 'Could not read this code.'); }
       finally { setBusy(false); scanning.current = false; }
     }} /><View pointerEvents="none" style={{ position: 'absolute', top: '25%', left: '18%', width: '64%', aspectRatio: 1, borderRadius: 30, borderWidth: 2, borderColor: '#FFFFFF' }} /></View>

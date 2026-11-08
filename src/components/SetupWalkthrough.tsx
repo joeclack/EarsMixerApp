@@ -1,5 +1,9 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Keyboard, KeyboardAvoidingView, Platform, ScrollView, Text, TextInput, View } from 'react-native';
+import { router } from 'expo-router';
+import { requireOptionalNativeModule } from 'expo';
+import { findStartupMixers, reachableMixer } from '../discovery/startup';
+import type { DiscoveryNative } from '../discovery/browser';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useSession } from '../mixer/context';
 import { useTheme } from '../theme';
@@ -14,9 +18,27 @@ const steps = [
   { title: 'Keep your layout', symbol: 'star' as const, body: '', bullets: ['Star favourites. Tap Edit to reorder.', 'Layouts save automatically on this phone.', 'Reconnects to your last mixer.'] },
 ];
 export default function SetupWalkthrough() {
-  const { session, state } = useSession(), theme = useTheme();
+  const { session, state, mix } = useSession(), theme = useTheme();
   const [step, setStep] = useState(0), [finishing, setFinishing] = useState(false);
   const current = steps[step];
+  const [checking, setChecking] = useState(false);
+  useEffect(() => {
+    if (step !== 1 || session.state.server || session.state.connecting) return;
+    const controller = new AbortController();
+    setChecking(true);
+    void (async () => {
+      if (session.state.lastServer) {
+        try { await session.connect(session.state.lastServer); if (session.state.server) return; } catch {}
+      }
+      const native = Platform.OS === 'web' ? null : requireOptionalNativeModule<DiscoveryNative>('EarsMixerDiscovery');
+      const mixers = await findStartupMixers(native, session.state.recent.map(item => item.url), controller.signal);
+      if (mixers.length === 1 && !controller.signal.aborted && !session.state.server && !session.state.connecting) {
+        const url = await reachableMixer(mixers[0], controller.signal);
+        if (!controller.signal.aborted && !session.state.server && !session.state.connecting) await session.connect(url);
+      }
+    })().catch(() => {}).finally(() => { if (!controller.signal.aborted) setChecking(false); });
+    return () => { controller.abort(); setChecking(false); };
+  }, [step, session]);
   return <SafeAreaView style={{ flex: 1, backgroundColor: theme.bg }}>
     <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
     <ScrollView style={{ flex: 1 }} keyboardShouldPersistTaps="handled" automaticallyAdjustKeyboardInsets contentContainerStyle={{ flexGrow: 1, padding: 28, gap: 24, justifyContent: 'flex-start', maxWidth: 600, width: '100%', alignSelf: 'center' }}>
@@ -34,14 +56,20 @@ export default function SetupWalkthrough() {
         onChangeText={nickname => session.setSettings({ nickname })} maxLength={80} autoComplete="nickname" returnKeyType="next"
         onSubmitEditing={() => { Keyboard.dismiss(); setStep(1); }}
         style={{ fontSize: 20, color: theme.text, paddingVertical: 16, borderBottomWidth: 1, borderBottomColor: theme.line }} />}
+      {step === 1 && <View style={{ gap: 16, alignItems: 'flex-start' }}>
+        <Text accessibilityLiveRegion="polite" style={{ color: mix.status === 'connected' ? theme.green : theme.muted, fontSize: 17 }}>
+          {mix.status === 'connected' && state.server ? 'Connected to ' + new URL(state.server).host : state.connecting || mix.status === 'connecting' || mix.status === 'loading' ? 'Connecting…' : checking ? 'Looking for a mixer…' : 'Not connected'}
+        </Text>
+        <NativeButton title={state.server ? 'Change mixer' : 'Connect'} bordered onPress={() => router.push('/connect')} />
+      </View>}
       <Message error>{state.message}</Message>
     </ScrollView>
       <View style={{ minHeight: 100, paddingHorizontal: 28, paddingVertical: 20, maxWidth: 600, width: '100%', alignSelf: 'center', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 16 }}>
         {step > 0 ? <NativeButton title="Back" disabled={finishing} onPress={() => setStep(value => value - 1)} /> : <View />}
-        <NativeButton title={step === steps.length - 1 ? 'Find mixer' : 'Next'} prominent disabled={finishing} onPress={() => {
+        <NativeButton title={step === steps.length - 1 ? 'Finish' : 'Next'} prominent disabled={finishing} onPress={() => {
           Keyboard.dismiss();
           if (step < steps.length - 1) setStep(value => value + 1);
-          else { setFinishing(true); void session.completeSetup().finally(() => setFinishing(false)); }
+          else { setFinishing(true); void session.completeSetup().then(() => router.back()).finally(() => setFinishing(false)); }
         }} />
       </View>
     </KeyboardAvoidingView>
