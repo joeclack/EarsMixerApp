@@ -20,7 +20,7 @@ export default function Mixer() {
   const topPadding = landscape ? insets.top + 12 : 20;
   const bottomPadding = insets.bottom + (landscape ? 12 : 20);
   const cardHeight = Math.max(120, bankHeight - topPadding - bottomPadding);
-  const stripHeight = Math.max(40, cardHeight - 80);
+  const stripHeight = Math.max(40, cardHeight - 96);
   useFocusEffect(useCallback(() => {
     // Cached positions remain visible while fresh desk values are requested.
     if (session.mixer.state.status === 'connected') session.mixer.refresh();
@@ -28,13 +28,17 @@ export default function Mixer() {
   }, [session]));
   const hidden = hiddenChannels(mix.config, state.preferences, mix.aux);
   const channels = useMemo(() => orderedChannels(mix.config, state.preferences).filter(channel => !hidden.includes(channel.channel)), [mix.config, mix.aux, state.preferences]);
-  const renderChannel = useCallback(({ item }: { item: Channel }) => <View testID={'channel-' + item.channel} style={{ height: landscape ? cardHeight : undefined, overflow: 'hidden', width: landscape ? 76 : undefined, marginRight: landscape ? 6 : 0, paddingHorizontal: landscape ? 6 : 12, paddingVertical: landscape ? 8 : 6, borderRadius: 14, backgroundColor: theme.panel, marginBottom: 6 }}>
-    <View style={{ height: landscape ? 64 : undefined, flexShrink: 0, flexDirection: landscape ? 'column' : 'row', alignItems: 'center', gap: landscape ? 6 : 10 }}>
+  const renderChannel = useCallback(({ item }: { item: Channel }) => <View testID={'channel-' + item.channel} style={{ height: landscape ? cardHeight : undefined, width: landscape ? 76 : undefined, marginRight: landscape ? 6 : 0, marginBottom: landscape ? 0 : 16 }}>
+    <View style={{ height: landscape ? 64 : undefined, marginBottom: 8, paddingHorizontal: landscape ? 0 : 8, flexShrink: 0, flexDirection: landscape ? 'column' : 'row', alignItems: 'center', gap: landscape ? 6 : 10 }}>
       <Text numberOfLines={landscape ? 2 : 1} style={{ color: theme.text, fontSize: landscape ? 12 : 15, minHeight: landscape ? 34 : undefined, textAlign: landscape ? 'center' : 'left', fontWeight: '600', flex: landscape ? undefined : 1 }}>{item.label}</Text>
       <FaderValue channel={item.channel} />
     </View>
-    <Fader channel={item.channel} label={item.label} color={theme.tint} vertical={landscape} length={stripHeight} />
-  </View>, [landscape, cardHeight, stripHeight, theme.panel, theme.text, theme.muted, theme.tint]);
+    <View style={{ alignSelf: landscape ? 'center' : 'stretch', width: landscape ? 64 : undefined,
+      borderRadius: 999, backgroundColor: theme.panel, borderWidth: 0.5, borderColor: theme.line,
+      paddingHorizontal: landscape ? 0 : 16, paddingVertical: 12, overflow: 'hidden' }}>
+      <Fader channel={item.channel} label={item.label} color={theme.tint} vertical={landscape} length={stripHeight} />
+    </View>
+  </View>, [landscape, cardHeight, stripHeight, theme.panel, theme.line, theme.text, theme.muted, theme.tint]);
   return <Page title={state.demo ? 'Demo' : 'Mixer'} scroll={false} compactHeader hideHeader={landscape} toolbar={<MixerToolbar />}>
     {!state.server ? <EmptyMixer /> : <FlatList key={landscape ? 'strips' : 'rows'} horizontal={landscape} onLayout={event => setBankHeight(event.nativeEvent.layout.height)} extraData={state.preferences}
       data={channels} renderItem={renderChannel} keyExtractor={item => String(item.channel)} contentInsetAdjustmentBehavior="never"
