@@ -19,7 +19,7 @@ export default function Mixer() {
   const landscape = width > height;
   const [bankHeight, setBankHeight] = useState(height);
   const topPadding = landscape ? insets.top + 12 : 20;
-  const bottomPadding = landscape ? insets.bottom + 12 : 130;
+  const bottomPadding = insets.bottom + (landscape ? 12 : 20);
   const cardHeight = Math.max(120, bankHeight - topPadding - bottomPadding);
   const stripHeight = Math.max(40, cardHeight - 80);
   useFocusEffect(useCallback(() => {

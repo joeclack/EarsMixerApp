@@ -60,6 +60,7 @@ function Navigation() {
     <StatusBar style={theme.dark ? 'light' : 'dark'} />
     <Stack screenOptions={{ contentStyle: { backgroundColor: theme.bg }, headerTintColor: theme.tint }}>
       <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+      <Stack.Screen name="settings" options={{ title: 'Settings', headerBackTitle: 'Mixer' }} />
       <Stack.Screen name="setup" options={{ headerShown: false, presentation: 'fullScreenModal', gestureEnabled: false }} />
       <Stack.Screen name="connect" options={sheetOptions} />
       <Stack.Screen name="templates" options={sheetOptions} />

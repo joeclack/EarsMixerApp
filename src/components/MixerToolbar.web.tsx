@@ -28,5 +28,8 @@ export default function MixerToolbar() {
       </div>
     </details>}
 
+    <Pressable accessibilityRole="button" accessibilityLabel="Settings" onPress={() => router.push('/settings')} style={styles.headerButton}>
+      <Icon name={{ web: 'settings' }} />
+    </Pressable>
   </View> }} />;
 }

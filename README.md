@@ -4,7 +4,7 @@ iOS and Android companion for [EarsMixer](https://github.com/joeclack/EarsMixer)
 
 ## Native interface · 0.2.0
 
-- Native Mixer and Settings tabs, with a nickname card in Settings. iOS uses the system tab bar with Liquid Glass on iOS 26 and newer; Android uses its native tab bar.
+- Native Mixer screen with a Settings gear in its toolbar. Settings opens as a page with a back button to Mixer.
 - SwiftUI glass buttons, segmented controls, settings forms and drag-to-reorder lists on iOS, with SF Symbols and automatic light/dark appearance.
 - Connection opens as a native bottom sheet with two height stops over the current page. Enter an address, use a recent mixer or scan its connection QR code.
 - The mixer renders native controls and talks directly to the existing server's WebSocket protocol. The app no longer embeds a WebView.

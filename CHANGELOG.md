@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Replace bottom tabs with a toolbar Settings button and a Settings page that navigates back to Mixer.
+
 - Replace mobile favourites with per-AUX hidden channels, controlled in Edit channels and saved locally. Preserve visibility from legacy layouts and server templates.
 
 - Add a four-step first-launch walkthrough for nickname, connection, faders and device-local layouts. Repeat setup after resetting device data.

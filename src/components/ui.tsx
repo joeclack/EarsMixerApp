@@ -60,12 +60,12 @@ export function Message({ children, error = false }: React.PropsWithChildren<{ e
   return <Text accessibilityLiveRegion="polite" style={{ fontSize: 14, lineHeight: 21, color: error ? theme.danger : theme.muted, marginVertical: 10 }}>{children}</Text>;
 }
 export function EmptyMixer() {
-  return <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24, paddingBottom: 120 }}>
+  return <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24, paddingBottom: 32 }}>
     <NativeButton title="Connect" onPress={() => router.push('/connect')} prominent />
   </View>;
 }
 export const styles = StyleSheet.create({
-  page: { padding: 20, paddingTop: 16, paddingBottom: 120 },
+  page: { padding: 20, paddingTop: 16, paddingBottom: 32 },
   headerButton: { minWidth: 44, minHeight: 44, justifyContent: 'center', alignItems: 'center' },
   row: { minHeight: 56, paddingHorizontal: 16, paddingVertical: 13, flexDirection: 'row', gap: 12, alignItems: 'center' },
   sectionLabel: { fontSize: 13, textTransform: 'uppercase', marginLeft: 16, marginBottom: 8, letterSpacing: 0.4 },
