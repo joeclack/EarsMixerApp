@@ -32,6 +32,10 @@ export default function MixerToolbar() {
     </Stack.Toolbar.Menu>}
     {state.server && <Stack.Toolbar.Menu icon={Platform.OS === 'ios' ? 'ellipsis' : undefined} accessibilityLabel="Mixer options">
       <Stack.Toolbar.Label>Options</Stack.Toolbar.Label>
+      <Stack.Toolbar.Menu inline title="Fader mode">
+        <Stack.Toolbar.MenuAction isOn={mix.parameter === 'level'} onPress={() => session.mixer.setParameter('level')}>Level</Stack.Toolbar.MenuAction>
+        <Stack.Toolbar.MenuAction isOn={mix.parameter === 'pan'} onPress={() => session.mixer.setParameter('pan')}>Pan</Stack.Toolbar.MenuAction>
+      </Stack.Toolbar.Menu>
       <Stack.Toolbar.MenuAction onPress={() => router.push('/templates')}>Templates</Stack.Toolbar.MenuAction>
       <Stack.Toolbar.MenuAction onPress={() => router.push('/layout')}>Edit channels</Stack.Toolbar.MenuAction>
     </Stack.Toolbar.Menu>}

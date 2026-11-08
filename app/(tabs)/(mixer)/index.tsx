@@ -7,7 +7,6 @@ import { useTheme } from '../../../src/theme';
 import { orderedChannels, hiddenChannels, levelText, type Channel } from '../../../src/mixer/model';
 import { Page, EmptyMixer, Icon } from '../../../src/components/ui';
 import NativeButton from '../../../src/components/NativeButton';
-import Segmented from '../../../src/components/Segmented';
 import Fader from '../../../src/components/Fader';
 import MixerToolbar from '../../../src/components/MixerToolbar';
 
@@ -41,7 +40,6 @@ export default function Mixer() {
       data={channels} renderItem={renderChannel} keyExtractor={item => String(item.channel)} contentInsetAdjustmentBehavior="never"
       contentContainerStyle={{ paddingTop: topPadding, paddingLeft: landscape ? insets.left + 20 : 20, paddingRight: landscape ? insets.right + 20 : 20, paddingBottom: bottomPadding }} keyboardShouldPersistTaps="handled"
       ListHeaderComponent={!landscape ? <View style={{ gap: 17, marginBottom: 20 }}>
-        <Segmented label="Fader mode" value={mix.parameter} options={[{ value: 'level', label: 'Level' }, { value: 'pan', label: 'Pan' }]} onChange={value => session.mixer.setParameter(value === 'pan' ? 'pan' : 'level')} />
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
           <Text style={{ color: theme.muted, fontSize: 13, marginLeft: 'auto' }}>{channels.length} channels</Text>
           <Pressable accessibilityRole="button" accessibilityLabel="Edit channel order" onPress={() => router.push('/layout')} style={{ minHeight: 40, justifyContent: 'center', paddingLeft: 4 }}>

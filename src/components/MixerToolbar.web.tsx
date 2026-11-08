@@ -23,6 +23,8 @@ export default function MixerToolbar() {
       <summary aria-label="Mixer options" style={{ cursor: 'pointer', padding: 12, fontSize: 22, listStyle: 'none' }}>…</summary>
       <div style={{ position: 'absolute', right: 0, top: '100%', minWidth: 220, padding: 12, background: theme.panel, border: '1px solid ' + theme.line, borderRadius: 12, zIndex: 100, display: 'grid', gap: 12 }}>
 
+        {(['level', 'pan'] as const).map(mode => <button key={mode} aria-pressed={mix.parameter === mode}
+          onClick={event => { session.mixer.setParameter(mode); event.currentTarget.closest('details')?.removeAttribute('open'); }}>{mode === 'level' ? 'Level' : 'Pan'}</button>)}
         <button onClick={event => { event.currentTarget.closest('details')?.removeAttribute('open'); router.push('/templates'); }}>Templates</button>
         <button onClick={event => { event.currentTarget.closest('details')?.removeAttribute('open'); router.push('/layout'); }}>Edit channels</button>
       </div>
