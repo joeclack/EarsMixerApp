@@ -3,6 +3,7 @@ import { View, Text } from 'react-native';
 import Animated, { useSharedValue, useAnimatedStyle } from 'react-native-reanimated';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import { scheduleOnRN } from 'react-native-worklets';
+import FaderHandleSurface from './FaderHandleSurface';
 import { DragHaptics } from '../mixer/dragHaptics';
 import * as Haptics from 'expo-haptics';
 import { useFaderSession } from '../mixer/context';
@@ -114,13 +115,7 @@ export default function Fader({ channel, label, color, vertical = false, length 
         backgroundColor: '#18232B', borderWidth: 1, borderColor: dragging ? '#728893' : '#435560',
         shadowColor: '#000000', shadowOffset: { width: 0, height: 3 }, shadowOpacity: 0.4, shadowRadius: 3, elevation: 4,
         alignItems: 'center', justifyContent: 'center' }, thumbStyle]}>
-      <View pointerEvents="none" style={{ position: 'absolute', left: 2, right: 2, top: 1, height: 2, borderRadius: 1, backgroundColor: '#A5B8BF', opacity: 0.35 }} />
-      <View pointerEvents="none" style={{ flexDirection: vertical ? 'column' : 'row', gap: 4 }}>
-        {Array.from({ length: vertical ? 5 : 4 }, (_, index) => <View key={index} style={{ width: vertical ? 18 : 2, height: vertical ? 2 : 22, backgroundColor: '#03090C', borderRadius: 1 }}>
-          <View style={{ flex: 1, backgroundColor: color, opacity: ready ? (index === 2 || dragging ? 1 : 0.65) : 0.25,
-            borderRadius: 1, shadowColor: color, shadowOpacity: 0.9, shadowRadius: dragging ? 5 : 3, shadowOffset: { width: 0, height: 0 } }} />
-        </View>)}
-      </View>
+      <FaderHandleSurface vertical={vertical} color={color} ready={ready} dragging={dragging} />
     </Animated.View></GestureDetector>
   </View>;
 }
