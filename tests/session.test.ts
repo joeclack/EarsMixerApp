@@ -27,6 +27,12 @@ test('nickname, appearance and per-server layouts automatically persist without 
   assert.equal(second.state.settings.nickname, 'Drummer');
   assert.equal(second.state.settings.appearance, 'dark');
   assert.equal(second.state.preferences.selectedAux, 2);
+  await second.restartSetup();
+  assert.equal(second.state.setupComplete, false);
+  assert.equal(second.state.settings.nickname, 'Drummer');
+  assert.deepEqual(second.state.preferences.channelOrder, [3, 1, 2]);
+  await second.completeSetup();
+  assert.equal(second.state.setupComplete, true);
   assert(requests.every(url => url.endsWith('/api/connection')));
   second.disconnect();
 });

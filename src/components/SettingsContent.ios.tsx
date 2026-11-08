@@ -38,6 +38,9 @@ export default function SettingsContent() {
       <Section>
         <Button label="Reset device data" role="destructive" onPress={reset.confirm} modifiers={[disabled(reset.resetting)]} />
       </Section>
+      <Section title="Developer tools">
+        <Button label="Test first-time setup" onPress={() => void session.restartSetup()} />
+      </Section>
       <Section title="About">
         <LabeledContent label="EarsMixer"><Text>{Constants.expoConfig?.version || '—'}</Text></LabeledContent>
       </Section>

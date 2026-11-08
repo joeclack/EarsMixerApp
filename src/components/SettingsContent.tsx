@@ -27,6 +27,7 @@ export default function SettingsContent() {
       </Pressable>}
     </View></Section>
     <Section><Row title="Reset device data" destructive onPress={reset.confirm} /></Section>
+    <Section title="Developer tools"><Row title="Test first-time setup" onPress={() => void session.restartSetup()} /></Section>
     <Section title="About"><Row title="EarsMixer"><Text style={{ color: theme.muted }}>{Constants.expoConfig?.version}</Text></Row></Section>
   </>;
 }

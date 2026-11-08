@@ -13,13 +13,22 @@ export default function Fader({ channel, label, color, vertical = false, length 
   const [dragging, setDragging] = useState(false);
   const latest = useRef({ width, mix, vertical });
   latest.current = { width, mix, vertical };
-  const drag = useRef<{ token: DragToken; start: number; moved: boolean; tick: number; tickAt: number } | null>(null);
+  const drag = useRef<{ token: DragToken; start: number; moved: boolean; finger: number; pulsed: number; motionAt: number } | null>(null);
+  const feedback = useRef<ReturnType<typeof setInterval> | null>(null);
+  const stopFeedback = () => { if (feedback.current) clearInterval(feedback.current); feedback.current = null; };
+  const pulse = () => {
+    const current = drag.current;
+    if (!current || current.token.epoch !== session.mixer.state.epoch || Date.now() - current.motionAt > 100 || Math.abs(current.finger - current.pulsed) < 0.5) return;
+    current.pulsed = current.finger;
+    void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Soft).catch(() => {});
+  };
   const cancel = () => {
+    stopFeedback();
     if (drag.current) session.mixer.cancelDrag(drag.current.token);
     drag.current = null; setDragging(false);
   };
   useEffect(() => { cancel(); }, [mix.epoch, width, vertical]);
-  useEffect(() => () => { if (drag.current) session.mixer.cancelDrag(drag.current.token); }, [session]);
+  useEffect(() => () => { stopFeedback(); if (drag.current) session.mixer.cancelDrag(drag.current.token); }, [session]);
   const responder = useMemo(() => PanResponder.create({
     onStartShouldSetPanResponder: () => latest.current.mix.status === 'connected' && latest.current.mix.values[channel] !== undefined,
     onMoveShouldSetPanResponder: (_event, gesture) => (latest.current.vertical ? Math.abs(gesture.dy) > Math.abs(gesture.dx) : Math.abs(gesture.dx) > Math.abs(gesture.dy)),
@@ -27,7 +36,7 @@ export default function Fader({ channel, label, color, vertical = false, length 
       const token = session.mixer.beginDrag(channel);
       if (!token) return;
       const start = session.mixer.position(channel);
-      drag.current = { token, start, moved: false, tick: Math.round(start * Math.max(0, latest.current.width - 32) / 6), tickAt: 0 };
+      drag.current = { token, start, moved: false, finger: 0, pulsed: 0, motionAt: 0 };
     },
     onPanResponderMove: (_event, gesture) => {
       const current = drag.current;
@@ -41,13 +50,13 @@ export default function Fader({ channel, label, color, vertical = false, length 
       }
       const travel = latest.current.width - 32;
       const position = clamp(current.start + movement / travel);
-      // Simulated detents every six points of finger travel. Never derive
-      // feedback from incoming OSC values or replay missed ticks later.
-      const tick = Math.round(position * travel / 6);
-      const now = Date.now();
-      if (Number.isFinite(tick) && tick !== current.tick && now - current.tickAt >= 40) {
-        current.tick = tick; current.tickAt = now;
-        void Haptics.selectionAsync().catch(() => {});
+      // Keep a movement-driven feedback loop alive for the gesture. Network
+      // values and release/settling never trigger feedback.
+      const finger = position * travel;
+      if (finger !== current.finger) { current.finger = finger; current.motionAt = Date.now(); }
+      if (!feedback.current) {
+        pulse();
+        feedback.current = setInterval(pulse, 45);
       }
       session.mixer.drag(current.token, position);
     },

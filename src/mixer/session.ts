@@ -59,6 +59,11 @@ export class MixerSession {
     this.queue = this.queue.then(() => this.storage.setItem(key, json)).catch(() => this.patch({ message: 'Could not save to this device.' }));
     return this.queue;
   }
+  async restartSetup() {
+    this.mixer.cancelWrites();
+    await this.persist('earsmixer.native.setup.v1', false);
+    this.patch({ setupComplete: false });
+  }
   async completeSetup() {
     await this.persist('earsmixer.native.setup.v1', true);
     this.patch({ setupComplete: true });
