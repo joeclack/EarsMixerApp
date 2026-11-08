@@ -1,4 +1,4 @@
-import { Platform, Pressable } from 'react-native';
+import { Platform, Pressable, Text } from 'react-native';
 import { router, Stack } from 'expo-router';
 import { useSession } from '../mixer/context';
 import { useTheme } from '../theme';
@@ -11,7 +11,13 @@ export default function MixerToolbar() {
   const label = selected?.label || 'Choose mix';
   const status = mix.status === 'connected' ? 'Connected' : mix.status === 'disconnected' ? 'Disconnected' : 'Connecting';
   const color = mix.status === 'connected' ? theme.green : mix.status === 'disconnected' ? theme.tint : theme.orange;
-  return <Stack.Toolbar placement="right" tintColor={theme.tint}>
+  return <>
+    <Stack.Toolbar placement="left">
+      <Stack.Toolbar.View hidesSharedBackground>
+        <Text accessibilityRole="header" style={{ color: theme.text, fontSize: 20, fontWeight: '700' }}>Mixer</Text>
+      </Stack.Toolbar.View>
+    </Stack.Toolbar>
+    <Stack.Toolbar placement="right" tintColor={theme.tint}>
     <Stack.Toolbar.Menu title="Choose your mix" accessibilityLabel={'Choose your mix, ' + label}
       disabled={mix.status !== 'connected' || !mix.config?.aux.length}>
       <Stack.Toolbar.Label>{label.length > 18 ? label.slice(0, 17) + '…' : label}</Stack.Toolbar.Label>
@@ -24,5 +30,6 @@ export default function MixerToolbar() {
         onPress={() => router.push('/connect')} style={styles.headerButton}>
         <Icon name={{ android: mix.status === 'connected' ? 'wifi' : 'wifi_off' }} color={color} />
       </Pressable></Stack.Toolbar.View>}
-  </Stack.Toolbar>;
+  </Stack.Toolbar>
+  </>;
 }

@@ -30,8 +30,8 @@ export function Page({ title, children, scroll = true, compactHeader = true, too
   const options = {
     title, headerLargeTitleEnabled: !compactHeader, headerTransparent: Platform.OS === 'ios' && !compactHeader,
     headerTitleStyle: { color: theme.text },
-    ...(toolbar && { headerTitle: () => null, headerBackVisible: false,
-      headerLeft: () => <Text accessibilityRole="header" style={{ color: theme.text, fontSize: 20, fontWeight: '700' }}>{title}</Text> }),
+    ...(toolbar && { title: '', headerTitle: '', headerBackVisible: false,
+      ...(Platform.OS === 'web' && { headerLeft: () => <Text accessibilityRole="header" style={{ color: theme.text, fontSize: 20, fontWeight: '700' }}>{title}</Text> }) }),
     headerShadowVisible: false, headerLargeTitleShadowVisible: false, headerTintColor: theme.tint,
     headerStyle: { backgroundColor: Platform.OS === 'ios' && !compactHeader ? 'transparent' : theme.bg },
     ...(!toolbar && { headerRight: () => <Pressable accessibilityRole="button" accessibilityLabel="Connect to mixer" onPress={() => router.push('/connect')} style={styles.headerButton}>
