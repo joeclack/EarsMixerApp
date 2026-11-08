@@ -23,14 +23,14 @@ export function Page({ title, children, scroll = true, compactHeader = true, too
     headerShadowVisible: false, headerLargeTitleShadowVisible: false, headerTintColor: theme.tint,
     headerStyle: { backgroundColor: 'transparent' },
     ...(!toolbar && Platform.OS !== 'ios' && { headerRight: () => <Pressable accessibilityRole="button" accessibilityLabel="Connect to mixer" onPress={() => router.push('/connect')} style={styles.headerButton}>
-      <Icon name={{ ios: mix.status === 'connected' ? 'wifi' : 'wifi.slash', android: 'wifi', web: 'wifi' }} color={mix.status === 'connected' ? theme.green : theme.tint} />
+      <Icon name={{ ios: mix.status === 'connected' ? 'wifi' : 'wifi.slash', android: 'wifi', web: 'wifi' }} color={mix.status === 'connected' ? theme.green : theme.danger} />
     </Pressable> }),
   };
   return <View style={{ flex: 1, backgroundColor: theme.bg }}>
     <Stack.Screen options={options} />
     {toolbar}
     {!toolbar && Platform.OS === 'ios' && <Stack.Toolbar placement="right">
-      <Stack.Toolbar.Button icon={mix.status === 'connected' ? 'wifi' : 'wifi.slash'} tintColor={mix.status === 'connected' ? theme.green : theme.tint}
+      <Stack.Toolbar.Button icon={mix.status === 'connected' ? 'wifi' : 'wifi.slash'} tintColor={mix.status === 'connected' ? theme.green : theme.danger}
         accessibilityLabel="Connect to mixer" onPress={() => router.push('/connect')} />
     </Stack.Toolbar>}
     {scroll ? <ScrollView contentInsetAdjustmentBehavior="automatic" keyboardShouldPersistTaps="handled" automaticallyAdjustKeyboardInsets
@@ -59,17 +59,9 @@ export function Message({ children, error = false }: React.PropsWithChildren<{ e
   if (!children) return null;
   return <Text accessibilityLiveRegion="polite" style={{ fontSize: 14, lineHeight: 21, color: error ? theme.danger : theme.muted, marginVertical: 10 }}>{children}</Text>;
 }
-export function EmptyMixer({ profile = false }: { profile?: boolean }) {
-  const theme = useTheme();
-  return <View style={{ paddingHorizontal: 18, paddingTop: 70, alignItems: 'center', gap: 18 }}>
-    <View style={{ width: 96, height: 96, borderRadius: 30, alignItems: 'center', justifyContent: 'center' }}>
-      <Icon name={{ ios: profile ? 'person.crop.circle' : 'headphones', android: profile ? 'account_circle' : 'headphones', web: profile ? 'account_circle' : 'headphones' }} size={46} />
-    </View>
-    <Text style={{ color: theme.text, fontSize: 27, fontWeight: '700', textAlign: 'center' }}>{profile ? 'Not connected' : 'No mixer connected'}</Text>
-    <Text style={{ color: theme.muted, fontSize: 17, lineHeight: 25, textAlign: 'center', maxWidth: 300 }}>
-      {profile ? 'Connect to a mixer to sign in.' : 'Select a server to view channels.'}
-    </Text>
-    <NativeButton title="Connect to mixer" symbol="wifi" onPress={() => router.push('/connect')} prominent />
+export function EmptyMixer() {
+  return <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24, paddingBottom: 120 }}>
+    <NativeButton title="Connect" onPress={() => router.push('/connect')} prominent />
   </View>;
 }
 export const styles = StyleSheet.create({
