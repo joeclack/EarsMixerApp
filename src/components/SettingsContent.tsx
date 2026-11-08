@@ -20,11 +20,13 @@ export default function SettingsContent() {
       <Row title="Edit channels" onPress={() => router.push('/layout')} />
     </Section>
     <Section title="Connection"><View style={{ flexDirection: 'row', alignItems: 'center' }}>
-      <View style={{ flex: 1 }}><Row title={state.server ? new URL(state.server).host : 'Connect'} onPress={() => router.push('/connect')} /></View>
+      <View style={{ flex: 1 }}><Row title={state.demo ? 'Demo mode' : state.server ? new URL(state.server).host : 'Connect'} onPress={() => router.push('/connect')} /></View>
       {state.server && <Pressable accessibilityRole="button" onPress={() => session.disconnect()} style={{ minHeight: 44, paddingHorizontal: 16, justifyContent: 'center' }}>
         <Text style={{ color: theme.danger, fontSize: 15 }}>Disconnect</Text>
       </Pressable>}
-    </View></Section>
+    </View>
+      {!state.demo && <Row title="Try demo" onPress={() => void session.startDemo()} />}
+    </Section>
     <Section><Row title="Reset device data" destructive onPress={reset.confirm} /></Section>
     <Section title="Developer tools"><Row title="Test first-time setup" onPress={() => void session.restartSetup()} /></Section>
     <Section title="About"><Row title="EarsMixer"><Text style={{ color: theme.muted }}>{Constants.expoConfig?.version}</Text></Row></Section>

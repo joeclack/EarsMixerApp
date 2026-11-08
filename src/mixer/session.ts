@@ -1,16 +1,17 @@
 import { normalizeMixerAddress, probeMixer, readSavedMixers, rememberMixer, type SavedMixer } from '../connection';
 import { requestTemplates, templatePreferences, type MixerTemplate } from './templates';
+import { DEMO_URL, createDemoSocket, demoTemplates, demoTemplate } from './demo';
 import { MixerClient, type Socket } from './client';
 import { emptyPreferences, readPreferences, type Preferences, parseConfig, hiddenChannels } from './model';
 type Storage = { getItem(key: string): Promise<string | null>; setItem(key: string, value: string): Promise<void>; getAllKeys?(): Promise<readonly string[]>; multiRemove?(keys: string[]): Promise<void> };
 export type Settings = { appearance: 'system' | 'light' | 'dark'; nickname: string };
 export type SessionState = {
-  hydrated: boolean; setupComplete: boolean; lastServer: string | null; server: string | null; recent: SavedMixer[]; settings: Settings;
+  hydrated: boolean; demo: boolean; setupComplete: boolean; lastServer: string | null; server: string | null; recent: SavedMixer[]; settings: Settings;
   preferences: Preferences; connecting: boolean; message: string;
 };
 export class MixerSession {
   readonly mixer: MixerClient;
-  state: SessionState = { hydrated: false, setupComplete: false, lastServer: null, server: null, recent: [], settings: { appearance: 'system', nickname: '' },
+  state: SessionState = { hydrated: false, demo: false, setupComplete: false, lastServer: null, server: null, recent: [], settings: { appearance: 'system', nickname: '' },
     preferences: emptyPreferences(), connecting: false, message: '' };
   private listeners = new Set<() => void>();
   private attempt = 0;
@@ -23,7 +24,7 @@ export class MixerSession {
     if (this.state.server) void this.persist("earsmixer.native.values:" + this.state.server, this.mixer.getValueCache());
   }
   constructor(private storage: Storage, factory: (url: string) => Socket, private fetcher: typeof fetch = fetch) {
-    this.mixer = new MixerClient(factory);
+    this.mixer = new MixerClient(url => url === DEMO_URL.replace(/^http/, 'ws') ? createDemoSocket() : factory(url));
     let previous: unknown = null;
     let revision = 0;
     this.mixer.subscribe(() => {
@@ -62,12 +63,13 @@ export class MixerSession {
   }
   async templates(signal?: AbortSignal): Promise<MixerTemplate[]> {
     if (!this.state.server) throw new Error('Connect to a mixer first.');
+    if (this.state.demo) return demoTemplates;
     return requestTemplates(this.state.server, undefined, this.fetcher, signal);
   }
   async applyTemplate(id: string) {
     if (!this.state.server || !/^[a-f0-9]{64}$/.test(id)) throw new Error('Choose a template from the connected mixer.');
     const server = this.state.server, attempt = this.attempt;
-    const data = await requestTemplates(server, id, this.fetcher);
+    const data = this.state.demo ? { config: demoTemplate(id) } : await requestTemplates(server, id, this.fetcher);
     if (server !== this.state.server || attempt !== this.attempt) throw new Error('The mixer connection changed. Choose a template again.');
     const preferences = templatePreferences(data.config, this.state.preferences.compact);
     this.mixer.cancelWrites();
@@ -92,11 +94,12 @@ export class MixerSession {
     this.patch({ recent: this.state.recent.filter(item => item.url !== url) });
     await this.persist('earsmixer.connections.v1', this.state.recent);
   }
+  startDemo() { return this.connect(DEMO_URL); }
   async connect(input: string) {
     const attempt = ++this.attempt;
     this.patch({ connecting: true, message: '' });
     try {
-      const server = await probeMixer(input, { fetchImpl: this.fetcher });
+      const server = input === DEMO_URL ? DEMO_URL : await probeMixer(input, { fetchImpl: this.fetcher });
       this.persistValues();
       await this.queue;
       let raw: any = {};
@@ -109,14 +112,14 @@ export class MixerSession {
       // Keep existing local guest layouts when upgrading. Never import account credentials.
       const preferences = readPreferences(raw.preferences) || readPreferences(raw.guest) || emptyPreferences();
       this.mixer.disconnect();
-      this.patch({ server, preferences, recent: rememberMixer(this.state.recent, server) });
+      this.patch({ server, demo: server === DEMO_URL, preferences, recent: server === DEMO_URL ? this.state.recent : rememberMixer(this.state.recent, server) });
       this.mixer.restoreValues(values);
       if (channels) this.mixer.restoreConfig(channels, preferences.selectedAux);
       this.mixer.selectAux(preferences.selectedAux);
       this.mixer.identify(this.state.settings.nickname.trim() || null);
       if (!this.suspended) this.mixer.connect(server, true);
       await this.persist('earsmixer.connections.v1', this.state.recent);
-      if (attempt === this.attempt) {
+      if (attempt === this.attempt && server !== DEMO_URL) {
         this.patch({ lastServer: server });
         await this.persist('earsmixer.native.last-server.v1', server);
       }
@@ -126,9 +129,9 @@ export class MixerSession {
   }
   disconnect(forgetConnection = true) {
     this.persistValues();
-    if (forgetConnection) { this.patch({ lastServer: null }); void this.persist('earsmixer.native.last-server.v1', null); }
+    if (forgetConnection && !this.state.demo) { this.patch({ lastServer: null }); void this.persist('earsmixer.native.last-server.v1', null); }
     ++this.attempt; this.mixer.disconnect();
-    this.patch({ server: null, connecting: false, preferences: emptyPreferences(), message: '' });
+    this.patch({ server: null, demo: false, connecting: false, preferences: emptyPreferences(), message: '' });
   }
   setChannelHidden(channel: number, hidden: boolean) {
     const aux = this.mixer.state.aux;

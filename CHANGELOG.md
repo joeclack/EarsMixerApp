@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Add an offline demo with 20 channels, four AUX mixes, local fader/pan control and example templates. Start it from Connect or Settings without contacting a mixer server.
+
 - Replace bottom tabs with a toolbar Settings button and a Settings page that navigates back to Mixer.
 
 - Replace mobile favourites with per-AUX hidden channels, controlled in Edit channels and saved locally. Preserve visibility from legacy layouts and server templates.

@@ -10,15 +10,15 @@ export default function MixerToolbar() {
   const selected = mix.config?.aux.find(aux => aux.channel === mix.aux);
   const label = selected?.label || 'Choose mix';
   const status = mix.status === 'connected' ? 'Connected' : mix.status === 'disconnected' ? 'Disconnected' : 'Connecting';
-  const color = mix.status === 'connected' ? theme.green : mix.status === 'disconnected' ? theme.danger : theme.orange;
+  const color = state.demo ? theme.orange : mix.status === 'connected' ? theme.green : mix.status === 'disconnected' ? theme.danger : theme.orange;
   return <>
     <Stack.Toolbar placement="left">
       <Stack.Toolbar.View hidesSharedBackground>
-        <Text accessibilityRole="header" style={{ color: theme.text, fontSize: 20, fontWeight: '700' }}>Mixer</Text>
+        <Text accessibilityRole="header" style={{ color: theme.text, fontSize: 20, fontWeight: '700' }}>{state.demo ? 'Demo' : 'Mixer'}</Text>
       </Stack.Toolbar.View>
     </Stack.Toolbar>
     <Stack.Toolbar placement="right" tintColor={theme.tint}>
-    {Platform.OS === 'ios' ? <Stack.Toolbar.Button icon={mix.status === 'connected' ? 'wifi' : 'wifi.slash'}
+    {Platform.OS === 'ios' ? <Stack.Toolbar.Button icon={state.demo ? 'play.circle' : mix.status === 'connected' ? 'wifi' : 'wifi.slash'}
       accessibilityLabel={status + '. Connect to mixer'} tintColor={color} onPress={() => router.push('/connect')} /> :
       <Stack.Toolbar.View><Pressable accessibilityRole="button" accessibilityLabel={status + '. Connect to mixer'}
         onPress={() => router.push('/connect')} style={styles.headerButton}>

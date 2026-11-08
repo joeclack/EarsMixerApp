@@ -14,7 +14,7 @@ export default function Connect() {
   const { session, state } = useSession();
   const theme = useTheme();
   const insets = useSafeAreaInsets();
-  const [address, setAddress] = useState(state.server || state.recent[0]?.url || '');
+  const [address, setAddress] = useState((!state.demo && state.server) || state.recent[0]?.url || '');
   const [error, setError] = useState('');
   const [mode, setMode] = useState('auto');
   const nearby = useNearbyMixers();
@@ -90,5 +90,9 @@ export default function Connect() {
       </>}
       </>}
       <Message error>{error}</Message>
+      <NativeButton title="Try demo" bordered disabled={busy} onPress={() => {
+        setError('');
+        void session.startDemo().then(() => router.back()).catch(() => setError('Could not start demo. Try again.'));
+      }} />
   </ScrollView>;
 }

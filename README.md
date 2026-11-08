@@ -85,3 +85,7 @@ Landscape uses vertical channel strips; portrait uses horizontal faders. Recent 
 The last successful server connection is saved locally. Choosing Disconnect clears that automatic reconnect target.
 
 Use Edit channels to hide unwanted channels or show them again. Visibility is saved per AUX on the device. Legacy favourites-based templates preserve their visible channel selection when loaded.
+
+## Demo mode
+
+Choose **Try demo** in the connection sheet or Settings to explore 20 channels, four AUX mixes and sample templates without a server. Faders, pan, hiding and reordering work locally. The demo has separate layout storage, makes no HTTP or WebSocket connection, and does not replace the last saved real mixer. Use Disconnect to exit, or connect to a real server from the connection sheet.

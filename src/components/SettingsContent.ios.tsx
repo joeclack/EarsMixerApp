@@ -28,11 +28,12 @@ export default function SettingsContent() {
       <Section title="Connection">
         <HStack spacing={12}>
           <Button systemImage="wifi" onPress={() => router.push('/connect')} modifiers={[buttonStyle('borderless')]}>
-            <Text modifiers={[lineLimit(1)]}>{state.server ? new URL(state.server).host : 'Connect'}</Text>
+            <Text modifiers={[lineLimit(1)]}>{state.demo ? 'Demo mode' : state.server ? new URL(state.server).host : 'Connect'}</Text>
           </Button>
           <Spacer />
           {state.server && <Button label="Disconnect" role="destructive" modifiers={[buttonStyle('borderless')]} onPress={() => session.disconnect()} />}
         </HStack>
+        {!state.demo && <Button label="Try demo" onPress={() => void session.startDemo()} />}
       </Section>
       <Section>
         <Button label="Reset device data" role="destructive" onPress={reset.confirm} modifiers={[disabled(reset.resetting)]} />
