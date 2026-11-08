@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.5.2 — QR navigation
+
+- Return directly to Mixer or setup after scanning a connection QR code instead of issuing an unconditional POP_TO_TOP.
+- Ignore repeated scan events after a successful connection and late navigation after closing the scanner. Allow retry after a failed scan.
+- Provide a Mixer fallback when closing a scanner opened without navigation history.
+
 ## 0.5.1 — Recent states
 
 - Simplify Recent states in Settings to show only the AUX name and last-edited timestamp.
