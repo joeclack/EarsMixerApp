@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Keep the connection while iOS is inactive and retain channel/AUX metadata when backgrounded or reconnecting.
+- Cache channel names per server on the device; re-read live levels before enabling faders after reconnecting.
+
 - Combine identity and settings into one screen with a device-local nickname; remove account and password flows from the mobile app.
 - Automatically persist layouts and settings on the device.
 - Add vertical faders in landscape and a teal console palette.

@@ -28,8 +28,8 @@ export class MixerClient {
   constructor(private socketFactory: (url: string) => Socket) {}
   subscribe = (fn: () => void) => { this.listeners.add(fn); return () => { this.listeners.delete(fn); }; };
   private emit(update: Partial<MixState>) { this.state = { ...this.state, ...update }; this.listeners.forEach(fn => fn()); }
-  connect(url: string) { this.disconnect(); this.url = url; this.attempt = 0; this.open(); }
-  disconnect() {
+  connect(url: string, preserveConfig = false) { this.disconnect(preserveConfig); this.url = url; this.attempt = 0; this.open(); }
+  disconnect(preserveConfig = false) {
     this.url = null;
     this.queryGeneration++;
     if (this.retry) clearTimeout(this.retry);
@@ -39,14 +39,18 @@ export class MixerClient {
     if (this.query) clearTimeout(this.query);
     const socket = this.socket; this.socket = null;
     if (socket) { socket.onclose = socket.onerror = socket.onmessage = socket.onopen = null; socket.close(); }
-    this.emit({ status: 'disconnected', config: null, values: {}, aux: null });
+    this.emit({ status: 'disconnected', config: preserveConfig ? this.state.config : null, values: {}, aux: preserveConfig ? this.state.aux : null });
+  }
+  restoreConfig(config: MixerConfig, aux: number | null) {
+    this.cancelWrites();
+    this.emit({ config, aux: config.aux.find(a => a.channel === aux)?.channel ?? config.aux[0]?.channel ?? null, values: {} });
   }
   private open() {
     if (!this.url) return;
     this.emit({ status: 'connecting', values: {} });
     const socket = this.socketFactory(this.url.replace(/^http/, 'ws'));
     this.socket = socket;
-    this.timeout = setTimeout(() => { if (this.socket === socket && !this.state.config) this.lost(socket); }, 10000);
+    this.timeout = setTimeout(() => { if (this.socket === socket && this.state.status !== 'connected') this.lost(socket); }, 10000);
     socket.onopen = () => { if (this.socket === socket) { this.emit({ status: 'loading' }); this.send({ username: this.username }); } };
     socket.onmessage = event => { if (this.socket === socket) this.receive(event.data); };
     socket.onclose = socket.onerror = () => this.lost(socket);
@@ -58,7 +62,7 @@ export class MixerClient {
     if (this.timeout) clearTimeout(this.timeout);
     if (this.query) clearTimeout(this.query);
     this.cancelWrites();
-    this.emit({ status: this.url ? 'connecting' : 'disconnected', config: null, values: {} });
+    this.emit({ status: this.url ? 'connecting' : 'disconnected', values: {} });
     if (this.url) this.retry = setTimeout(() => this.open(), Math.min(10000, 1000 * 2 ** this.attempt++));
   }
   private send(message: object) {

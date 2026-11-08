@@ -1,6 +1,6 @@
 import { probeMixer, readSavedMixers, rememberMixer, type SavedMixer } from '../connection';
 import { MixerClient, type Socket } from './client';
-import { emptyPreferences, readPreferences, type Preferences } from './model';
+import { emptyPreferences, readPreferences, type Preferences, parseConfig } from './model';
 type Storage = { getItem(key: string): Promise<string | null>; setItem(key: string, value: string): Promise<void> };
 export type Settings = { appearance: 'system' | 'light' | 'dark'; nickname: string };
 export type SessionState = {
@@ -15,7 +15,17 @@ export class MixerSession {
   private attempt = 0;
   private suspended = false;
   private queue = Promise.resolve();
-  constructor(private storage: Storage, factory: (url: string) => Socket, private fetcher: typeof fetch = fetch) { this.mixer = new MixerClient(factory); }
+  constructor(private storage: Storage, factory: (url: string) => Socket, private fetcher: typeof fetch = fetch) {
+    this.mixer = new MixerClient(factory);
+    let previous: unknown = null;
+    this.mixer.subscribe(() => {
+      const { config, status } = this.mixer.state;
+      if (status === 'connected' && config && config !== previous && this.state.server) {
+        previous = config;
+        void this.persist('earsmixer.native.channels:' + this.state.server, config);
+      }
+    });
+  }
   subscribe = (fn: () => void) => { this.listeners.add(fn); return () => { this.listeners.delete(fn); }; };
   snapshot = () => this.state;
   private patch(update: Partial<SessionState>) { this.state = { ...this.state, ...update }; this.listeners.forEach(fn => fn()); }
@@ -53,14 +63,17 @@ export class MixerSession {
       await this.queue;
       let raw: any = {};
       try { raw = JSON.parse(await this.storage.getItem('earsmixer.native.profile:' + server) || '{}') || {}; } catch {}
+      let channels = null;
+      try { channels = parseConfig(JSON.parse(await this.storage.getItem('earsmixer.native.channels:' + server) || 'null')); } catch {}
       if (attempt !== this.attempt) return;
       // Keep existing local guest layouts when upgrading. Never import account credentials.
       const preferences = readPreferences(raw.preferences) || readPreferences(raw.guest) || emptyPreferences();
       this.mixer.disconnect();
       this.patch({ server, preferences, recent: rememberMixer(this.state.recent, server) });
+      if (channels) this.mixer.restoreConfig(channels, preferences.selectedAux);
       this.mixer.selectAux(preferences.selectedAux);
       this.mixer.identify(this.state.settings.nickname.trim() || null);
-      if (!this.suspended) this.mixer.connect(server);
+      if (!this.suspended) this.mixer.connect(server, true);
       await this.persist('earsmixer.connections.v1', this.state.recent);
     } catch (error) {
       if (attempt === this.attempt) { this.patch({ message: error instanceof Error ? error.message : 'Could not connect.' }); throw error; }
@@ -77,13 +90,18 @@ export class MixerSession {
     if ('selectedAux' in update) this.mixer.selectAux(preferences.selectedAux);
     if (this.state.server) void this.persist('earsmixer.native.profile:' + this.state.server, { preferences });
   }
-  setActive(active: boolean) {
-    this.suspended = !active;
-    if (!active) this.mixer.disconnect();
-    else if (this.state.server) {
-      this.mixer.selectAux(this.state.preferences.selectedAux);
-      this.mixer.identify(this.state.settings.nickname.trim() || null);
-      this.mixer.connect(this.state.server);
+  setLifecycle(state: string) {
+    if (state === 'inactive') { this.mixer.cancelWrites(); return; }
+    if (state === 'background') {
+      this.suspended = true;
+      this.mixer.disconnect(true);
+    } else if (state === 'active') {
+      if (this.suspended && this.state.server) {
+        this.mixer.identify(this.state.settings.nickname.trim() || null);
+        this.mixer.connect(this.state.server, true);
+      } else if (this.mixer.state.status === 'connected') this.mixer.refresh();
+      this.suspended = false;
     }
   }
+  setActive(active: boolean) { this.setLifecycle(active ? 'active' : 'background'); }
 }

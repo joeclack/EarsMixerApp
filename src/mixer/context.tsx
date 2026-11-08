@@ -9,7 +9,7 @@ export function MixerProvider({ children }: React.PropsWithChildren) {
   const [session] = useState(() => new MixerSession(AsyncStorage, url => new WebSocket(url) as unknown as Socket));
   useEffect(() => {
     void session.hydrate();
-    const subscription = AppState.addEventListener('change', state => session.setActive(state === 'active'));
+    const subscription = AppState.addEventListener('change', state => session.setLifecycle(state));
     return () => { subscription.remove(); session.disconnect(); };
   }, [session]);
   return <Context.Provider value={session}>{children}</Context.Provider>;
