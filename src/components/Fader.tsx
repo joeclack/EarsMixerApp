@@ -13,7 +13,7 @@ export default function Fader({ channel, label, color, vertical = false, length 
   const [dragging, setDragging] = useState(false);
   const latest = useRef({ width, mix, vertical });
   latest.current = { width, mix, vertical };
-  const drag = useRef<{ token: DragToken; start: number; moved: boolean } | null>(null);
+  const drag = useRef<{ token: DragToken; start: number; moved: boolean; tick: number; tickAt: number } | null>(null);
   const cancel = () => {
     if (drag.current) session.mixer.cancelDrag(drag.current.token);
     drag.current = null; setDragging(false);
@@ -26,7 +26,7 @@ export default function Fader({ channel, label, color, vertical = false, length 
     onPanResponderGrant: () => {
       const token = session.mixer.beginDrag(channel);
       if (!token) return;
-      drag.current = { token, start: session.mixer.position(channel), moved: false };
+      drag.current = { token, start: session.mixer.position(channel), moved: false, tick: NaN, tickAt: 0 };
     },
     onPanResponderMove: (_event, gesture) => {
       const current = drag.current;
@@ -37,9 +37,15 @@ export default function Fader({ channel, label, color, vertical = false, length 
       if (!current.moved && Math.abs(movement) < 3) return;
       if (!current.moved) {
         current.moved = true; setDragging(true);
-        void Haptics.selectionAsync().catch(() => {});
       }
       session.mixer.drag(current.token, clamp(current.start + movement / (latest.current.width - 32)));
+      const value = session.mixer.state.values[channel];
+      const tick = Math.round(value * (current.token.parameter === 'pan' ? 100 : 2));
+      const now = Date.now();
+      if (Number.isFinite(tick) && tick !== current.tick && now - current.tickAt >= 70) {
+        current.tick = tick; current.tickAt = now;
+        void Haptics.selectionAsync().catch(() => {});
+      }
     },
     onPanResponderRelease: () => {
       if (drag.current?.moved) session.mixer.flush(drag.current.token);
@@ -62,6 +68,7 @@ export default function Fader({ channel, label, color, vertical = false, length 
       accessibilityActions={[{ name: 'increment' }, { name: 'decrement' }]} onAccessibilityAction={event => {
         const token = session.mixer.beginDrag(channel); if (!token) return;
         session.mixer.drag(token, clamp(position + (event.nativeEvent.actionName === 'increment' ? 0.02 : -0.02))); session.mixer.flush(token);
+        void Haptics.selectionAsync().catch(() => {});
       }}
       style={{ position: 'absolute', left: vertical ? 9 : Math.max(0, width - 32) * position, top: vertical ? Math.max(0, width - 32) * (1 - position) : undefined, width: 32, height: 32, borderRadius: vertical ? 6 : 16,
         backgroundColor: '#FFFFFF', borderWidth: 0.5, borderColor: '#00000012',

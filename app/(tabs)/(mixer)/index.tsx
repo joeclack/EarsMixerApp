@@ -31,7 +31,6 @@ export default function Mixer() {
   };
   const renderChannel = ({ item }: { item: Channel }) => <View testID={'channel-' + item.channel} style={{ width: landscape ? 132 : undefined, marginRight: landscape ? 10 : 0, paddingHorizontal: compact ? 12 : 17, paddingVertical: compact ? 6 : 17, borderRadius: compact ? 14 : 20, backgroundColor: theme.panel, marginBottom: compact ? 6 : 10 }}>
     <View style={{ flexDirection: landscape ? 'column' : 'row', alignItems: 'center', gap: 10 }}>
-      <Text style={{ color: theme.muted, fontSize: 12, fontVariant: ['tabular-nums'], minWidth: 20 }}>{String(item.channel).padStart(2, '0')}</Text>
       <Text numberOfLines={compact ? 1 : 2} style={{ color: theme.text, fontSize: compact ? 15 : 17, fontWeight: '600', flex: landscape ? undefined : 1 }}>{item.label}</Text>
       {compact && <Text style={{ color: theme.muted, fontSize: 12, fontVariant: ['tabular-nums'] }}>{levelText(session.mixer.displayValue(item.channel), mix.parameter)}</Text>}
       <Pressable accessibilityRole="button" accessibilityLabel={(favourites.channels.includes(item.channel) ? 'Remove favourite ' : 'Favourite ') + item.label}
@@ -50,7 +49,7 @@ export default function Mixer() {
   return <Page title="Mixer" scroll={false} compactHeader toolbar={<MixerToolbar />}>
     {landscape && state.server && <View style={{ paddingHorizontal: 20, paddingVertical: 6, flexDirection: 'row', alignItems: 'center', gap: 16 }}><View style={{ flex: 1 }}><Segmented label="Fader mode" value={mix.parameter} options={[{ value: 'level', label: 'Level' }, { value: 'pan', label: 'Pan' }]} onChange={value => session.mixer.setParameter(value === 'pan' ? 'pan' : 'level')} /></View><Text style={{ color: theme.muted, fontSize: 12, width: 110, textAlign: 'right' }}>{channels.length} channels</Text></View>}
     {!state.server ? <EmptyMixer /> : <FlatList key={landscape ? 'strips' : 'rows'} horizontal={landscape} extraData={state.preferences}
-      data={channels} renderItem={renderChannel} keyExtractor={item => String(item.channel)} contentInsetAdjustmentBehavior="automatic"
+      data={channels} renderItem={renderChannel} keyExtractor={item => String(item.channel)} contentInsetAdjustmentBehavior="never"
       contentContainerStyle={{ padding: 20, paddingBottom: landscape ? 85 : 130 }} keyboardShouldPersistTaps="handled"
       ListHeaderComponent={!landscape ? <View style={{ gap: 17, marginBottom: 20 }}>
         <Segmented label="Fader mode" value={mix.parameter} options={[{ value: 'level', label: 'Level' }, { value: 'pan', label: 'Pan' }]} onChange={value => session.mixer.setParameter(value === 'pan' ? 'pan' : 'level')} />

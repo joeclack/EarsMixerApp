@@ -3,6 +3,7 @@ import { AccessibilityInfo, ActivityIndicator, Platform, Pressable, ScrollView, 
 import { GlassView, isLiquidGlassAvailable } from 'expo-glass-effect';
 import { SymbolView, type SymbolViewProps } from 'expo-symbols';
 import { router, Stack } from 'expo-router';
+import { useHeaderHeight } from 'expo-router/react-navigation';
 import { useTheme } from '../theme';
 import { useSession } from '../mixer/context';
 import NativeButton from './NativeButton';
@@ -27,8 +28,9 @@ export function Glass({ children, style, ...props }: ViewProps) {
 export function Page({ title, children, scroll = true, compactHeader = true, toolbar }: React.PropsWithChildren<{ title: string; scroll?: boolean; compactHeader?: boolean; toolbar?: React.ReactNode }>) {
   const theme = useTheme();
   const { state, mix } = useSession();
+  const headerHeight = useHeaderHeight();
   const options = {
-    title, headerLargeTitleEnabled: !compactHeader, headerTransparent: Platform.OS === 'ios' && !compactHeader,
+    title, headerLargeTitleEnabled: !compactHeader, headerTransparent: Platform.OS === 'ios',
     headerTitleStyle: { color: theme.text },
     ...(toolbar && { title: '', headerTitle: '', headerBackVisible: false,
       ...(Platform.OS === 'web' && { headerLeft: () => <Text accessibilityRole="header" style={{ color: theme.text, fontSize: 20, fontWeight: '700' }}>{title}</Text> }) }),
@@ -42,7 +44,7 @@ export function Page({ title, children, scroll = true, compactHeader = true, too
     <Stack.Screen options={options} />
     {toolbar}
     {scroll ? <ScrollView contentInsetAdjustmentBehavior="automatic" keyboardShouldPersistTaps="handled" automaticallyAdjustKeyboardInsets
-      contentContainerStyle={styles.page}>{children}</ScrollView> : children}
+      contentContainerStyle={styles.page}>{children}</ScrollView> : <View style={{ flex: 1, paddingTop: Platform.OS === 'ios' ? headerHeight : 0 }}>{children}</View>}
     {!state.hydrated && <View style={styles.loading}><ActivityIndicator /></View>}
   </View>;
 }
