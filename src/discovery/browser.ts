@@ -29,7 +29,7 @@ export function parseNearbyMixer(value: unknown): NearbyMixer | null {
 // Browse only: finding a service never logs in, selects an AUX or writes levels.
 export function browseMixers(native: DiscoveryNative | null, update: (state: DiscoveryState) => void) {
   if (!native) {
-    update({ status: 'unavailable', mixers: [], message: 'Automatic discovery is available in the installed app. Use an address or QR code here.' });
+    update({ status: 'unavailable', mixers: [], message: '' });
     return () => {};
   }
   let active = true;

@@ -1,75 +1,54 @@
-import React, { useCallback, useMemo } from 'react';
-import { FlatList, Pressable, Text, View } from 'react-native';
+import React, { useCallback, useMemo, useState } from 'react';
+import { FlatList, Text, View, useWindowDimensions } from 'react-native';
 import { router, useFocusEffect } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useSession } from '../../../src/mixer/context';
 import { useTheme } from '../../../src/theme';
-import { orderedChannels, levelText, type Channel } from '../../../src/mixer/model';
-import { Page, EmptyMixer, Icon, Message } from '../../../src/components/ui';
+import { orderedChannels, hiddenChannels, type Channel } from '../../../src/mixer/model';
+import { Page, EmptyMixer, Icon } from '../../../src/components/ui';
 import NativeButton from '../../../src/components/NativeButton';
-import Segmented from '../../../src/components/Segmented';
-import Fader from '../../../src/components/Fader';
+import Fader, { FaderValue } from '../../../src/components/Fader';
 import MixerToolbar from '../../../src/components/MixerToolbar';
 
 export default function Mixer() {
   const { session, state, mix } = useSession();
   const theme = useTheme();
-  useFocusEffect(useCallback(() => () => session.mixer.cancelWrites(), [session]));
-  const favourites = state.preferences.favouritesByAux[String(mix.aux)] || { channels: [], enabled: false };
-  const channels = useMemo(() => orderedChannels(mix.config, state.preferences).filter(c => !favourites.enabled || favourites.channels.includes(c.channel)), [mix.config, state.preferences, favourites.enabled]);
-  const loaded = Object.keys(mix.values).length, count = mix.config?.channels.length || 0;
-  const compact = state.preferences.compact;
-  const toggleFavourite = (channel: number) => {
-    if (!mix.aux) return;
-    const next = favourites.channels.includes(channel) ? favourites.channels.filter(id => id !== channel) : [...favourites.channels, channel];
-    session.preferences({ favouritesByAux: { ...state.preferences.favouritesByAux, [mix.aux]: { ...favourites, channels: next } } });
-  };
-  const renderChannel = ({ item }: { item: Channel }) => <View testID={'channel-' + item.channel} style={{ paddingHorizontal: compact ? 12 : 17, paddingVertical: compact ? 6 : 17, borderRadius: compact ? 14 : 20, backgroundColor: theme.panel, marginBottom: compact ? 6 : 10 }}>
-    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-      <Text style={{ color: theme.muted, fontSize: 12, fontVariant: ['tabular-nums'], minWidth: 20 }}>{String(item.channel).padStart(2, '0')}</Text>
-      <Text numberOfLines={compact ? 1 : 2} style={{ color: theme.text, fontSize: compact ? 15 : 17, fontWeight: '600', flex: 1 }}>{item.label}</Text>
-      {compact && <Text style={{ color: theme.muted, fontSize: 12, fontVariant: ['tabular-nums'] }}>{levelText(mix.values[item.channel], mix.parameter)}</Text>}
-      <Pressable accessibilityRole="button" accessibilityLabel={(favourites.channels.includes(item.channel) ? 'Remove favourite ' : 'Favourite ') + item.label}
-        accessibilityState={{ selected: favourites.channels.includes(item.channel) }} onPress={() => toggleFavourite(item.channel)} hitSlop={10}
-        style={{ minWidth: 36, minHeight: 36, alignItems: 'center', justifyContent: 'center' }}>
-        <Icon name={{ ios: favourites.channels.includes(item.channel) ? 'star.fill' : 'star', android: favourites.channels.includes(item.channel) ? 'star' : 'star_outline', web: 'star' }}
-          size={20} color={favourites.channels.includes(item.channel) ? theme.orange : theme.muted} />
-      </Pressable>
+  const { width, height } = useWindowDimensions();
+  const insets = useSafeAreaInsets();
+  const landscape = width > height;
+  const [bankHeight, setBankHeight] = useState(height);
+  const topPadding = landscape ? insets.top + 12 : 20;
+  const bottomPadding = insets.bottom + (landscape ? 12 : 20);
+  const cardHeight = Math.max(120, bankHeight - topPadding - bottomPadding);
+  const stripHeight = Math.max(40, cardHeight - 96);
+  useFocusEffect(useCallback(() => {
+    // Cached positions remain visible while fresh desk values are requested.
+    if (session.mixer.state.status === 'connected') session.mixer.refresh();
+    return () => session.mixer.cancelWrites();
+  }, [session]));
+  const hidden = hiddenChannels(mix.config, state.preferences, mix.aux);
+  const channels = useMemo(() => orderedChannels(mix.config, state.preferences).filter(channel => !hidden.includes(channel.channel)), [mix.config, mix.aux, state.preferences]);
+  const renderChannel = useCallback(({ item }: { item: Channel }) => <View testID={'channel-' + item.channel} style={{ height: landscape ? cardHeight : undefined, width: landscape ? 76 : undefined, marginRight: landscape ? 6 : 0, marginBottom: landscape ? 0 : 12 }}>
+    <View style={{ height: landscape ? 64 : undefined, marginBottom: 8, paddingHorizontal: landscape ? 0 : 8, flexShrink: 0, flexDirection: landscape ? 'column' : 'row', alignItems: 'center', gap: landscape ? 6 : 10 }}>
+      <Text numberOfLines={landscape ? 2 : 1} style={{ color: theme.text, fontSize: landscape ? 12 : 15, minHeight: landscape ? 34 : undefined, textAlign: landscape ? 'center' : 'left', fontWeight: '600', flex: landscape ? undefined : 1 }}>{item.label}</Text>
+      <FaderValue channel={item.channel} />
     </View>
-    <Fader channel={item.channel} label={item.label} color={theme.tint} />
-    {!compact && <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-      {!compact && <Text style={{ color: theme.muted, fontSize: 11 }}>{mix.parameter === 'level' ? 'SEND LEVEL' : 'SEND PAN'}</Text>}
-      <Text style={{ color: theme.text, marginLeft: 'auto', fontSize: 13, fontWeight: '500', fontVariant: ['tabular-nums'] }}>{levelText(mix.values[item.channel], mix.parameter)}</Text>
-    </View>}
-  </View>;
-  return <Page title="Mixer" scroll={false} compactHeader toolbar={<MixerToolbar />}>
-    {!state.server ? <EmptyMixer /> : <FlatList extraData={state.preferences}
-      data={channels} renderItem={renderChannel} keyExtractor={item => String(item.channel)} contentInsetAdjustmentBehavior="automatic"
-      contentContainerStyle={{ padding: 20, paddingBottom: 130 }} keyboardShouldPersistTaps="handled"
-      ListHeaderComponent={<View style={{ gap: 17, marginBottom: 20 }}>
-        {mix.status === 'connected' && loaded < count && <Text style={{ color: theme.muted, fontSize: 13 }}>Loading channels · {loaded}/{count}</Text>}
-        {!!mix.config?.snapshot && <Text numberOfLines={1} style={{ color: theme.muted, fontSize: 12 }}>{mix.config.snapshot}</Text>}
-        <Segmented label="Fader mode" value={mix.parameter} options={[{ value: 'level', label: 'Level' }, { value: 'pan', label: 'Pan' }]} onChange={value => session.mixer.setParameter(value === 'pan' ? 'pan' : 'level')} />
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-          <Pressable accessibilityRole="button" accessibilityState={{ selected: favourites.enabled }} onPress={() => {
-            if (mix.aux) session.preferences({ favouritesByAux: { ...state.preferences.favouritesByAux, [mix.aux]: { ...favourites, enabled: !favourites.enabled } } });
-          }} style={{ flexDirection: 'row', alignItems: 'center', gap: 7, minHeight: 40 }}>
-            <Icon name={{ ios: favourites.enabled ? 'star.fill' : 'star', android: 'star', web: 'star' }} size={17} color={favourites.enabled ? theme.orange : theme.muted} />
-            <Text style={{ color: favourites.enabled ? theme.orange : theme.muted, fontSize: 14, fontWeight: '600' }}>Favourites</Text>
-          </Pressable>
-          <Text style={{ color: theme.muted, fontSize: 13, marginLeft: 'auto' }}>{channels.length} channels</Text>
-          <Pressable accessibilityRole="button" accessibilityLabel="Edit channel order" onPress={() => router.push('/layout')} style={{ minHeight: 40, justifyContent: 'center', paddingLeft: 4 }}>
-            <Text style={{ color: theme.tint, fontSize: 15 }}>Edit</Text>
-          </Pressable>
-        </View>
-        {state.sync === 'conflict' && <Message>Your layout changed on another device. Resolve it in Profile.</Message>}
-      </View>}
+    <View style={{ alignSelf: landscape ? 'center' : 'stretch', width: landscape ? 64 : undefined,
+      borderRadius: 999, backgroundColor: theme.panel, borderWidth: 0.5, borderColor: theme.line,
+      boxShadow: [{ offsetX: 0, offsetY: 0, blurRadius: 5, spreadDistance: 1, color: theme.dark ? '#00000050' : '#00000018', inset: true }],
+      paddingHorizontal: landscape ? 0 : 16, paddingVertical: landscape ? 12 : 4, overflow: 'hidden' }}>
+      <Fader channel={item.channel} label={item.label} color={theme.tint} vertical={landscape} length={stripHeight} />
+    </View>
+  </View>, [landscape, cardHeight, stripHeight, theme.dark, theme.panel, theme.line, theme.text, theme.muted, theme.tint]);
+  return <Page title={state.demo ? 'Demo' : 'Mixer'} scroll={false} compactHeader hideHeader={landscape} toolbar={<MixerToolbar />}>
+    {!state.server ? <EmptyMixer /> : <FlatList key={landscape ? 'strips' : 'rows'} horizontal={landscape} onLayout={event => setBankHeight(event.nativeEvent.layout.height)} extraData={state.preferences}
+      data={channels} renderItem={renderChannel} keyExtractor={item => String(item.channel)} contentInsetAdjustmentBehavior="never"
+      contentContainerStyle={{ paddingTop: topPadding, paddingLeft: landscape ? insets.left + 20 : 20, paddingRight: landscape ? insets.right + 20 : 20, paddingBottom: bottomPadding }} keyboardShouldPersistTaps="handled"
       ListEmptyComponent={<View style={{ alignItems: 'center', paddingVertical: 40, gap: 12 }}>
-        <Icon name={{ ios: favourites.enabled ? 'star' : 'waveform', android: 'tune', web: 'tune' }} size={34} color={theme.muted} />
-        <Text style={{ color: theme.text, fontSize: 19, fontWeight: '600' }}>{favourites.enabled ? 'No favourites' : 'No channels'}</Text>
-        <Text style={{ color: theme.muted, textAlign: 'center', lineHeight: 22 }}>{favourites.enabled ? 'Star a channel to add it here.' : 'Check the server’s desk connection.'}</Text>
-        {favourites.enabled && <NativeButton title="Show all channels" onPress={() => {
-          if (mix.aux) session.preferences({ favouritesByAux: { ...state.preferences.favouritesByAux, [mix.aux]: { ...favourites, enabled: false } } });
-        }} />}
+        <Icon name={{ ios: 'eye.slash', android: 'visibility_off', web: 'visibility_off' }} size={34} color={theme.muted} />
+        <Text style={{ color: theme.text, fontSize: 19, fontWeight: '600' }}>{hidden.length ? 'All channels hidden' : 'No channels'}</Text>
+        <Text style={{ color: theme.muted, textAlign: 'center', lineHeight: 22 }}>{hidden.length ? 'Use Edit to show channels.' : 'Check the server’s desk connection.'}</Text>
+        {hidden.length > 0 && <NativeButton title="Edit channels" onPress={() => router.push('/layout')} />}
       </View>} />}
   </Page>;
 }

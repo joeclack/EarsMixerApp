@@ -1,82 +1,107 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { setTimeout as delay } from 'node:timers/promises';
-import { MixerSession, AccountError } from '../src/mixer/session';
-import { emptyPreferences, type Account } from '../src/mixer/model';
+import { MixerSession } from '../src/mixer/session';
 import type { Socket } from '../src/mixer/client';
 
-function setup(t: any) {
-  const storage = new Map<string, string>();
-  let signedIn = false;
-  let profile: Account = { user: { id: 'alice-id', username: 'alice', displayName: 'Alice' }, preferences: null, revision: 0 };
-  const writes: any[] = [], audio: any[] = [];
-  const fetcher = (async (url: string, options: RequestInit = {}) => {
-    const pathname = new URL(url).pathname;
-    const body = options.body ? JSON.parse(String(options.body)) : {};
-    if (pathname === '/api/connection') return Response.json({ url: 'http://mixer.local/', qr: 'data:image/png;base64,AAA' });
-    if (pathname.endsWith('/login') || pathname.endsWith('/register')) { signedIn = true; return Response.json(profile); }
-    if (pathname.endsWith('/logout')) { signedIn = false; return Response.json({ ok: true }); }
-    if (pathname.endsWith('/preferences')) {
-      writes.push(body);
-      if (!signedIn || body.userId !== profile.user?.id) return Response.json({ error: 'Sign in again' }, { status: 401 });
-      if (body.revision !== profile.revision) return Response.json({ ...profile, error: 'Conflict' }, { status: 409 });
-      profile = { ...profile, preferences: body.preferences, revision: profile.revision + 1 };
-    }
-    return Response.json(signedIn ? profile : { user: null, preferences: null, revision: 0 });
-  }) as typeof fetch;
-  const session = new MixerSession({
-    getItem: async key => storage.get(key) || null, setItem: async (key, value) => { storage.set(key, value); },
-  }, () => ({ readyState: 1, send: raw => audio.push(JSON.parse(raw)), close() {}, onopen: null, onclose: null, onmessage: null, onerror: null } as Socket), fetcher);
-  t.after(() => session.disconnect());
-  return { session, storage, writes, audio, remote: (changes: Partial<Account>) => { profile = { ...profile, ...changes }; }, expire: () => { signedIn = false; } };
-}
-test('registration imports the guest layout; account saves cannot contain audio values', async t => {
-  const { session, writes, audio } = setup(t);
-  await session.hydrate(); await session.connect('mixer.local');
-  session.preferences({ selectedAux: 2, compact: true, channelOrder: [2, 1] });
-  await session.authenticate('alice', 'password123', true);
-  assert.equal(session.state.sync, 'saved'); assert.equal(writes[0].userId, 'alice-id');
-  assert.equal(writes[0].preferences.selectedAux, 2);
-  assert.equal('levels' in writes[0].preferences, false);
-  assert.equal(audio.filter(m => m.address && !m.address.endsWith('/?')).length, 0);
+test('nickname, appearance and per-server layouts automatically persist without account requests', async () => {
+  const data = new Map<string, string>();
+  const requests: string[] = [];
+  const make = () => new MixerSession({ getItem: async key => data.get(key) || null, setItem: async (key, value) => { data.set(key, value); } },
+    () => ({ readyState: 1, send() {}, close() {}, onopen: null, onclose: null, onmessage: null, onerror: null }) as Socket,
+    (async (url: string) => { requests.push(url); return Response.json({ url, qr: 'data:image/png;base64,AAA' }); }) as typeof fetch);
+  const first = make(); await first.hydrate();
+  assert.equal(first.state.setupComplete, false);
+  await first.completeSetup();
+  first.setSettings({ nickname: 'Drummer', appearance: 'dark' });
+  await first.connect('one.local');
+  first.preferences({ channelOrder: [3, 1, 2], selectedAux: 2, compact: true });
+  await first.connect('two.local');
+  assert.equal(first.state.preferences.compact, true);
+  await first.connect('one.local');
+  assert.deepEqual(first.state.preferences.channelOrder, [3, 1, 2]);
+  first.disconnect(false);
+  const second = make(); await second.hydrate();
+  assert.equal(second.state.setupComplete, true);
+  assert.equal(second.state.lastServer, 'http://one.local/');
+  await second.connect('one.local');
+  assert.equal(second.state.settings.nickname, 'Drummer');
+  assert.equal(second.state.settings.appearance, 'dark');
+  assert.equal(second.state.preferences.selectedAux, 2);
+  await second.restartSetup();
+  assert.equal(second.state.setupComplete, false);
+  assert.equal(second.state.settings.nickname, 'Drummer');
+  assert.deepEqual(second.state.preferences.channelOrder, [3, 1, 2]);
+  await second.completeSetup();
+  assert.equal(second.state.setupComplete, true);
+  assert(requests.every(url => url.endsWith('/api/connection')));
+  second.disconnect();
 });
-test('another device cannot silently overwrite the layout; both conflict choices work', async t => {
-  const { session, remote } = setup(t);
-  await session.connect('mixer.local'); await session.authenticate('alice', 'password123', true);
-  remote({ revision: 2, preferences: { ...emptyPreferences(), selectedAux: 7 } });
-  session.preferences({ selectedAux: 3 }); await session.save();
-  assert.equal(session.state.sync, 'conflict'); assert.equal(session.state.preferences.selectedAux, 3);
-  await session.loadSaved(); assert.equal(session.state.preferences.selectedAux, 7);
-  remote({ revision: 3, preferences: { ...emptyPreferences(), selectedAux: 8 } });
-  session.preferences({ selectedAux: 4 }); await session.save();
-  assert.equal(session.state.sync, 'conflict');
-  await session.save(true); assert.equal(session.state.sync, 'saved');
-  assert.equal(session.state.preferences.selectedAux, 4);
+
+test('app switcher retains connection; background and relaunch retain channels with cached display levels and fresh-value drag gating', async () => {
+  const data = new Map<string, string>();
+  const sockets: Socket[] = [];
+  const sent: any[] = [];
+  const make = () => new MixerSession({ getItem: async key => data.get(key) || null, setItem: async (key, value) => { data.set(key, value); } },
+    () => { const socket: Socket = { readyState: 1, send: raw => sent.push(JSON.parse(raw)), close() {}, onopen: null, onclose: null, onmessage: null, onerror: null }; sockets.push(socket); return socket; },
+    (async (url: string) => Response.json({ url, qr: 'data:image/png;base64,AAA' })) as typeof fetch);
+  const session = make(); await session.connect('mixer.local');
+  sockets[0].onopen?.();
+  sockets[0].onmessage?.({ data: JSON.stringify({ config: { channels: [{ channel: 1, label: 'Kick', order: 1 }], aux: [{ channel: 2, label: 'Drums', colour: '#007AFF', stereo: false }], snapshot: 'Live' } }) });
+  sockets[0].onmessage?.({ data: JSON.stringify({ address: '/Input_Channels/1/Aux_Send/2/send_level', args: [-10] }) });
+  session.setLifecycle('inactive');
+  assert.equal(session.mixer.state.status, 'connected');
+  assert.equal(sockets.length, 1);
+  session.setLifecycle('background');
+  assert.equal(session.mixer.state.config?.channels[0].label, 'Kick');
+  assert.deepEqual(session.mixer.state.values, {});
+  assert.equal(session.mixer.displayValue(1), -10);
+  assert.equal(session.mixer.beginDrag(1), null);
+  session.setLifecycle('active');
+  assert.equal(sockets.length, 2);
+  assert.equal(session.mixer.state.config?.aux[0].label, 'Drums');
+  session.disconnect();
+  await new Promise(resolve => setTimeout(resolve, 0));
+  const restored = make(); await restored.connect('mixer.local');
+  assert.equal(restored.mixer.state.config?.channels[0].label, 'Kick');
+  assert.equal(restored.mixer.beginDrag(1), null);
+  assert.deepEqual(restored.mixer.state.values, {});
+  assert.equal(restored.mixer.displayValue(1), -10);
+  restored.mixer.setParameter('pan');
+  assert.equal(restored.mixer.displayValue(1), undefined);
+  restored.mixer.setParameter('level');
+  assert.equal(restored.mixer.displayValue(1), -10);
+  const socket = sockets.at(-1)!;
+  socket.onopen?.();
+  socket.onmessage?.({ data: JSON.stringify({ config: { channels: [{ channel: 1, label: 'Kick', order: 1 }], aux: [{ channel: 2, label: 'Drums', colour: '#007AFF', stereo: false }], snapshot: 'Live' } }) });
+  assert.equal(restored.mixer.beginDrag(1), null);
+  socket.onmessage?.({ data: JSON.stringify({ address: '/Input_Channels/1/Aux_Send/2/send_level', args: [-5] }) });
+  assert.equal(restored.mixer.displayValue(1), -5);
+  assert(restored.mixer.beginDrag(1));
+  assert(sent.every(message => !message.address || message.address.endsWith('/?')));
+  restored.disconnect();
 });
-test('sign-out restores guest settings and session expiration exposes sign-in', async t => {
-  const { session, expire } = setup(t);
-  await session.connect('mixer.local'); session.preferences({ compact: true });
-  await session.authenticate('alice', 'password123', true);
-  session.preferences({ compact: false }); await session.save();
-  await session.logout();
-  assert.equal(session.state.user, null); assert.equal(session.state.preferences.compact, true);
-  await session.authenticate('alice', 'password123', false);
-  expire(); await session.refreshAccount();
-  assert.equal(session.state.user, null); assert.match(session.state.message, /session ended/i);
-});
-test('device settings persist without storing account passwords', async t => {
-  const { session, storage } = setup(t);
-  await session.hydrate(); session.setSettings({ appearance: 'dark' });
-  await session.connect('mixer.local'); await session.authenticate('alice', 'very-private-password', true);
-  await delay(10);
-  assert.equal(JSON.parse(storage.get('earsmixer.native.settings.v1')!).appearance, 'dark');
-  assert.ok(!JSON.stringify([...storage]).includes('very-private-password'));
-});
-test('local guest profiles remain isolated between mixer servers', async t => {
-  const { session } = setup(t);
-  await session.connect('one.local'); session.preferences({ selectedAux: 4, compact: true });
-  await session.connect('two.local'); assert.equal(session.state.preferences.compact, false);
-  session.preferences({ selectedAux: 8 });
-  await session.connect('one.local'); assert.equal(session.state.preferences.selectedAux, 4);
-  assert.equal(session.state.preferences.compact, true);
+
+test('device reset removes local profiles and caches without writing desk levels', async () => {
+  const data = new Map<string, string>([['unrelated.setting', 'keep'], ['earsmixer.native.channels:http://old.local/', '{}']]);
+  const sent: any[] = [];
+  const socket: Socket = { readyState: 1, send: raw => sent.push(JSON.parse(raw)), close() {}, onopen: null, onclose: null, onmessage: null, onerror: null };
+  const session = new MixerSession({ getItem: async key => data.get(key) || null, setItem: async (key, value) => { data.set(key, value); },
+    getAllKeys: async () => [...data.keys()], multiRemove: async keys => { keys.forEach(key => data.delete(key)); } }, () => socket,
+    (async (url: string) => Response.json({ url, qr: 'data:image/png;base64,AAA' })) as typeof fetch);
+  await session.completeSetup();
+  session.setSettings({ nickname: 'Joe', appearance: 'dark' });
+  await session.connect('mixer.local'); socket.onopen?.();
+  socket.onmessage?.({ data: JSON.stringify({ config: { channels: [{ channel: 1, label: 'Kick', order: 1 }], aux: [{ channel: 2, label: 'Drums' }] } }) });
+  socket.onmessage?.({ data: JSON.stringify({ address: '/Input_Channels/1/Aux_Send/2/send_level', args: [-10] }) });
+  session.preferences({ compact: true, channelOrder: [1], favouritesByAux: { '2': { channels: [1], enabled: true } } });
+  const drag = session.mixer.beginDrag(1)!;
+  session.mixer.drag(drag, 0.8);
+  await session.resetDeviceData();
+  assert.deepEqual([...data], [['unrelated.setting', 'keep']]);
+  assert.equal(session.state.setupComplete, false);
+  assert.equal(session.state.settings.nickname, '');
+  assert.equal(session.state.server, null);
+  assert.deepEqual(session.state.preferences.favouritesByAux, {});
+  assert.equal(session.state.lastServer, null);
+  assert(sent.every(message => !message.address || message.address.endsWith('/?')));
 });

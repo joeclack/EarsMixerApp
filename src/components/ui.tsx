@@ -1,8 +1,8 @@
-import React, { useEffect, useState } from 'react';
-import { AccessibilityInfo, ActivityIndicator, Platform, Pressable, ScrollView, StyleSheet, Text, View, type ViewProps, type ColorValue } from 'react-native';
-import { GlassView, isLiquidGlassAvailable } from 'expo-glass-effect';
+import React from 'react';
+import { ActivityIndicator, Platform, Pressable, ScrollView, StyleSheet, Text, View, type ColorValue } from 'react-native';
 import { SymbolView, type SymbolViewProps } from 'expo-symbols';
 import { router, Stack } from 'expo-router';
+import { useHeaderHeight } from 'expo-router/react-navigation';
 import { useTheme } from '../theme';
 import { useSession } from '../mixer/context';
 import NativeButton from './NativeButton';
@@ -11,36 +11,30 @@ export function Icon({ name, size = 22, color }: { name: SymbolViewProps['name']
   const theme = useTheme();
   return <SymbolView name={name} size={size} tintColor={color || theme.tint} style={{ width: size, height: size }} />;
 }
-export function Glass({ children, style, ...props }: ViewProps) {
-  const theme = useTheme();
-  const [reduced, setReduced] = useState(false);
-  useEffect(() => {
-    if (Platform.OS !== 'ios') return;
-    void AccessibilityInfo.isReduceTransparencyEnabled().then(setReduced);
-    const listener = AccessibilityInfo.addEventListener('reduceTransparencyChanged', setReduced);
-    return () => listener.remove();
-  }, []);
-  if (Platform.OS === 'ios' && isLiquidGlassAvailable() && !reduced)
-    return <GlassView glassEffectStyle="regular" colorScheme={theme.scheme} style={style} {...props}>{children}</GlassView>;
-  return <View style={[{ backgroundColor: theme.panel }, style]} {...props}>{children}</View>;
-}
-export function Page({ title, children, scroll = true, compactHeader = true, toolbar }: React.PropsWithChildren<{ title: string; scroll?: boolean; compactHeader?: boolean; toolbar?: React.ReactNode }>) {
+export function Page({ title, children, scroll = true, compactHeader = true, toolbar, hideHeader = false }: React.PropsWithChildren<{ title: string; scroll?: boolean; compactHeader?: boolean; toolbar?: React.ReactNode; hideHeader?: boolean }>) {
   const theme = useTheme();
   const { state, mix } = useSession();
+  const headerHeight = useHeaderHeight();
   const options = {
-    title, headerLargeTitleEnabled: !compactHeader, headerTransparent: Platform.OS === 'ios' && !compactHeader,
+    headerShown: !hideHeader, title, headerLargeTitleEnabled: !compactHeader, headerTransparent: Platform.OS === 'ios',
     headerTitleStyle: { color: theme.text },
+    ...(toolbar && { title: '', headerTitle: '', headerBackVisible: false,
+      ...(Platform.OS === 'web' && { headerLeft: () => <Text accessibilityRole="header" style={{ color: theme.text, fontSize: 20, fontWeight: '700' }}>{title}</Text> }) }),
     headerShadowVisible: false, headerLargeTitleShadowVisible: false, headerTintColor: theme.tint,
-    headerStyle: { backgroundColor: Platform.OS === 'ios' && !compactHeader ? 'transparent' : theme.bg },
-    ...(!toolbar && { headerRight: () => <Pressable accessibilityRole="button" accessibilityLabel="Connect to mixer" onPress={() => router.push('/connect')} style={styles.headerButton}>
-      <Icon name={{ ios: mix.status === 'connected' ? 'wifi' : 'wifi.slash', android: 'wifi', web: 'wifi' }} color={mix.status === 'connected' ? theme.green : theme.tint} />
+    headerStyle: { backgroundColor: 'transparent' },
+    ...(!toolbar && Platform.OS !== 'ios' && { headerRight: () => <Pressable accessibilityRole="button" accessibilityLabel="Connect to mixer" onPress={() => router.push('/connect')} style={styles.headerButton}>
+      <Icon name={{ ios: mix.status === 'connected' ? 'wifi' : 'wifi.slash', android: 'wifi', web: 'wifi' }} color={mix.status === 'connected' ? theme.green : theme.danger} />
     </Pressable> }),
   };
   return <View style={{ flex: 1, backgroundColor: theme.bg }}>
     <Stack.Screen options={options} />
-    {toolbar}
+    {!hideHeader && toolbar}
+    {!hideHeader && !toolbar && Platform.OS === 'ios' && <Stack.Toolbar placement="right">
+      <Stack.Toolbar.Button icon={mix.status === 'connected' ? 'wifi' : 'wifi.slash'} tintColor={mix.status === 'connected' ? theme.green : theme.danger}
+        accessibilityLabel="Connect to mixer" onPress={() => router.push('/connect')} />
+    </Stack.Toolbar>}
     {scroll ? <ScrollView contentInsetAdjustmentBehavior="automatic" keyboardShouldPersistTaps="handled" automaticallyAdjustKeyboardInsets
-      contentContainerStyle={styles.page}>{children}</ScrollView> : children}
+      contentContainerStyle={styles.page}>{children}</ScrollView> : <View style={{ flex: 1, paddingTop: !hideHeader && Platform.OS === 'ios' ? headerHeight : 0 }}>{children}</View>}
     {!state.hydrated && <View style={styles.loading}><ActivityIndicator /></View>}
   </View>;
 }
@@ -65,21 +59,13 @@ export function Message({ children, error = false }: React.PropsWithChildren<{ e
   if (!children) return null;
   return <Text accessibilityLiveRegion="polite" style={{ fontSize: 14, lineHeight: 21, color: error ? theme.danger : theme.muted, marginVertical: 10 }}>{children}</Text>;
 }
-export function EmptyMixer({ profile = false }: { profile?: boolean }) {
-  const theme = useTheme();
-  return <View style={{ paddingHorizontal: 18, paddingTop: 70, alignItems: 'center', gap: 18 }}>
-    <Glass style={{ width: 96, height: 96, borderRadius: 30, alignItems: 'center', justifyContent: 'center' }}>
-      <Icon name={{ ios: profile ? 'person.crop.circle' : 'headphones', android: profile ? 'account_circle' : 'headphones', web: profile ? 'account_circle' : 'headphones' }} size={46} />
-    </Glass>
-    <Text style={{ color: theme.text, fontSize: 27, fontWeight: '700', textAlign: 'center' }}>{profile ? 'Not connected' : 'No mixer connected'}</Text>
-    <Text style={{ color: theme.muted, fontSize: 17, lineHeight: 25, textAlign: 'center', maxWidth: 300 }}>
-      {profile ? 'Connect to a mixer to sign in.' : 'Select a server to view channels.'}
-    </Text>
-    <NativeButton title="Connect to mixer" symbol="wifi" onPress={() => router.push('/connect')} prominent />
+export function EmptyMixer() {
+  return <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24, paddingBottom: 32 }}>
+    <NativeButton title="Connect" onPress={() => router.push('/connect')} prominent />
   </View>;
 }
 export const styles = StyleSheet.create({
-  page: { padding: 20, paddingTop: 16, paddingBottom: 120 },
+  page: { padding: 20, paddingTop: 16, paddingBottom: 32 },
   headerButton: { minWidth: 44, minHeight: 44, justifyContent: 'center', alignItems: 'center' },
   row: { minHeight: 56, paddingHorizontal: 16, paddingVertical: 13, flexDirection: 'row', gap: 12, alignItems: 'center' },
   sectionLabel: { fontSize: 13, textTransform: 'uppercase', marginLeft: 16, marginBottom: 8, letterSpacing: 0.4 },

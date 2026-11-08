@@ -1,3 +1,4 @@
+import { useSetAllLevelsOff } from './useSetAllLevelsOff';
 import { Pressable, View } from 'react-native';
 import { router, Stack } from 'expo-router';
 import { useSession } from '../mixer/context';
@@ -5,18 +6,35 @@ import { useTheme } from '../theme';
 import { Icon, styles } from './ui';
 
 export default function MixerToolbar() {
-  const { session, mix } = useSession();
+  const { session, state, mix } = useSession();
   const theme = useTheme();
+  const setAllLevelsOff = useSetAllLevelsOff();
   return <Stack.Screen options={{ headerRight: () => <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-    <select aria-label="Choose your mix" disabled={mix.status !== 'connected' || !mix.config?.aux.length} value={mix.aux || ''}
-      onChange={event => session.preferences({ selectedAux: Number(event.target.value) })}
-      style={{ color: theme.tint, background: theme.panel, border: 'none', borderRadius: 12, padding: 10, maxWidth: 180, fontSize: 15 }}>
-      {!mix.config?.aux.length && <option value="">Choose mix</option>}
-      {mix.config?.aux.map(aux => <option key={aux.channel} value={aux.channel}>{aux.label}</option>)}
-    </select>
     <Pressable accessibilityRole="button" accessibilityLabel={(mix.status === 'connected' ? 'Connected' : 'Disconnected') + '. Connect to mixer'}
       onPress={() => router.push('/connect')} style={styles.headerButton}>
-      <Icon name={{ web: mix.status === 'connected' ? 'wifi' : 'wifi_off' }} color={mix.status === 'connected' ? theme.green : theme.tint} />
+      <Icon name={{ web: mix.status === 'connected' ? 'wifi' : 'wifi_off' }} color={mix.status === 'connected' ? theme.green : theme.danger} />
+    </Pressable>
+    {state.server && !!mix.config?.aux.length && <details style={{ position: 'relative', color: theme.tint }}>
+      <summary aria-label="Choose AUX" style={{ cursor: 'pointer', padding: 10, listStyle: 'none' }}><Icon name={{ web: 'headphones' }} /></summary>
+      <div style={{ position: 'absolute', right: 0, top: '100%', minWidth: 180, padding: 12, background: theme.panel, borderRadius: 12, zIndex: 100, display: 'grid', gap: 8 }}>
+        {mix.config.aux.map(aux => <button key={aux.channel} disabled={mix.status !== 'connected'} aria-pressed={mix.aux === aux.channel}
+          onClick={event => { session.preferences({ selectedAux: aux.channel }); event.currentTarget.closest('details')?.removeAttribute('open'); }}>{aux.label}</button>)}
+      </div>
+    </details>}
+    {state.server && <details style={{ position: 'relative', color: theme.tint }}>
+      <summary aria-label="Mixer options" style={{ cursor: 'pointer', padding: 12, fontSize: 22, listStyle: 'none' }}>…</summary>
+      <div style={{ position: 'absolute', right: 0, top: '100%', minWidth: 220, padding: 12, background: theme.panel, border: '1px solid ' + theme.line, borderRadius: 12, zIndex: 100, display: 'grid', gap: 12 }}>
+
+        {(['level', 'pan'] as const).map(mode => <button key={mode} aria-pressed={mix.parameter === mode}
+          onClick={event => { session.mixer.setParameter(mode); event.currentTarget.closest('details')?.removeAttribute('open'); }}>{mode === 'level' ? 'Level' : 'Pan'}</button>)}
+        <button onClick={event => { event.currentTarget.closest('details')?.removeAttribute('open'); router.push('/templates'); }}>{state.selectedTemplate ? state.selectedTemplate.name + ': Templates' : 'Templates'}</button>
+        <button onClick={event => { event.currentTarget.closest('details')?.removeAttribute('open'); router.push('/layout'); }}>Edit channels</button>
+        <button disabled={mix.status !== 'connected' || !mix.aux} onClick={event => { event.currentTarget.closest('details')?.removeAttribute('open'); setAllLevelsOff(); }} style={{ color: theme.danger }}>Set all levels to off</button>
+      </div>
+    </details>}
+
+    <Pressable accessibilityRole="button" accessibilityLabel="Settings" onPress={() => router.push('/settings')} style={styles.headerButton}>
+      <Icon name={{ web: 'settings' }} />
     </Pressable>
   </View> }} />;
 }

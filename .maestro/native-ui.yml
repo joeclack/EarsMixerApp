@@ -2,6 +2,11 @@ appId: com.joeclack.earsmixerapp
 ---
 - launchApp:
     clearState: true
+- tapOn: "Next"
+- tapOn: "Next"
+- tapOn: "Next"
+- tapOn: "Next"
+- tapOn: "Finish"
 - extendedWaitUntil:
     visible: "Select a server or enter its address."
     timeout: 30000
@@ -9,6 +14,7 @@ appId: com.joeclack.earsmixerapp
 - tapOn:
     text: "Allow"
     optional: true
+- tapOn: "Manual"
 - scrollUntilVisible:
     element:
       id: mixer-address
@@ -23,9 +29,7 @@ appId: com.joeclack.earsmixerapp
     visible: "Kick"
     timeout: 30000
 - takeScreenshot: screenshots/ios-mixer
-- tapOn: "Profile"
-- assertVisible: "Account"
-- takeScreenshot: screenshots/ios-profile
 - tapOn: "Settings"
-- assertVisible: "Compact channels"
+- assertVisible: "This device"
+- assertVisible: "Edit channels"
 - takeScreenshot: screenshots/ios-settings

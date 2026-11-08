@@ -2,6 +2,31 @@
 
 ## Unreleased
 
+- Move fader gestures and track animation onto the UI thread; isolate channel readouts and theme/navigation subscriptions from unrelated level updates.
+- Add bounded three-tick haptic bursts for fast position jumps.
+
+- Restyle portrait and landscape faders with rectangular caps, backlit grip slits, and labelled scales including 0 dB.
+
+- Add an offline demo with 20 channels, four AUX mixes, local fader/pan control and example templates. Start it from Connect or Settings without contacting a mixer server.
+
+- Replace bottom tabs with a toolbar Settings button and a Settings page that navigates back to Mixer.
+
+- Replace mobile favourites with per-AUX hidden channels, controlled in Edit channels and saved locally. Preserve visibility from legacy layouts and server templates.
+
+- Add a four-step first-launch walkthrough for nickname, connection, faders and device-local layouts. Repeat setup after resetting device data.
+
+- Reconnect to the last saved server on startup; otherwise automatically connect to a single discovered desk and show the connection sheet for multiple desks.
+
+- Cache last-known send levels and pan per server/AUX for offline display; enable dragging only after fresh desk values arrive. Cached values are never recalled to the desk.
+
+- Keep the connection while iOS is inactive and retain channel/AUX metadata when backgrounded or reconnecting.
+- Cache channel names per server on the device; re-read live levels before enabling faders after reconnecting.
+
+- Combine identity and settings into one screen with a device-local nickname; remove account and password flows from the mobile app.
+- Automatically persist layouts and settings on the device.
+- Add vertical faders in landscape and a teal console palette.
+- Check recently used servers alongside Bonjour discovery.
+
 - Discover nearby servers with native iOS Bonjour and Android NSD; retain manual and QR connections.
 - Move AUX selection into a native toolbar menu alongside connection status. Remove the AUX sheet and connected-address label.
 - Use compact page headers, shorter compact channel rows and a single-column mixer.

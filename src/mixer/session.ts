@@ -1,262 +1,179 @@
-import { probeMixer, readSavedMixers, rememberMixer, type SavedMixer } from '../connection';
+import { normalizeMixerAddress, probeMixer, readSavedMixers, rememberMixer, type SavedMixer } from '../connection';
+import { requestTemplates, templatePreferences, type MixerTemplate } from './templates';
+import { DEMO_URL, createDemoSocket, demoTemplates, demoTemplate } from './demo';
 import { MixerClient, type Socket } from './client';
-import { emptyPreferences, readPreferences, type Account, type Preferences, type User } from './model';
-
-type Storage = { getItem(key: string): Promise<string | null>; setItem(key: string, value: string): Promise<void> };
-export type Settings = { appearance: 'system' | 'light' | 'dark' };
-export type Sync = 'guest' | 'saved' | 'saving' | 'pending' | 'conflict' | 'error' | 'unavailable';
-type Draft = { userId: string; preferences: Preferences; revision: number };
+import { emptyPreferences, readPreferences, type Preferences, parseConfig, hiddenChannels } from './model';
+type Storage = { getItem(key: string): Promise<string | null>; setItem(key: string, value: string): Promise<void>; getAllKeys?(): Promise<readonly string[]>; multiRemove?(keys: string[]): Promise<void> };
+export type Settings = { appearance: 'system' | 'light' | 'dark'; nickname: string };
 export type SessionState = {
-  hydrated: boolean; server: string | null; recent: SavedMixer[]; settings: Settings;
-  user: User | null; preferences: Preferences; revision: number; sync: Sync;
-  busy: boolean; connecting: boolean; message: string;
+  selectedTemplate: MixerTemplate | null; hydrated: boolean; demo: boolean; setupComplete: boolean; lastServer: string | null; server: string | null; recent: SavedMixer[]; settings: Settings;
+  preferences: Preferences; connecting: boolean; message: string;
 };
-export class AccountError extends Error {
-  constructor(message: string, public status: number, public data: any) { super(message); }
-}
 export class MixerSession {
   readonly mixer: MixerClient;
-  state: SessionState = {
-    hydrated: false, server: null, recent: [], settings: { appearance: 'system' },
-    user: null, preferences: emptyPreferences(), revision: 0, sync: 'guest', busy: false, connecting: false, message: '',
-  };
+  state: SessionState = { selectedTemplate: null, hydrated: false, demo: false, setupComplete: false, lastServer: null, server: null, recent: [], settings: { appearance: 'system', nickname: '' },
+    preferences: emptyPreferences(), connecting: false, message: '' };
   private listeners = new Set<() => void>();
-  private generation = 0;
-  private connectAttempt = 0;
-  private saved = '';
-  private guest = emptyPreferences();
-  private timer: ReturnType<typeof setTimeout> | null = null;
-  private saving: Promise<void> | null = null;
-  private storageQueue = Promise.resolve();
-  private draft: Draft | null = null;
+  private attempt = 0;
   private suspended = false;
+  private queue = Promise.resolve();
+  private valueTimer: ReturnType<typeof setTimeout> | null = null;
+  private persistValues() {
+    if (this.valueTimer) clearTimeout(this.valueTimer);
+    this.valueTimer = null;
+    if (this.state.server) void this.persist("earsmixer.native.values:" + this.state.server, this.mixer.getValueCache());
+  }
   constructor(private storage: Storage, factory: (url: string) => Socket, private fetcher: typeof fetch = fetch) {
-    this.mixer = new MixerClient(factory);
+    this.mixer = new MixerClient(url => url === DEMO_URL.replace(/^http/, 'ws') ? createDemoSocket() : factory(url));
+    let previous: unknown = null;
+    let revision = 0;
+    this.mixer.subscribe(() => {
+      const { config, status } = this.mixer.state;
+      if (this.mixer.cacheRevision !== revision) {
+        revision = this.mixer.cacheRevision;
+        if (!this.valueTimer) this.valueTimer = setTimeout(() => this.persistValues(), 350);
+      }
+      if (status === 'connected' && config && config !== previous && this.state.server) {
+        previous = config;
+        void this.persist('earsmixer.native.channels:' + this.state.server, config);
+      }
+    });
   }
   subscribe = (fn: () => void) => { this.listeners.add(fn); return () => { this.listeners.delete(fn); }; };
   snapshot = () => this.state;
   private patch(update: Partial<SessionState>) { this.state = { ...this.state, ...update }; this.listeners.forEach(fn => fn()); }
   async hydrate() {
     try {
-      const [recent, raw] = await Promise.all([this.storage.getItem('earsmixer.connections.v1'), this.storage.getItem('earsmixer.native.settings.v1')]);
+      const [recent, raw, last, setup] = await Promise.all([this.storage.getItem('earsmixer.connections.v1'), this.storage.getItem('earsmixer.native.settings.v1'), this.storage.getItem('earsmixer.native.last-server.v1'), this.storage.getItem('earsmixer.native.setup.v1')]);
       let settings: Partial<Settings> = {};
-      try { settings = JSON.parse(raw || '{}'); } catch {}
-      this.patch({ recent: readSavedMixers(recent), settings: {
-        appearance: ['light', 'dark'].includes(settings.appearance || '') ? settings.appearance as 'light' | 'dark' : 'system',
+      try { settings = JSON.parse(raw || '{}') || {}; } catch {}
+      let lastServer: string | null = null;
+      try { const saved = JSON.parse(last || 'null'); if (typeof saved === 'string') lastServer = normalizeMixerAddress(saved); } catch {}
+      this.patch({ setupComplete: setup === 'true', lastServer, recent: readSavedMixers(recent), settings: {
+        appearance: settings.appearance === 'dark' || settings.appearance === 'light' ? settings.appearance : 'system',
+        nickname: typeof settings.nickname === 'string' ? settings.nickname.slice(0, 80) : '',
       } });
-    } catch { this.patch({ message: 'Saved settings could not be loaded. You can still connect.' }); }
+    } catch { this.patch({ message: 'Could not load device settings.' }); }
     this.patch({ hydrated: true });
   }
   private persist(key: string, value: unknown) {
-    const serialized = JSON.stringify(value);
-    this.storageQueue = this.storageQueue.then(() => this.storage.setItem(key, serialized)).catch(() => {
-      this.patch({ message: 'Device storage is unavailable. Keep the app open until your layout is saved to the server.' });
-    });
-    return this.storageQueue;
+    const json = JSON.stringify(value);
+    this.queue = this.queue.then(() => this.storage.setItem(key, json)).catch(() => this.patch({ message: 'Could not save to this device.' }));
+    return this.queue;
   }
-  private cache() {
-    if (!this.state.server) return;
-    return this.persist('earsmixer.native.profile:' + this.state.server, { guest: this.guest, draft: this.draft });
+  async templates(signal?: AbortSignal): Promise<MixerTemplate[]> {
+    if (!this.state.server) throw new Error('Connect to a mixer first.');
+    if (this.state.demo) return demoTemplates;
+    return requestTemplates(this.state.server, undefined, this.fetcher, signal);
+  }
+  async applyTemplate(id: string) {
+    if (!this.state.server || !/^[a-f0-9]{64}$/.test(id)) throw new Error('Choose a template from the connected mixer.');
+    const server = this.state.server, attempt = this.attempt;
+    const data = this.state.demo ? { config: demoTemplate(id), name: demoTemplates.find(template => template.id === id)?.name } : await requestTemplates(server, id, this.fetcher);
+    if (server !== this.state.server || attempt !== this.attempt) throw new Error('The mixer connection changed. Choose a template again.');
+    const preferences = templatePreferences(data.config, this.state.preferences.compact);
+    this.mixer.cancelWrites();
+    this.patch({ selectedTemplate: typeof data.name === 'string' && data.name.trim() && data.name.length <= 80 ? { id, name: data.name.trim() } : null });
+    this.preferences(preferences);
+    await this.queue;
+  }
+  async restartSetup() {
+    this.mixer.cancelWrites();
+    await this.persist('earsmixer.native.setup.v1', false);
+    this.patch({ setupComplete: false });
+  }
+  async completeSetup() {
+    await this.persist('earsmixer.native.setup.v1', true);
+    this.patch({ setupComplete: true });
   }
   setSettings(settings: Partial<Settings>) {
     this.patch({ settings: { ...this.state.settings, ...settings } });
+    this.mixer.identify(this.state.settings.nickname.trim() || null);
     void this.persist('earsmixer.native.settings.v1', this.state.settings);
   }
   async forget(url: string) {
     this.patch({ recent: this.state.recent.filter(item => item.url !== url) });
     await this.persist('earsmixer.connections.v1', this.state.recent);
   }
+  startDemo() { return this.connect(DEMO_URL); }
   async connect(input: string) {
-    const attempt = ++this.connectAttempt;
+    const attempt = ++this.attempt;
     this.patch({ connecting: true, message: '' });
     try {
-      const server = await probeMixer(input, { fetchImpl: this.fetcher });
-      if (attempt !== this.connectAttempt) return;
-      await this.save();
-      if (attempt !== this.connectAttempt) return;
-      const generation = ++this.generation;
-      if (this.timer) clearTimeout(this.timer);
+      const server = input === DEMO_URL ? DEMO_URL : await probeMixer(input, { fetchImpl: this.fetcher });
+      this.persistValues();
+      await this.queue;
+      let raw: any = {};
+      try { raw = JSON.parse(await this.storage.getItem('earsmixer.native.profile:' + server) || '{}') || {}; } catch {}
+      let channels = null;
+      try { channels = parseConfig(JSON.parse(await this.storage.getItem('earsmixer.native.channels:' + server) || 'null')); } catch {}
+      let values: unknown = {};
+      try { values = JSON.parse(await this.storage.getItem("earsmixer.native.values:" + server) || "{}"); } catch {}
+      if (attempt !== this.attempt) return;
+      // Keep existing local guest layouts when upgrading. Never import account credentials.
+      const preferences = readPreferences(raw.preferences) || readPreferences(raw.guest) || emptyPreferences();
+      const selectedTemplate = typeof raw.template?.id === 'string' && /^[a-f0-9]{64}$/.test(raw.template.id) && typeof raw.template.name === 'string' && raw.template.name.length <= 80 ? { id: raw.template.id, name: raw.template.name } : null;
       this.mixer.disconnect();
-      this.saved = ''; this.guest = emptyPreferences(); this.draft = null;
-      try {
-        const cache = JSON.parse(await this.storage.getItem('earsmixer.native.profile:' + server) || '{}');
-        this.guest = readPreferences(cache.guest) || emptyPreferences();
-        if (typeof cache.draft?.userId === 'string' && Number.isSafeInteger(cache.draft.revision) && readPreferences(cache.draft.preferences)) this.draft = cache.draft;
-      } catch {}
-      if (generation !== this.generation || attempt !== this.connectAttempt) return;
-      this.patch({ server, recent: rememberMixer(this.state.recent, server), user: null, preferences: this.guest, revision: 0, sync: 'guest', busy: false });
+      this.patch({ selectedTemplate, server, demo: server === DEMO_URL, preferences, recent: server === DEMO_URL ? this.state.recent : rememberMixer(this.state.recent, server) });
+      this.mixer.restoreValues(values);
+      if (channels) this.mixer.restoreConfig(channels, preferences.selectedAux);
+      this.mixer.selectAux(preferences.selectedAux);
+      this.mixer.identify(this.state.settings.nickname.trim() || null);
+      if (!this.suspended) this.mixer.connect(server, true);
       await this.persist('earsmixer.connections.v1', this.state.recent);
-      if (generation !== this.generation || attempt !== this.connectAttempt) return;
-      this.mixer.selectAux(this.guest.selectedAux);
-      this.mixer.identify(null);
-      if (!this.suspended) this.mixer.connect(server);
-      await this.refreshAccount();
+      if (attempt === this.attempt && server !== DEMO_URL) {
+        this.patch({ lastServer: server });
+        await this.persist('earsmixer.native.last-server.v1', server);
+      }
     } catch (error) {
-      if (attempt === this.connectAttempt) { this.patch({ message: error instanceof Error ? error.message : 'Could not connect.' }); throw error; }
-    } finally { if (attempt === this.connectAttempt) this.patch({ connecting: false }); }
+      if (attempt === this.attempt) { this.patch({ message: error instanceof Error ? error.message : 'Could not connect.' }); throw error; }
+    } finally { if (attempt === this.attempt) this.patch({ connecting: false }); }
   }
-  disconnect() {
-    ++this.connectAttempt; ++this.generation;
-    if (this.timer) clearTimeout(this.timer);
-    this.mixer.disconnect();
-    this.patch({ server: null, user: null, sync: 'guest', busy: false, connecting: false, message: '', preferences: emptyPreferences(), revision: 0 });
+  disconnect(forgetConnection = true) {
+    this.persistValues();
+    if (forgetConnection && !this.state.demo) { this.patch({ lastServer: null }); void this.persist('earsmixer.native.last-server.v1', null); }
+    ++this.attempt; this.mixer.disconnect();
+    this.patch({ selectedTemplate: null, server: null, demo: false, connecting: false, preferences: emptyPreferences(), message: '' });
   }
-  async request(path = '', options: { method?: string; body?: unknown } = {}): Promise<any> {
-    const server = this.state.server;
-    if (!server) throw new Error('Connect to your mixer first.');
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 10000);
-    try {
-      const response = await this.fetcher(server + 'api/account' + path, {
-        method: options.method || 'GET', credentials: 'include', cache: 'no-store', signal: controller.signal,
-        ...(options.body !== undefined ? { headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(options.body) } : {}),
-      });
-      let data: any;
-      try { data = await response.json(); } catch { throw new Error('Accounts require EarsMixer server 1.4.0 or newer.'); }
-      if (!response.ok) throw new AccountError(data.error || 'The account request failed.', response.status, data);
-      return data;
-    } finally { clearTimeout(timeout); }
-  }
-  private applyAccount(data: Account) {
-    if (!data.user) return;
-    const saved = readPreferences(data.preferences);
-    let preferences = saved || this.guest;
-    let revision = data.revision, sync: Sync = saved ? 'saved' : 'pending';
-    this.saved = saved ? JSON.stringify(saved) : '';
-    if (this.draft?.userId === data.user.id) {
-      preferences = this.draft.preferences;
-      sync = this.draft.revision === data.revision ? 'pending' : 'conflict';
-      revision = data.revision;
-    }
-    this.patch({ user: data.user, revision, preferences, sync, message: '' });
-    this.mixer.identify(data.user.displayName); this.mixer.selectAux(preferences.selectedAux);
-    if (sync === 'pending' && this.draft) this.scheduleSave();
-  }
-  async refreshAccount() {
-    if (!this.state.server || this.state.busy || this.saving) return;
-    const generation = this.generation;
-    try {
-      const data: Account = await this.request();
-      if (generation !== this.generation || this.state.busy || this.saving) return;
-      if (!data.user) {
-        if (this.state.user) this.expired();
-        return;
-      }
-      if (this.state.user && data.user.id !== this.state.user.id) {
-        this.mixer.cancelWrites(); this.patch({ user: null, preferences: this.guest, sync: 'guest' });
-      }
-      if (this.state.user && data.revision !== this.state.revision && JSON.stringify(this.state.preferences) !== this.saved) {
-        this.patch({ revision: data.revision, sync: 'conflict' }); return;
-      }
-      if (!this.state.user || data.revision !== this.state.revision) this.applyAccount(data);
-      else { this.patch({ user: data.user }); this.mixer.identify(data.user.displayName); }
-    } catch (error) {
-      if (generation === this.generation) this.patch({ sync: this.state.user ? 'error' : 'unavailable', message: error instanceof Error ? error.message : 'Accounts are unavailable.' });
-    }
-  }
-  async authenticate(username: string, password: string, register: boolean, displayName?: string) {
-    if (this.state.busy || this.saving) return;
-    const generation = ++this.generation;
-    this.patch({ busy: true, message: '' });
-    try {
-      const data = await this.request(register ? '/register' : '/login', { method: 'POST', body: { username, password, ...(register ? { displayName: displayName?.trim() || username } : {}) } });
-      if (generation !== this.generation) return;
-      this.mixer.cancelWrites(); this.applyAccount(data);
-      if (register) await this.save(true);
-    } finally { if (generation === this.generation) this.patch({ busy: false }); }
-  }
-  async rename(displayName: string) {
-    if (!this.state.user || this.state.busy) return;
-    const generation = this.generation;
-    this.patch({ busy: true, message: '' });
-    try {
-      const data = await this.request('', { method: 'PUT', body: { userId: this.state.user.id, displayName } });
-      if (generation === this.generation) { this.patch({ user: data.user, message: 'Name saved.' }); this.mixer.identify(data.user.displayName); }
-    } finally { if (generation === this.generation) this.patch({ busy: false }); }
+  setChannelHidden(channel: number, hidden: boolean) {
+    const aux = this.mixer.state.aux;
+    if (aux === null) return;
+    const previous = hiddenChannels(this.mixer.state.config, this.state.preferences, aux);
+    const channels = hidden ? [...new Set([...previous, channel])] : previous.filter(id => id !== channel);
+    this.mixer.cancelWrites();
+    this.preferences({ hiddenByAux: { ...this.state.preferences.hiddenByAux, [aux]: channels } });
   }
   preferences(update: Partial<Preferences>) {
-    const preferences = { ...this.state.preferences, ...update };
-    if (!readPreferences(preferences)) return;
+    const preferences = readPreferences({ ...this.state.preferences, ...update });
+    if (!preferences) return;
     this.patch({ preferences });
     if ('selectedAux' in update) this.mixer.selectAux(preferences.selectedAux);
-    if (this.state.user) {
-      this.draft = { userId: this.state.user.id, preferences, revision: this.state.revision };
-      if (this.state.sync !== 'conflict') this.patch({ sync: 'pending' });
-      this.scheduleSave();
-    } else this.guest = preferences;
-    void this.cache();
+    if (this.state.server) void this.persist('earsmixer.native.profile:' + this.state.server, { preferences, template: this.state.selectedTemplate });
   }
-  private scheduleSave() {
-    if (this.timer) clearTimeout(this.timer);
-    this.timer = setTimeout(() => { void this.save(); }, 650);
+  async resetDeviceData() {
+    if (!this.storage.getAllKeys || !this.storage.multiRemove) throw new Error('Device storage cannot be reset.');
+    // Close the socket and cancel queued gestures before clearing data. No OSC
+    // values are sent, including when a drag was pending when Reset was tapped.
+    this.disconnect(false);
+    await this.queue;
+    const keys = (await this.storage.getAllKeys()).filter(key => key.startsWith('earsmixer.'));
+    await this.storage.multiRemove(keys);
+    this.patch({ selectedTemplate: null, setupComplete: false, server: null, lastServer: null, recent: [], settings: { appearance: 'system', nickname: '' },
+      preferences: emptyPreferences(), connecting: false, message: '' });
   }
-  save(force = false): Promise<void> {
-    if (this.timer) clearTimeout(this.timer);
-    if (this.saving) return this.saving;
-    if (!this.state.user || !this.state.server || (this.state.sync === 'conflict' && !force) ||
-      (!force && JSON.stringify(this.state.preferences) === this.saved)) return Promise.resolve();
-    const generation = this.generation;
-    const preferences = this.state.preferences, json = JSON.stringify(preferences);
-    const body = { userId: this.state.user.id, preferences, revision: this.state.revision };
-    this.patch({ sync: 'saving' });
-    this.saving = (async () => {
-      try {
-        const data: Account = await this.request('/preferences', { method: 'PUT', body });
-        if (generation !== this.generation) return;
-        this.saved = json;
-        const dirty = JSON.stringify(this.state.preferences) !== json;
-        this.draft = dirty ? { userId: body.userId, preferences: this.state.preferences, revision: data.revision } : null;
-        this.patch({ revision: data.revision, sync: dirty ? 'pending' : 'saved', message: '' });
-        await this.cache();
-      } catch (error) {
-        if (generation !== this.generation) return;
-        this.draft = { userId: body.userId, preferences: this.state.preferences, revision: body.revision };
-        if (error instanceof AccountError && error.status === 409) this.patch({ revision: error.data.revision, sync: 'conflict' });
-        else if (error instanceof AccountError && error.status === 401) this.expired();
-        else this.patch({ sync: 'error', message: 'Layout is saved on this device. Reconnect and retry to save it to your account.' });
-        await this.cache();
-      } finally {
-        this.saving = null;
-        if (generation === this.generation && this.state.sync === 'pending') this.scheduleSave();
-      }
-    })();
-    return this.saving;
-  }
-  async loadSaved() {
-    if (this.state.busy || this.saving) return;
-    const generation = this.generation;
-    this.patch({ busy: true });
-    try {
-      const data = await this.request();
-      if (generation !== this.generation) return;
-      if (!data.user || data.user.id !== this.state.user?.id) { this.expired(); return; }
-      this.draft = null; this.applyAccount(data); await this.cache();
-    } finally { if (generation === this.generation) this.patch({ busy: false }); }
-  }
-  private expired() {
-    if (this.timer) clearTimeout(this.timer);
-    this.mixer.cancelWrites(); this.mixer.identify(null); this.mixer.selectAux(this.guest.selectedAux);
-    this.patch({ user: null, preferences: this.guest, revision: 0, sync: 'guest', message: 'Your session ended. Sign in again to restore your layout.' });
-  }
-  async logout() {
-    await this.save();
-    if (['pending', 'error', 'conflict'].includes(this.state.sync)) throw new Error('Save your changes or load the saved layout before signing out.');
-    if (this.state.busy) return;
-    const generation = this.generation;
-    this.patch({ busy: true });
-    try {
-      await this.request('/logout', { method: 'POST', body: {} });
-      if (generation !== this.generation) return;
-      this.draft = null; this.saved = ''; ++this.generation;
-      this.expired(); this.patch({ message: 'Signed out. Guest settings are restored.', busy: false }); await this.cache();
-    } finally { if (generation === this.generation) this.patch({ busy: false }); }
-  }
-  setActive(active: boolean) {
-    this.suspended = !active;
-    if (!active) { this.mixer.disconnect(); void this.save(); }
-    else if (this.state.server) {
-      this.mixer.selectAux(this.state.preferences.selectedAux); this.mixer.connect(this.state.server);
-      void this.refreshAccount().then(() => this.save());
+  setLifecycle(state: string) {
+    if (state === 'inactive') { this.persistValues(); this.mixer.cancelWrites(); return; }
+    if (state === 'background') {
+      this.persistValues();
+      this.suspended = true;
+      this.mixer.disconnect(true);
+    } else if (state === 'active') {
+      if (this.suspended && this.state.server) {
+        this.mixer.identify(this.state.settings.nickname.trim() || null);
+        this.mixer.connect(this.state.server, true);
+      } else if (this.mixer.state.status === 'connected') this.mixer.refresh();
+      this.suspended = false;
     }
   }
+  setActive(active: boolean) { this.setLifecycle(active ? 'active' : 'background'); }
 }
