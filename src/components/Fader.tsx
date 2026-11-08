@@ -77,10 +77,10 @@ export default function Fader({ channel, label, color, vertical = false, length 
   const scale = mix.parameter === 'level'
     ? [-40, -20, -10, 0, 10].map(db => ({ position: dbToPosition(db), label: db === 0 ? '0 dB' : db > 0 ? '+' + db : String(db), major: db === 0 }))
     : [{ position: 0, label: 'L', major: false }, { position: 0.5, label: 'C', major: true }, { position: 1, label: 'R', major: false }];
-  return <View onLayout={event => setWidth(vertical ? event.nativeEvent.layout.height : event.nativeEvent.layout.width)} style={{ height: vertical ? length : 72, width: vertical ? 64 : undefined, alignSelf: vertical ? 'center' : undefined, opacity: session.mixer.displayValue(channel) !== undefined ? 1 : 0.35 }}>
+  return <View onLayout={event => setWidth(vertical ? event.nativeEvent.layout.height : event.nativeEvent.layout.width)} style={{ height: vertical ? length : 56, width: vertical ? 64 : undefined, alignSelf: vertical ? 'center' : undefined, opacity: session.mixer.displayValue(channel) !== undefined ? 1 : 0.35 }}>
     <View pointerEvents="none" style={vertical
       ? { position: 'absolute', top: inset, bottom: inset, left: 34, width: 6, borderRadius: 3, backgroundColor: '#050A0D', justifyContent: 'flex-end' }
-      : { position: 'absolute', left: inset, right: inset, top: 33, height: 6, borderRadius: 3, backgroundColor: '#050A0D' }}>
+      : { position: 'absolute', left: inset, right: inset, top: 25, height: 6, borderRadius: 3, backgroundColor: '#050A0D' }}>
       <Animated.View style={[vertical ? { width: 6 } : { height: 6 }, { borderRadius: 3, backgroundColor: color, opacity: 0.6 }, fillStyle]} />
     </View>
     <View pointerEvents="none" style={{ position: 'absolute', top: 0, bottom: 0, left: 0, right: 0 }}>
@@ -88,7 +88,7 @@ export default function Fader({ channel, label, color, vertical = false, length 
         const point = inset + travel * (vertical ? 1 - index / 20 : index / 20);
         return <View key={index} style={vertical
           ? { position: 'absolute', top: point, left: 23, width: index % 5 === 0 ? 9 : 5, height: 1, backgroundColor: theme.line }
-          : { position: 'absolute', left: point, top: 49, width: 1, height: index % 5 === 0 ? 8 : 4, backgroundColor: theme.line }} />;
+          : { position: 'absolute', left: point, top: 42, width: 1, height: index % 5 === 0 ? 8 : 4, backgroundColor: theme.line }} />;
       })}
       {scale.map(mark => {
         const point = inset + travel * (vertical ? 1 - mark.position : mark.position);
@@ -109,14 +109,14 @@ export default function Fader({ channel, label, color, vertical = false, length 
         session.mixer.drag(token, clamp(position + (event.nativeEvent.actionName === 'increment' ? 0.02 : -0.02))); session.mixer.flush(token);
         void Haptics.selectionAsync().catch(() => {});
       }}
-      style={[{ position: 'absolute', left: vertical ? 23 : 4, top: vertical ? 4 : 14,
-        width: vertical ? 28 : 32, height: 44, borderRadius: 4,
+      style={[{ position: 'absolute', left: vertical ? 23 : 6, top: vertical ? 4 : 10,
+        width: 28, height: vertical ? 44 : 36, borderRadius: 4,
         backgroundColor: '#18232B', borderWidth: 1, borderColor: dragging ? '#728893' : '#435560',
         shadowColor: '#000000', shadowOffset: { width: 0, height: 3 }, shadowOpacity: 0.4, shadowRadius: 3, elevation: 4,
         alignItems: 'center', justifyContent: 'center' }, thumbStyle]}>
       <View pointerEvents="none" style={{ position: 'absolute', left: 2, right: 2, top: 1, height: 2, borderRadius: 1, backgroundColor: '#A5B8BF', opacity: 0.35 }} />
       <View pointerEvents="none" style={{ flexDirection: vertical ? 'column' : 'row', gap: 4 }}>
-        {Array.from({ length: vertical ? 5 : 4 }, (_, index) => <View key={index} style={{ width: vertical ? 18 : 2, height: vertical ? 2 : 26, backgroundColor: '#03090C', borderRadius: 1 }}>
+        {Array.from({ length: vertical ? 5 : 4 }, (_, index) => <View key={index} style={{ width: vertical ? 18 : 2, height: vertical ? 2 : 22, backgroundColor: '#03090C', borderRadius: 1 }}>
           <View style={{ flex: 1, backgroundColor: color, opacity: ready ? (index === 2 || dragging ? 1 : 0.65) : 0.25,
             borderRadius: 1, shadowColor: color, shadowOpacity: 0.9, shadowRadius: dragging ? 5 : 3, shadowOffset: { width: 0, height: 0 } }} />
         </View>)}
