@@ -38,7 +38,7 @@ export default function MixerToolbar() {
         <Stack.Toolbar.MenuAction isOn={mix.parameter === 'level'} onPress={() => session.mixer.setParameter('level')}>Level</Stack.Toolbar.MenuAction>
         <Stack.Toolbar.MenuAction isOn={mix.parameter === 'pan'} onPress={() => session.mixer.setParameter('pan')}>Pan</Stack.Toolbar.MenuAction>
       </Stack.Toolbar.Menu>
-      <Stack.Toolbar.MenuAction onPress={() => router.push('/templates')}>Templates</Stack.Toolbar.MenuAction>
+      <Stack.Toolbar.MenuAction onPress={() => router.push('/templates')}>{state.selectedTemplate ? state.selectedTemplate.name + ': Templates' : 'Templates'}</Stack.Toolbar.MenuAction>
       <Stack.Toolbar.MenuAction onPress={() => router.push('/layout')}>Edit channels</Stack.Toolbar.MenuAction>
       <Stack.Toolbar.MenuAction destructive disabled={mix.status !== 'connected' || !mix.aux} onPress={setAllLevelsOff}>Set all levels to off</Stack.Toolbar.MenuAction>
     </Stack.Toolbar.Menu>}

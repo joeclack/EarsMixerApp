@@ -6,12 +6,12 @@ import { emptyPreferences, readPreferences, type Preferences, parseConfig, hidde
 type Storage = { getItem(key: string): Promise<string | null>; setItem(key: string, value: string): Promise<void>; getAllKeys?(): Promise<readonly string[]>; multiRemove?(keys: string[]): Promise<void> };
 export type Settings = { appearance: 'system' | 'light' | 'dark'; nickname: string };
 export type SessionState = {
-  hydrated: boolean; demo: boolean; setupComplete: boolean; lastServer: string | null; server: string | null; recent: SavedMixer[]; settings: Settings;
+  selectedTemplate: MixerTemplate | null; hydrated: boolean; demo: boolean; setupComplete: boolean; lastServer: string | null; server: string | null; recent: SavedMixer[]; settings: Settings;
   preferences: Preferences; connecting: boolean; message: string;
 };
 export class MixerSession {
   readonly mixer: MixerClient;
-  state: SessionState = { hydrated: false, demo: false, setupComplete: false, lastServer: null, server: null, recent: [], settings: { appearance: 'system', nickname: '' },
+  state: SessionState = { selectedTemplate: null, hydrated: false, demo: false, setupComplete: false, lastServer: null, server: null, recent: [], settings: { appearance: 'system', nickname: '' },
     preferences: emptyPreferences(), connecting: false, message: '' };
   private listeners = new Set<() => void>();
   private attempt = 0;
@@ -69,10 +69,11 @@ export class MixerSession {
   async applyTemplate(id: string) {
     if (!this.state.server || !/^[a-f0-9]{64}$/.test(id)) throw new Error('Choose a template from the connected mixer.');
     const server = this.state.server, attempt = this.attempt;
-    const data = this.state.demo ? { config: demoTemplate(id) } : await requestTemplates(server, id, this.fetcher);
+    const data = this.state.demo ? { config: demoTemplate(id), name: demoTemplates.find(template => template.id === id)?.name } : await requestTemplates(server, id, this.fetcher);
     if (server !== this.state.server || attempt !== this.attempt) throw new Error('The mixer connection changed. Choose a template again.');
     const preferences = templatePreferences(data.config, this.state.preferences.compact);
     this.mixer.cancelWrites();
+    this.patch({ selectedTemplate: typeof data.name === 'string' && data.name.trim() && data.name.length <= 80 ? { id, name: data.name.trim() } : null });
     this.preferences(preferences);
     await this.queue;
   }
@@ -111,8 +112,9 @@ export class MixerSession {
       if (attempt !== this.attempt) return;
       // Keep existing local guest layouts when upgrading. Never import account credentials.
       const preferences = readPreferences(raw.preferences) || readPreferences(raw.guest) || emptyPreferences();
+      const selectedTemplate = typeof raw.template?.id === 'string' && /^[a-f0-9]{64}$/.test(raw.template.id) && typeof raw.template.name === 'string' && raw.template.name.length <= 80 ? { id: raw.template.id, name: raw.template.name } : null;
       this.mixer.disconnect();
-      this.patch({ server, demo: server === DEMO_URL, preferences, recent: server === DEMO_URL ? this.state.recent : rememberMixer(this.state.recent, server) });
+      this.patch({ selectedTemplate, server, demo: server === DEMO_URL, preferences, recent: server === DEMO_URL ? this.state.recent : rememberMixer(this.state.recent, server) });
       this.mixer.restoreValues(values);
       if (channels) this.mixer.restoreConfig(channels, preferences.selectedAux);
       this.mixer.selectAux(preferences.selectedAux);
@@ -131,7 +133,7 @@ export class MixerSession {
     this.persistValues();
     if (forgetConnection && !this.state.demo) { this.patch({ lastServer: null }); void this.persist('earsmixer.native.last-server.v1', null); }
     ++this.attempt; this.mixer.disconnect();
-    this.patch({ server: null, demo: false, connecting: false, preferences: emptyPreferences(), message: '' });
+    this.patch({ selectedTemplate: null, server: null, demo: false, connecting: false, preferences: emptyPreferences(), message: '' });
   }
   setChannelHidden(channel: number, hidden: boolean) {
     const aux = this.mixer.state.aux;
@@ -146,7 +148,7 @@ export class MixerSession {
     if (!preferences) return;
     this.patch({ preferences });
     if ('selectedAux' in update) this.mixer.selectAux(preferences.selectedAux);
-    if (this.state.server) void this.persist('earsmixer.native.profile:' + this.state.server, { preferences });
+    if (this.state.server) void this.persist('earsmixer.native.profile:' + this.state.server, { preferences, template: this.state.selectedTemplate });
   }
   async resetDeviceData() {
     if (!this.storage.getAllKeys || !this.storage.multiRemove) throw new Error('Device storage cannot be reset.');
@@ -156,7 +158,7 @@ export class MixerSession {
     await this.queue;
     const keys = (await this.storage.getAllKeys()).filter(key => key.startsWith('earsmixer.'));
     await this.storage.multiRemove(keys);
-    this.patch({ setupComplete: false, server: null, lastServer: null, recent: [], settings: { appearance: 'system', nickname: '' },
+    this.patch({ selectedTemplate: null, setupComplete: false, server: null, lastServer: null, recent: [], settings: { appearance: 'system', nickname: '' },
       preferences: emptyPreferences(), connecting: false, message: '' });
   }
   setLifecycle(state: string) {
