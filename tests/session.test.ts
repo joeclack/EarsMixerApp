@@ -26,7 +26,7 @@ test('nickname, appearance and per-server layouts automatically persist without 
   second.disconnect();
 });
 
-test('app switcher retains connection; background and relaunch retain channels without recalling levels', async () => {
+test('app switcher retains connection; background and relaunch retain channels with cached display levels and fresh-value drag gating', async () => {
   const data = new Map<string, string>();
   const sockets: Socket[] = [];
   const sent: any[] = [];
@@ -43,6 +43,7 @@ test('app switcher retains connection; background and relaunch retain channels w
   session.setLifecycle('background');
   assert.equal(session.mixer.state.config?.channels[0].label, 'Kick');
   assert.deepEqual(session.mixer.state.values, {});
+  assert.equal(session.mixer.displayValue(1), -10);
   assert.equal(session.mixer.beginDrag(1), null);
   session.setLifecycle('active');
   assert.equal(sockets.length, 2);
@@ -53,6 +54,18 @@ test('app switcher retains connection; background and relaunch retain channels w
   assert.equal(restored.mixer.state.config?.channels[0].label, 'Kick');
   assert.equal(restored.mixer.beginDrag(1), null);
   assert.deepEqual(restored.mixer.state.values, {});
+  assert.equal(restored.mixer.displayValue(1), -10);
+  restored.mixer.setParameter('pan');
+  assert.equal(restored.mixer.displayValue(1), undefined);
+  restored.mixer.setParameter('level');
+  assert.equal(restored.mixer.displayValue(1), -10);
+  const socket = sockets.at(-1)!;
+  socket.onopen?.();
+  socket.onmessage?.({ data: JSON.stringify({ config: { channels: [{ channel: 1, label: 'Kick', order: 1 }], aux: [{ channel: 2, label: 'Drums', colour: '#007AFF', stereo: false }], snapshot: 'Live' } }) });
+  assert.equal(restored.mixer.beginDrag(1), null);
+  socket.onmessage?.({ data: JSON.stringify({ address: '/Input_Channels/1/Aux_Send/2/send_level', args: [-5] }) });
+  assert.equal(restored.mixer.displayValue(1), -5);
+  assert(restored.mixer.beginDrag(1));
   assert(sent.every(message => !message.address || message.address.endsWith('/?')));
   restored.disconnect();
 });

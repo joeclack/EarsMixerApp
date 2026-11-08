@@ -58,7 +58,7 @@ export default function Fader({ channel, label, color, vertical = false, length 
       <View style={vertical ? { height: (position * 100) + '%' as any, width: 6, borderRadius: 4, backgroundColor: color } : { width: (position * 100) + '%' as any, height: 6, borderRadius: 4, backgroundColor: color }} />
     </View>
     <View {...responder.panHandlers} accessible accessibilityRole="adjustable" accessibilityLabel={label + (mix.parameter === 'pan' ? ' pan' : ' level')}
-      accessibilityState={{ disabled: !ready }} accessibilityValue={{ min: 0, max: 100, now: Math.round(position * 100), text: levelText(mix.values[channel], mix.parameter) }}
+      accessibilityState={{ disabled: !ready }} accessibilityValue={{ min: 0, max: 100, now: Math.round(position * 100), text: levelText(session.mixer.displayValue(channel), mix.parameter) }}
       accessibilityActions={[{ name: 'increment' }, { name: 'decrement' }]} onAccessibilityAction={event => {
         const token = session.mixer.beginDrag(channel); if (!token) return;
         session.mixer.drag(token, clamp(position + (event.nativeEvent.actionName === 'increment' ? 0.02 : -0.02))); session.mixer.flush(token);

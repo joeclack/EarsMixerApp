@@ -12,7 +12,30 @@ export type MixState = {
   values: Record<number, number>; epoch: number;
 };
 export type DragToken = { epoch: number; aux: number; channel: number; parameter: Parameter };
+export type ValueCache = Record<string, Record<number, number>>;
 export class MixerClient {
+  private valueCache: ValueCache = {};
+  cacheRevision = 0;
+  getValueCache() { return this.valueCache; }
+  displayValue(channel: number) { return this.state.values[channel] ?? this.valueCache[this.state.aux + ":" + this.state.parameter]?.[channel]; }
+  restoreValues(raw: unknown) {
+    const cache: ValueCache = {};
+    if (raw && typeof raw === "object") for (const [key, values] of Object.entries(raw).slice(0, 512)) {
+      if (!/^[1-9]\d*:(level|pan)$/.test(key) || !values || typeof values !== "object") continue;
+      const pan = key.endsWith(":pan");
+      cache[key] = {};
+      for (const [id, value] of Object.entries(values).slice(0, 1000)) {
+        if (/^[1-9]\d*$/.test(id) && typeof value === "number" && Number.isFinite(value) && value >= (pan ? 0 : -150) && value <= (pan ? 1 : 10)) cache[key][Number(id)] = value;
+      }
+    }
+    this.valueCache = cache;
+    this.emit({});
+  }
+  private remember(channel: number, value: number) {
+    const key = this.state.aux + ":" + this.state.parameter;
+    this.valueCache = { ...this.valueCache, [key]: { ...this.valueCache[key], [channel]: value } };
+    this.cacheRevision++;
+  }
   state: MixState = { status: 'disconnected', config: null, aux: null, parameter: 'level', values: {}, epoch: 0 };
   private socket: Socket | null = null;
   private url: string | null = null;
@@ -39,6 +62,7 @@ export class MixerClient {
     if (this.query) clearTimeout(this.query);
     const socket = this.socket; this.socket = null;
     if (socket) { socket.onclose = socket.onerror = socket.onmessage = socket.onopen = null; socket.close(); }
+    if (!preserveConfig) this.valueCache = {};
     this.emit({ status: 'disconnected', config: preserveConfig ? this.state.config : null, values: {}, aux: preserveConfig ? this.state.aux : null });
   }
   restoreConfig(config: MixerConfig, aux: number | null) {
@@ -133,7 +157,7 @@ export class MixerClient {
     const entry = this.pending.get(token.channel);
     if (!entry || entry.token !== token) return;
     clearTimeout(entry.timer); this.pending.delete(token.channel);
-    if (this.valid(token)) this.send({ address: this.address(token.channel, token.aux, token.parameter), args: [entry.value] });
+    if (this.valid(token) && this.send({ address: this.address(token.channel, token.aux, token.parameter), args: [entry.value] })) { this.remember(token.channel, entry.value); this.emit({}); }
   }
   cancelDrag(token: DragToken) {
     const entry = this.pending.get(token.channel);
@@ -164,6 +188,7 @@ export class MixerClient {
       if (Number(match[2]) !== this.state.aux || match[3] !== this.state.parameter ||
         !config?.channels.some(c => c.channel === channel) || !Number.isFinite(value) ||
         (match[3] === 'level' ? value < -150 || value > 10 : value < 0 || value > 1)) return;
+      this.remember(channel, value);
       if (!this.pending.has(channel)) this.emit({ values: { ...this.state.values, [channel]: value } });
       return;
     }
@@ -173,7 +198,7 @@ export class MixerClient {
     if (config && auxName) this.emit({ config: { ...config, aux: config.aux.map(a => a.channel === Number(auxName[1]) ? { ...a, label: String(message.args[0] || 'Mix ' + a.channel) } : a) } });
   }
   position(channel: number) {
-    const value = this.state.values[channel];
+    const value = this.displayValue(channel);
     return value === undefined ? 0 : this.state.parameter === 'level' ? dbToPosition(value) : value;
   }
 }

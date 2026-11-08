@@ -15,11 +15,22 @@ export class MixerSession {
   private attempt = 0;
   private suspended = false;
   private queue = Promise.resolve();
+  private valueTimer: ReturnType<typeof setTimeout> | null = null;
+  private persistValues() {
+    if (this.valueTimer) clearTimeout(this.valueTimer);
+    this.valueTimer = null;
+    if (this.state.server) void this.persist("earsmixer.native.values:" + this.state.server, this.mixer.getValueCache());
+  }
   constructor(private storage: Storage, factory: (url: string) => Socket, private fetcher: typeof fetch = fetch) {
     this.mixer = new MixerClient(factory);
     let previous: unknown = null;
+    let revision = 0;
     this.mixer.subscribe(() => {
       const { config, status } = this.mixer.state;
+      if (this.mixer.cacheRevision !== revision) {
+        revision = this.mixer.cacheRevision;
+        if (!this.valueTimer) this.valueTimer = setTimeout(() => this.persistValues(), 350);
+      }
       if (status === 'connected' && config && config !== previous && this.state.server) {
         previous = config;
         void this.persist('earsmixer.native.channels:' + this.state.server, config);
@@ -60,16 +71,20 @@ export class MixerSession {
     this.patch({ connecting: true, message: '' });
     try {
       const server = await probeMixer(input, { fetchImpl: this.fetcher });
+      this.persistValues();
       await this.queue;
       let raw: any = {};
       try { raw = JSON.parse(await this.storage.getItem('earsmixer.native.profile:' + server) || '{}') || {}; } catch {}
       let channels = null;
       try { channels = parseConfig(JSON.parse(await this.storage.getItem('earsmixer.native.channels:' + server) || 'null')); } catch {}
+      let values: unknown = {};
+      try { values = JSON.parse(await this.storage.getItem("earsmixer.native.values:" + server) || "{}"); } catch {}
       if (attempt !== this.attempt) return;
       // Keep existing local guest layouts when upgrading. Never import account credentials.
       const preferences = readPreferences(raw.preferences) || readPreferences(raw.guest) || emptyPreferences();
       this.mixer.disconnect();
       this.patch({ server, preferences, recent: rememberMixer(this.state.recent, server) });
+      this.mixer.restoreValues(values);
       if (channels) this.mixer.restoreConfig(channels, preferences.selectedAux);
       this.mixer.selectAux(preferences.selectedAux);
       this.mixer.identify(this.state.settings.nickname.trim() || null);
@@ -80,6 +95,7 @@ export class MixerSession {
     } finally { if (attempt === this.attempt) this.patch({ connecting: false }); }
   }
   disconnect() {
+    this.persistValues();
     ++this.attempt; this.mixer.disconnect();
     this.patch({ server: null, connecting: false, preferences: emptyPreferences(), message: '' });
   }
@@ -91,8 +107,9 @@ export class MixerSession {
     if (this.state.server) void this.persist('earsmixer.native.profile:' + this.state.server, { preferences });
   }
   setLifecycle(state: string) {
-    if (state === 'inactive') { this.mixer.cancelWrites(); return; }
+    if (state === 'inactive') { this.persistValues(); this.mixer.cancelWrites(); return; }
     if (state === 'background') {
+      this.persistValues();
       this.suspended = true;
       this.mixer.disconnect(true);
     } else if (state === 'active') {

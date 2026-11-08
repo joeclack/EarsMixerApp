@@ -30,7 +30,7 @@ export default function Mixer() {
     <View style={{ flexDirection: landscape ? 'column' : 'row', alignItems: 'center', gap: 10 }}>
       <Text style={{ color: theme.muted, fontSize: 12, fontVariant: ['tabular-nums'], minWidth: 20 }}>{String(item.channel).padStart(2, '0')}</Text>
       <Text numberOfLines={compact ? 1 : 2} style={{ color: theme.text, fontSize: compact ? 15 : 17, fontWeight: '600', flex: landscape ? undefined : 1 }}>{item.label}</Text>
-      {compact && <Text style={{ color: theme.muted, fontSize: 12, fontVariant: ['tabular-nums'] }}>{levelText(mix.values[item.channel], mix.parameter)}</Text>}
+      {compact && <Text style={{ color: theme.muted, fontSize: 12, fontVariant: ['tabular-nums'] }}>{levelText(session.mixer.displayValue(item.channel), mix.parameter)}</Text>}
       <Pressable accessibilityRole="button" accessibilityLabel={(favourites.channels.includes(item.channel) ? 'Remove favourite ' : 'Favourite ') + item.label}
         accessibilityState={{ selected: favourites.channels.includes(item.channel) }} onPress={() => toggleFavourite(item.channel)} hitSlop={10}
         style={{ minWidth: 36, minHeight: 36, alignItems: 'center', justifyContent: 'center' }}>
@@ -41,7 +41,7 @@ export default function Mixer() {
     <Fader channel={item.channel} label={item.label} color={theme.tint} vertical={landscape} length={stripHeight} />
     {!compact && <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
       {!compact && <Text style={{ color: theme.muted, fontSize: 11 }}>{mix.parameter === 'level' ? 'SEND LEVEL' : 'SEND PAN'}</Text>}
-      <Text style={{ color: theme.text, marginLeft: 'auto', fontSize: 13, fontWeight: '500', fontVariant: ['tabular-nums'] }}>{levelText(mix.values[item.channel], mix.parameter)}</Text>
+      <Text style={{ color: theme.text, marginLeft: 'auto', fontSize: 13, fontWeight: '500', fontVariant: ['tabular-nums'] }}>{levelText(session.mixer.displayValue(item.channel), mix.parameter)}</Text>
     </View>}
   </View>;
   return <Page title="Mixer" scroll={false} compactHeader toolbar={<MixerToolbar />}>

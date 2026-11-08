@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Cache last-known send levels and pan per server/AUX for offline display; enable dragging only after fresh desk values arrive. Cached values are never recalled to the desk.
+
 - Keep the connection while iOS is inactive and retain channel/AUX metadata when backgrounded or reconnecting.
 - Cache channel names per server on the device; re-read live levels before enabling faders after reconnecting.
 
