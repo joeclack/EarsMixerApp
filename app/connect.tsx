@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, Keyboard, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 import { router } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../src/theme';
 import { useSession } from '../src/mixer/context';
 import { Glass, Icon, Message, Row } from '../src/components/ui';
@@ -10,6 +11,7 @@ import { reachableMixer, type NearbyMixer } from '../src/discovery/browser';
 export default function Connect() {
   const { session, state } = useSession();
   const theme = useTheme();
+  const insets = useSafeAreaInsets();
   const [address, setAddress] = useState(state.server || state.recent[0]?.url || '');
   const [error, setError] = useState('');
   const nearby = useNearbyMixers();
@@ -38,7 +40,8 @@ export default function Connect() {
     try { await session.connect(value); router.back(); }
     catch (error) { setError(error instanceof Error ? error.message : 'Could not connect.'); }
   }
-  return <Glass collapsable={false} style={{ flex: 1, borderTopLeftRadius: 32, borderTopRightRadius: 32 }}>
+  return <View style={{ flex: 1, minHeight: 0, paddingBottom: Math.max(insets.bottom, 12), backgroundColor: 'transparent' }}>
+    <Glass collapsable={false} style={{ flex: 1, minHeight: 0, borderRadius: 32, overflow: 'hidden' }}>
     <ScrollView keyboardShouldPersistTaps="handled" automaticallyAdjustKeyboardInsets contentContainerStyle={{ padding: 24, paddingTop: 32, paddingBottom: 40 }}>
       <View style={{ flexDirection: 'row', gap: 12, alignItems: 'center', marginBottom: 20 }}>
         <View style={{ flex: 1 }}>
@@ -86,5 +89,6 @@ export default function Connect() {
       </>}
       <Text style={{ color: theme.muted, fontSize: 13, lineHeight: 20, marginTop: 14 }}>Use the same network as the server.</Text>
     </ScrollView>
-  </Glass>;
+    </Glass>
+  </View>;
 }
