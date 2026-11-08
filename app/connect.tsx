@@ -4,7 +4,7 @@ import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../src/theme';
 import { useSession } from '../src/mixer/context';
-import { Glass, Icon, Message, Row } from '../src/components/ui';
+import { Icon, Message, Row } from '../src/components/ui';
 import NativeButton from '../src/components/NativeButton';
 import { useNearbyMixers } from '../src/discovery/useNearbyMixers';
 import { reachableMixer, type NearbyMixer } from '../src/discovery/browser';
@@ -40,9 +40,8 @@ export default function Connect() {
     try { await session.connect(value); router.back(); }
     catch (error) { setError(error instanceof Error ? error.message : 'Could not connect.'); }
   }
-  return <View style={{ flex: 1, minHeight: 0, paddingBottom: Math.max(insets.bottom, 12), backgroundColor: 'transparent' }}>
-    <Glass collapsable={false} style={{ flex: 1, minHeight: 0, borderRadius: 32, overflow: 'hidden' }}>
-    <ScrollView keyboardShouldPersistTaps="handled" automaticallyAdjustKeyboardInsets contentContainerStyle={{ padding: 24, paddingTop: 32, paddingBottom: 40 }}>
+  return <View style={{ flex: 1, minHeight: 0, backgroundColor: 'transparent' }}>
+    <ScrollView keyboardShouldPersistTaps="handled" automaticallyAdjustKeyboardInsets contentContainerStyle={{ padding: 24, paddingTop: 32, paddingBottom: Math.max(insets.bottom, 12) + 24 }}>
       <View style={{ flexDirection: 'row', gap: 12, alignItems: 'center', marginBottom: 20 }}>
         <View style={{ flex: 1 }}>
           <Text accessibilityRole="header" style={{ color: theme.text, fontSize: 28, fontWeight: '700', letterSpacing: -0.6 }}>Connect to mixer</Text>
@@ -89,6 +88,5 @@ export default function Connect() {
       </>}
       <Text style={{ color: theme.muted, fontSize: 13, lineHeight: 20, marginTop: 14 }}>Use the same network as the server.</Text>
     </ScrollView>
-    </Glass>
   </View>;
 }
