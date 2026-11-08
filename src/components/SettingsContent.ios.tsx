@@ -1,6 +1,6 @@
 import React from 'react';
 import { useResetDeviceData } from './useResetDeviceData';
-import { Host, Form, Section, Toggle, Picker, Text, Button, LabeledContent, HStack, Spacer, TextField, useNativeState } from '@expo/ui/swift-ui';
+import { Host, Form, Section, Picker, Text, Button, LabeledContent, HStack, Spacer, TextField, useNativeState } from '@expo/ui/swift-ui';
 import { tag, pickerStyle, buttonStyle, lineLimit, scrollContentBackground, disabled } from '@expo/ui/swift-ui/modifiers';
 import { router } from 'expo-router';
 import Constants from 'expo-constants';
@@ -23,7 +23,6 @@ export default function SettingsContent() {
         </Picker>
       </Section>
       <Section title="Mixer">
-        <Toggle label="Compact channels" systemImage="rectangle.compress.vertical" isOn={state.preferences.compact} onIsOnChange={compact => session.preferences({ compact })} />
         <Button label="Edit channels" systemImage="line.3.horizontal" onPress={() => router.push('/layout')} />
       </Section>
       <Section title="Connection">

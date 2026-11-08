@@ -29,17 +29,12 @@ export default function Mixer() {
   }, [session]));
   const hidden = hiddenChannels(mix.config, state.preferences, mix.aux);
   const channels = useMemo(() => orderedChannels(mix.config, state.preferences).filter(channel => !hidden.includes(channel.channel)), [mix.config, mix.aux, state.preferences]);
-  const compact = state.preferences.compact;
-  const renderChannel = ({ item }: { item: Channel }) => <View testID={'channel-' + item.channel} style={{ height: landscape ? cardHeight : undefined, overflow: 'hidden', width: landscape ? 76 : undefined, marginRight: landscape ? 6 : 0, paddingHorizontal: landscape ? 6 : compact ? 12 : 17, paddingVertical: landscape ? 8 : compact ? 6 : 17, borderRadius: compact ? 14 : 20, backgroundColor: theme.panel, marginBottom: compact ? 6 : 10 }}>
+  const renderChannel = ({ item }: { item: Channel }) => <View testID={'channel-' + item.channel} style={{ height: landscape ? cardHeight : undefined, overflow: 'hidden', width: landscape ? 76 : undefined, marginRight: landscape ? 6 : 0, paddingHorizontal: landscape ? 6 : 12, paddingVertical: landscape ? 8 : 6, borderRadius: 14, backgroundColor: theme.panel, marginBottom: 6 }}>
     <View style={{ height: landscape ? 64 : undefined, flexShrink: 0, flexDirection: landscape ? 'column' : 'row', alignItems: 'center', gap: landscape ? 6 : 10 }}>
-      <Text numberOfLines={landscape ? 2 : compact ? 1 : 2} style={{ color: theme.text, fontSize: landscape ? 12 : compact ? 15 : 17, minHeight: landscape ? 34 : undefined, textAlign: landscape ? 'center' : 'left', fontWeight: '600', flex: landscape ? undefined : 1 }}>{item.label}</Text>
-      {(landscape || compact) && <Text style={{ color: theme.muted, fontSize: 12, fontVariant: ['tabular-nums'] }}>{levelText(session.mixer.displayValue(item.channel), mix.parameter)}</Text>}
+      <Text numberOfLines={landscape ? 2 : 1} style={{ color: theme.text, fontSize: landscape ? 12 : 15, minHeight: landscape ? 34 : undefined, textAlign: landscape ? 'center' : 'left', fontWeight: '600', flex: landscape ? undefined : 1 }}>{item.label}</Text>
+      {<Text style={{ color: theme.muted, fontSize: 12, fontVariant: ['tabular-nums'] }}>{levelText(session.mixer.displayValue(item.channel), mix.parameter)}</Text>}
     </View>
     <Fader channel={item.channel} label={item.label} color={theme.tint} vertical={landscape} length={stripHeight} />
-    {!landscape && !compact && <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-      {!compact && <Text style={{ color: theme.muted, fontSize: 11 }}>{mix.parameter === 'level' ? 'SEND LEVEL' : 'SEND PAN'}</Text>}
-      <Text style={{ color: theme.text, marginLeft: 'auto', fontSize: 13, fontWeight: '500', fontVariant: ['tabular-nums'] }}>{levelText(session.mixer.displayValue(item.channel), mix.parameter)}</Text>
-    </View>}
   </View>;
   return <Page title="Mixer" scroll={false} compactHeader hideHeader={landscape} toolbar={<MixerToolbar />}>
     {!state.server ? <EmptyMixer /> : <FlatList key={landscape ? 'strips' : 'rows'} horizontal={landscape} onLayout={event => setBankHeight(event.nativeEvent.layout.height)} extraData={state.preferences}

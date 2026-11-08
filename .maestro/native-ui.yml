@@ -31,5 +31,5 @@ appId: com.joeclack.earsmixerapp
 - takeScreenshot: screenshots/ios-mixer
 - tapOn: "Settings"
 - assertVisible: "This device"
-- assertVisible: "Compact channels"
+- assertVisible: "Edit channels"
 - takeScreenshot: screenshots/ios-settings

@@ -1,7 +1,7 @@
 import React from 'react';
 import { useResetDeviceData } from './useResetDeviceData';
 import ProfileCard from './ProfileCard';
-import { Switch, Text, View, Pressable } from 'react-native';
+import { Text, View, Pressable } from 'react-native';
 import { router } from 'expo-router';
 import Constants from 'expo-constants';
 import { useSession } from '../mixer/context';
@@ -17,7 +17,6 @@ export default function SettingsContent() {
       options={[{ value: 'system', label: 'System' }, { value: 'light', label: 'Light' }, { value: 'dark', label: 'Dark' }]}
       onChange={value => session.setSettings({ appearance: value as 'system' | 'light' | 'dark' })} /></Section>
     <Section title="Mixer">
-      <Row title="Compact channels"><Switch value={state.preferences.compact} onValueChange={compact => session.preferences({ compact })} /></Row>
       <Row title="Edit channels" onPress={() => router.push('/layout')} />
     </Section>
     <Section title="Connection"><View style={{ flexDirection: 'row', alignItems: 'center' }}>

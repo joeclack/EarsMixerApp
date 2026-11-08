@@ -16,7 +16,7 @@ test('nickname, appearance and per-server layouts automatically persist without 
   await first.connect('one.local');
   first.preferences({ channelOrder: [3, 1, 2], selectedAux: 2, compact: true });
   await first.connect('two.local');
-  assert.equal(first.state.preferences.compact, false);
+  assert.equal(first.state.preferences.compact, true);
   await first.connect('one.local');
   assert.deepEqual(first.state.preferences.channelOrder, [3, 1, 2]);
   first.disconnect(false);

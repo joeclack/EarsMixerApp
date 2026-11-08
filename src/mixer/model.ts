@@ -10,7 +10,7 @@ export type Preferences = {
 };
 export type User = { id: string; username: string; displayName: string };
 export type Account = { user: User | null; preferences: Preferences | null; revision: number };
-export const emptyPreferences = (): Preferences => ({ selectedAux: null, channelOrder: [], favouritesByAux: {}, hiddenByAux: {}, view: 'list', compact: false });
+export const emptyPreferences = (): Preferences => ({ selectedAux: null, channelOrder: [], favouritesByAux: {}, hiddenByAux: {}, view: 'list', compact: true });
 const record = (v: unknown): v is Record<string, any> => !!v && typeof v === 'object' && !Array.isArray(v);
 const positive = (v: unknown): v is number => Number.isSafeInteger(v) && Number(v) > 0;
 export function readPreferences(v: unknown): Preferences | null {
@@ -32,7 +32,7 @@ export function readPreferences(v: unknown): Preferences | null {
       !Array.isArray(entry.channels) || entry.channels.length > 1000 || !entry.channels.every(positive)) return null;
     favouritesByAux[id] = { channels: [...new Set(entry.channels)], enabled: entry.enabled };
   }
-  return { selectedAux: v.selectedAux, channelOrder: [...new Set(v.channelOrder)], favouritesByAux, hiddenByAux, view: v.view, compact: v.compact };
+  return { selectedAux: v.selectedAux, channelOrder: [...new Set(v.channelOrder)], favouritesByAux, hiddenByAux, view: v.view, compact: true };
 }
 export function parseConfig(value: unknown): MixerConfig | null {
   if (!record(value) || !Array.isArray(value.channels) || !Array.isArray(value.aux)) return null;
