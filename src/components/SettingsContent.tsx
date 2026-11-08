@@ -1,4 +1,5 @@
 import React from 'react';
+import ProfileCard from './ProfileCard';
 import { Switch, Text, View, Pressable } from 'react-native';
 import { router } from 'expo-router';
 import Constants from 'expo-constants';
@@ -9,6 +10,7 @@ import Segmented from './Segmented';
 export default function SettingsContent() {
   const { session, state } = useSession(), theme = useTheme();
   return <>
+    <View style={{ marginBottom: 26 }}><ProfileCard /></View>
     <Section title="Appearance"><Row title="Theme" /><Segmented label="Appearance" value={state.settings.appearance}
       options={[{ value: 'system', label: 'System' }, { value: 'light', label: 'Light' }, { value: 'dark', label: 'Dark' }]}
       onChange={value => session.setSettings({ appearance: value as 'system' | 'light' | 'dark' })} /></Section>

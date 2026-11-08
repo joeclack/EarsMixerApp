@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- Combine identity and settings into one screen with a device-local nickname; remove account and password flows from the mobile app.
+- Automatically persist layouts and settings on the device.
+- Add vertical faders in landscape and a teal console palette.
+- Check recently used servers alongside Bonjour discovery.
+
 - Discover nearby servers with native iOS Bonjour and Android NSD; retain manual and QR connections.
 - Move AUX selection into a native toolbar menu alongside connection status. Remove the AUX sheet and connected-address label.
 - Use compact page headers, shorter compact channel rows and a single-column mixer.

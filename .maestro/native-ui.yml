@@ -23,9 +23,7 @@ appId: com.joeclack.earsmixerapp
     visible: "Kick"
     timeout: 30000
 - takeScreenshot: screenshots/ios-mixer
-- tapOn: "Profile"
-- assertVisible: "Account"
-- takeScreenshot: screenshots/ios-profile
 - tapOn: "Settings"
+- assertVisible: "This device"
 - assertVisible: "Compact channels"
 - takeScreenshot: screenshots/ios-settings
