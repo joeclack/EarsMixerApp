@@ -14,7 +14,7 @@ const steps = [
   { title: 'Set your nickname', symbol: 'person.crop.circle' as const, body: 'This name identifies your connection to the mixer.', bullets: [] },
   { title: 'Connect to a mixer', symbol: 'wifi' as const, body: 'Make sure you are on the correct Wi-Fi.', bullets: [] },
   { title: 'Choose a template (optional)', symbol: 'square.stack' as const, body: '', bullets: ['Open the … menu and tap Templates.', 'Choose a saved layout, or keep your own.', 'Templates never change desk levels.'] },
-  { title: 'Adjust your mix', symbol: 'slider.horizontal.3' as const, body: '', bullets: ['Choose your AUX in the … menu.', 'Drag a handle to change level or pan.', 'Rotate for vertical faders.'] },
+  { title: 'Adjust your mix', symbol: 'slider.horizontal.3' as const, body: '', bullets: ['Tap the headphones button to choose your AUX.', 'Drag a handle to change level or pan.', 'Rotate for vertical faders.'] },
   { title: 'Keep your layout', symbol: 'eye.slash' as const, body: '', bullets: ['Tap Edit to reorder or hide channels.', 'Layouts save automatically on this phone.', 'Reconnects to your last mixer.'] },
 ];
 export default function SetupWalkthrough() {

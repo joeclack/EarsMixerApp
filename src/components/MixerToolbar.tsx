@@ -18,22 +18,23 @@ export default function MixerToolbar() {
       </Stack.Toolbar.View>
     </Stack.Toolbar>
     <Stack.Toolbar placement="right" tintColor={theme.tint}>
-    {state.server && <Stack.Toolbar.Menu icon={Platform.OS === 'ios' ? 'ellipsis' : undefined} accessibilityLabel="Mixer options">
-      <Stack.Toolbar.Label>Options</Stack.Toolbar.Label>
-      <Stack.Toolbar.Menu disabled={mix.status !== 'connected' || !mix.config?.aux.length}>
-        <Stack.Toolbar.Label>{'Mix: ' + label}</Stack.Toolbar.Label>
-        {mix.config?.aux.map(aux => <Stack.Toolbar.MenuAction key={aux.channel} isOn={mix.aux === aux.channel}
-          onPress={() => session.preferences({ selectedAux: aux.channel })}>{aux.label}</Stack.Toolbar.MenuAction>)}
-      </Stack.Toolbar.Menu>
-      <Stack.Toolbar.MenuAction onPress={() => router.push('/templates')}>Templates</Stack.Toolbar.MenuAction>
-      <Stack.Toolbar.MenuAction onPress={() => router.push('/layout')}>Edit channels</Stack.Toolbar.MenuAction>
-    </Stack.Toolbar.Menu>}
     {Platform.OS === 'ios' ? <Stack.Toolbar.Button icon={mix.status === 'connected' ? 'wifi' : 'wifi.slash'}
       accessibilityLabel={status + '. Connect to mixer'} tintColor={color} onPress={() => router.push('/connect')} /> :
       <Stack.Toolbar.View><Pressable accessibilityRole="button" accessibilityLabel={status + '. Connect to mixer'}
         onPress={() => router.push('/connect')} style={styles.headerButton}>
         <Icon name={{ android: mix.status === 'connected' ? 'wifi' : 'wifi_off' }} color={color} />
       </Pressable></Stack.Toolbar.View>}
+    {state.server && !!mix.config?.aux.length && <Stack.Toolbar.Menu icon={Platform.OS === 'ios' ? 'headphones' : undefined}
+      accessibilityLabel={'Choose AUX, ' + label} disabled={mix.status !== 'connected'}>
+      <Stack.Toolbar.Label>Choose AUX</Stack.Toolbar.Label>
+      {mix.config.aux.map(aux => <Stack.Toolbar.MenuAction key={aux.channel} isOn={mix.aux === aux.channel}
+        onPress={() => session.preferences({ selectedAux: aux.channel })}>{aux.label}</Stack.Toolbar.MenuAction>)}
+    </Stack.Toolbar.Menu>}
+    {state.server && <Stack.Toolbar.Menu icon={Platform.OS === 'ios' ? 'ellipsis' : undefined} accessibilityLabel="Mixer options">
+      <Stack.Toolbar.Label>Options</Stack.Toolbar.Label>
+      <Stack.Toolbar.MenuAction onPress={() => router.push('/templates')}>Templates</Stack.Toolbar.MenuAction>
+      <Stack.Toolbar.MenuAction onPress={() => router.push('/layout')}>Edit channels</Stack.Toolbar.MenuAction>
+    </Stack.Toolbar.Menu>}
   </Stack.Toolbar>
   </>;
 }
