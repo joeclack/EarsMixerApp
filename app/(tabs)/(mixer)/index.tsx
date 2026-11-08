@@ -16,10 +16,13 @@ export default function Mixer() {
   const { width, height } = useWindowDimensions();
   const landscape = width > height;
   const stripHeight = Math.max(90, height - 310);
-  useFocusEffect(useCallback(() => () => session.mixer.cancelWrites(), [session]));
+  useFocusEffect(useCallback(() => {
+    // Cached positions remain visible while fresh desk values are requested.
+    if (session.mixer.state.status === 'connected') session.mixer.refresh();
+    return () => session.mixer.cancelWrites();
+  }, [session]));
   const favourites = state.preferences.favouritesByAux[String(mix.aux)] || { channels: [], enabled: false };
   const channels = useMemo(() => orderedChannels(mix.config, state.preferences).filter(c => !favourites.enabled || favourites.channels.includes(c.channel)), [mix.config, state.preferences, favourites.enabled]);
-  const loaded = Object.keys(mix.values).length, count = mix.config?.channels.length || 0;
   const compact = state.preferences.compact;
   const toggleFavourite = (channel: number) => {
     if (!mix.aux) return;
@@ -45,7 +48,7 @@ export default function Mixer() {
     </View>}
   </View>;
   return <Page title="Mixer" scroll={false} compactHeader toolbar={<MixerToolbar />}>
-    {landscape && state.server && <View style={{ paddingHorizontal: 20, paddingVertical: 6, flexDirection: 'row', alignItems: 'center', gap: 16 }}><View style={{ flex: 1 }}><Segmented label="Fader mode" value={mix.parameter} options={[{ value: 'level', label: 'Level' }, { value: 'pan', label: 'Pan' }]} onChange={value => session.mixer.setParameter(value === 'pan' ? 'pan' : 'level')} /></View><Text style={{ color: theme.muted, fontSize: 12, width: 110, textAlign: 'right' }}>{mix.status === 'connected' && loaded < count ? `Loading ${loaded}/${count}` : `${channels.length} channels`}</Text></View>}
+    {landscape && state.server && <View style={{ paddingHorizontal: 20, paddingVertical: 6, flexDirection: 'row', alignItems: 'center', gap: 16 }}><View style={{ flex: 1 }}><Segmented label="Fader mode" value={mix.parameter} options={[{ value: 'level', label: 'Level' }, { value: 'pan', label: 'Pan' }]} onChange={value => session.mixer.setParameter(value === 'pan' ? 'pan' : 'level')} /></View><Text style={{ color: theme.muted, fontSize: 12, width: 110, textAlign: 'right' }}>{channels.length} channels</Text></View>}
     {!state.server ? <EmptyMixer /> : <FlatList key={landscape ? 'strips' : 'rows'} horizontal={landscape} extraData={state.preferences}
       data={channels} renderItem={renderChannel} keyExtractor={item => String(item.channel)} contentInsetAdjustmentBehavior="automatic"
       contentContainerStyle={{ padding: 20, paddingBottom: landscape ? 85 : 130 }} keyboardShouldPersistTaps="handled"
@@ -58,7 +61,7 @@ export default function Mixer() {
             <Icon name={{ ios: favourites.enabled ? 'star.fill' : 'star', android: 'star', web: 'star' }} size={17} color={favourites.enabled ? theme.orange : theme.muted} />
             <Text style={{ color: favourites.enabled ? theme.orange : theme.muted, fontSize: 14, fontWeight: '600' }}>Favourites</Text>
           </Pressable>
-          <Text style={{ color: theme.muted, fontSize: 13, marginLeft: 'auto' }}>{mix.status === 'connected' && loaded < count ? `Loading ${loaded}/${count}` : `${channels.length} channels`}</Text>
+          <Text style={{ color: theme.muted, fontSize: 13, marginLeft: 'auto' }}>{channels.length} channels</Text>
           <Pressable accessibilityRole="button" accessibilityLabel="Edit channel order" onPress={() => router.push('/layout')} style={{ minHeight: 40, justifyContent: 'center', paddingLeft: 4 }}>
             <Text style={{ color: theme.tint, fontSize: 15 }}>Edit</Text>
           </Pressable>

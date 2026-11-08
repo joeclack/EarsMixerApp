@@ -50,7 +50,7 @@ export default function Fader({ channel, label, color, vertical = false, length 
   }), [channel, session]);
   const ready = mix.status === 'connected' && mix.values[channel] !== undefined;
   const position = session.mixer.position(channel);
-  return <View onLayout={event => setWidth(vertical ? event.nativeEvent.layout.height : event.nativeEvent.layout.width)} style={{ height: vertical ? length : 48, width: vertical ? 56 : undefined, alignSelf: vertical ? 'center' : undefined, justifyContent: 'center', opacity: ready ? 1 : 0.35 }}>
+  return <View onLayout={event => setWidth(vertical ? event.nativeEvent.layout.height : event.nativeEvent.layout.width)} style={{ height: vertical ? length : 48, width: vertical ? 56 : undefined, alignSelf: vertical ? 'center' : undefined, justifyContent: 'center', opacity: session.mixer.displayValue(channel) !== undefined ? 1 : 0.35 }}>
     {vertical && <View pointerEvents="none" style={{ position: 'absolute', top: 16, bottom: 16, left: 0, right: 0, justifyContent: 'space-between' }}>
       {Array.from({ length: 9 }, (_, index) => <View key={index} style={{ height: 1, width: index % 2 ? 8 : 14, backgroundColor: theme.line }} />)}
     </View>}
