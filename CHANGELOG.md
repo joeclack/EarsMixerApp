@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Reconnect to the last saved server on startup; otherwise automatically connect to a single discovered desk and show the connection sheet for multiple desks.
+
 - Cache last-known send levels and pan per server/AUX for offline display; enable dragging only after fresh desk values arrive. Cached values are never recalled to the desk.
 
 - Keep the connection while iOS is inactive and retain channel/AUX metadata when backgrounded or reconnecting.

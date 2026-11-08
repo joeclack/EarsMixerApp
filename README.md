@@ -48,7 +48,7 @@ Register physical iPhones for internal distribution as prompted by EAS. Preview,
 
 ## Nearby mixers
 
-Open **Connect** to browse nearby EarsMixer servers. Select a result to connect; the app checks the resolved address and port before opening a mixer session. Discovery does not change audio levels or connect to a server without a tap. It stops when the sheet closes or the app enters the background.
+Open **Connect** to browse nearby EarsMixer servers. Select a result to connect; the app checks the resolved address and port before opening a mixer session. Startup reconnects to the last saved server. If unavailable, one discovered server connects automatically; multiple results open the connection sheet. Discovery never changes audio levels. It stops when the sheet closes or the app enters the background.
 
 This requires the EarsMixer server’s Bonjour discovery update and a **new native app build**. The local `earsmixer-discovery` Expo module uses Apple Bonjour and Android Network Service Discovery. Expo Go and browsers cannot load it; use manual addresses or QR codes there. For native development, run `npm run ios` on macOS or `npm run android`, or create a signed EAS build for a physical iPhone.
 
@@ -81,3 +81,5 @@ The iOS native build workflow compiles a simulator app and runs the Maestro scre
 The mobile app uses an optional nickname and stores appearance, channel order, favourites, selected AUX and compact mode on the device automatically. No account or password is required. Layouts are kept separately for each server. Last-known levels and pan are cached for display while reconnecting. Fresh desk values replace them before dragging is enabled; cached values are never sent to the desk. Removing the app removes its local layouts.
 
 Landscape uses vertical channel strips; portrait uses horizontal faders. Recent server addresses are checked alongside native Bonjour discovery. Native discovery requires a rebuilt app and the server discovery update; Expo Go can check recent addresses and use QR/manual connections.
+
+The last successful server connection is saved locally. Choosing Disconnect clears that automatic reconnect target.

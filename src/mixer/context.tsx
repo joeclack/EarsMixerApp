@@ -10,7 +10,7 @@ export function MixerProvider({ children }: React.PropsWithChildren) {
   useEffect(() => {
     void session.hydrate();
     const subscription = AppState.addEventListener('change', state => session.setLifecycle(state));
-    return () => { subscription.remove(); session.disconnect(); };
+    return () => { subscription.remove(); session.disconnect(false); };
   }, [session]);
   return <Context.Provider value={session}>{children}</Context.Provider>;
 }

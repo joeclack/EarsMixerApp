@@ -1,15 +1,15 @@
-import { probeMixer, readSavedMixers, rememberMixer, type SavedMixer } from '../connection';
+import { normalizeMixerAddress, probeMixer, readSavedMixers, rememberMixer, type SavedMixer } from '../connection';
 import { MixerClient, type Socket } from './client';
 import { emptyPreferences, readPreferences, type Preferences, parseConfig } from './model';
 type Storage = { getItem(key: string): Promise<string | null>; setItem(key: string, value: string): Promise<void> };
 export type Settings = { appearance: 'system' | 'light' | 'dark'; nickname: string };
 export type SessionState = {
-  hydrated: boolean; server: string | null; recent: SavedMixer[]; settings: Settings;
+  hydrated: boolean; lastServer: string | null; server: string | null; recent: SavedMixer[]; settings: Settings;
   preferences: Preferences; connecting: boolean; message: string;
 };
 export class MixerSession {
   readonly mixer: MixerClient;
-  state: SessionState = { hydrated: false, server: null, recent: [], settings: { appearance: 'system', nickname: '' },
+  state: SessionState = { hydrated: false, lastServer: null, server: null, recent: [], settings: { appearance: 'system', nickname: '' },
     preferences: emptyPreferences(), connecting: false, message: '' };
   private listeners = new Set<() => void>();
   private attempt = 0;
@@ -42,10 +42,12 @@ export class MixerSession {
   private patch(update: Partial<SessionState>) { this.state = { ...this.state, ...update }; this.listeners.forEach(fn => fn()); }
   async hydrate() {
     try {
-      const [recent, raw] = await Promise.all([this.storage.getItem('earsmixer.connections.v1'), this.storage.getItem('earsmixer.native.settings.v1')]);
+      const [recent, raw, last] = await Promise.all([this.storage.getItem('earsmixer.connections.v1'), this.storage.getItem('earsmixer.native.settings.v1'), this.storage.getItem('earsmixer.native.last-server.v1')]);
       let settings: Partial<Settings> = {};
       try { settings = JSON.parse(raw || '{}') || {}; } catch {}
-      this.patch({ recent: readSavedMixers(recent), settings: {
+      let lastServer: string | null = null;
+      try { const saved = JSON.parse(last || 'null'); if (typeof saved === 'string') lastServer = normalizeMixerAddress(saved); } catch {}
+      this.patch({ lastServer, recent: readSavedMixers(recent), settings: {
         appearance: settings.appearance === 'dark' || settings.appearance === 'light' ? settings.appearance : 'system',
         nickname: typeof settings.nickname === 'string' ? settings.nickname.slice(0, 80) : '',
       } });
@@ -90,12 +92,17 @@ export class MixerSession {
       this.mixer.identify(this.state.settings.nickname.trim() || null);
       if (!this.suspended) this.mixer.connect(server, true);
       await this.persist('earsmixer.connections.v1', this.state.recent);
+      if (attempt === this.attempt) {
+        this.patch({ lastServer: server });
+        await this.persist('earsmixer.native.last-server.v1', server);
+      }
     } catch (error) {
       if (attempt === this.attempt) { this.patch({ message: error instanceof Error ? error.message : 'Could not connect.' }); throw error; }
     } finally { if (attempt === this.attempt) this.patch({ connecting: false }); }
   }
-  disconnect() {
+  disconnect(forgetConnection = true) {
     this.persistValues();
+    if (forgetConnection) { this.patch({ lastServer: null }); void this.persist('earsmixer.native.last-server.v1', null); }
     ++this.attempt; this.mixer.disconnect();
     this.patch({ server: null, connecting: false, preferences: emptyPreferences(), message: '' });
   }

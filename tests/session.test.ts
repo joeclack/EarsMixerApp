@@ -17,8 +17,10 @@ test('nickname, appearance and per-server layouts automatically persist without 
   assert.equal(first.state.preferences.compact, false);
   await first.connect('one.local');
   assert.deepEqual(first.state.preferences.channelOrder, [3, 1, 2]);
-  first.disconnect();
-  const second = make(); await second.hydrate(); await second.connect('one.local');
+  first.disconnect(false);
+  const second = make(); await second.hydrate();
+  assert.equal(second.state.lastServer, 'http://one.local/');
+  await second.connect('one.local');
   assert.equal(second.state.settings.nickname, 'Drummer');
   assert.equal(second.state.settings.appearance, 'dark');
   assert.equal(second.state.preferences.selectedAux, 2);
