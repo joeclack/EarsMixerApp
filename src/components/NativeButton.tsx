@@ -2,7 +2,7 @@ import React from 'react';
 import { Pressable, Text } from 'react-native';
 import type { SFSymbol } from 'sf-symbols-typescript';
 import { useTheme } from '../theme';
-export type NativeButtonProps = { title: string; symbol?: SFSymbol; onPress(): void; prominent?: boolean; disabled?: boolean; destructive?: boolean };
+export type NativeButtonProps = { title: string; symbol?: SFSymbol; onPress(): void; prominent?: boolean; bordered?: boolean; disabled?: boolean; destructive?: boolean };
 export default function NativeButton({ title, onPress, prominent, disabled, destructive }: NativeButtonProps) {
   const theme = useTheme();
   return <Pressable accessibilityRole="button" accessibilityState={{ disabled: !!disabled }} disabled={disabled} onPress={onPress}

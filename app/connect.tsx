@@ -79,7 +79,7 @@ export default function Connect() {
       </View>
       <View style={{ flexDirection: 'row', gap: 10, flexWrap: 'wrap', marginTop: 5, marginBottom: 24 }}>
         <NativeButton title={busy ? 'Connecting…' : 'Connect'} symbol="wifi" prominent disabled={busy || !address.trim()} onPress={() => void connect()} />
-        <NativeButton title="Scan code" symbol="qrcode.viewfinder" disabled={busy} onPress={() => router.push('/scan')} />
+        <NativeButton title="Scan code" bordered symbol="qrcode.viewfinder" disabled={busy} onPress={() => router.push('/scan')} />
       </View>
       {!!state.recent.length && <>
         <Text style={{ color: theme.muted, fontSize: 13, fontWeight: '600', marginBottom: 8 }}>RECENT MIXERS</Text>
