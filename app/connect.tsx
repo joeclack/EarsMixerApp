@@ -5,6 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../src/theme';
 import { useSession } from '../src/mixer/context';
 import { Icon, Message, Row } from '../src/components/ui';
+import CloseButton from '../src/components/CloseButton';
 import NativeButton from '../src/components/NativeButton';
 import Segmented from '../src/components/Segmented';
 import { useNearbyMixers } from '../src/discovery/useNearbyMixers';
@@ -49,10 +50,7 @@ export default function Connect() {
           <Text accessibilityRole="header" style={{ color: theme.text, fontSize: 28, fontWeight: '700', letterSpacing: -0.6 }}>Connect to mixer</Text>
           <Text style={{ color: theme.muted, fontSize: 15, marginTop: 6, lineHeight: 21 }}>Select a server or enter its address.</Text>
         </View>
-        <Pressable accessibilityRole="button" accessibilityLabel="Close connection sheet" onPress={() => router.back()}
-          style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: theme.secondary, alignItems: 'center', justifyContent: 'center' }}>
-          <Icon name={{ ios: 'xmark', android: 'close', web: 'close' }} size={14} color={theme.muted} />
-        </Pressable>
+        <CloseButton onPress={() => router.back()} />
       </View>
       <View style={{ marginBottom: 24 }}>
         <Segmented label="Connection method" value={mode} options={[{ value: 'auto', label: 'Auto' }, { value: 'manual', label: 'Manual' }]}

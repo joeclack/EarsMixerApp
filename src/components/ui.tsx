@@ -1,6 +1,5 @@
-import React, { useEffect, useState } from 'react';
-import { AccessibilityInfo, ActivityIndicator, Platform, Pressable, ScrollView, StyleSheet, Text, View, type ViewProps, type ColorValue } from 'react-native';
-import { GlassView, isLiquidGlassAvailable } from 'expo-glass-effect';
+import React from 'react';
+import { ActivityIndicator, Platform, Pressable, ScrollView, StyleSheet, Text, View, type ColorValue } from 'react-native';
 import { SymbolView, type SymbolViewProps } from 'expo-symbols';
 import { router, Stack } from 'expo-router';
 import { useHeaderHeight } from 'expo-router/react-navigation';
@@ -11,19 +10,6 @@ import NativeButton from './NativeButton';
 export function Icon({ name, size = 22, color }: { name: SymbolViewProps['name']; size?: number; color?: ColorValue }) {
   const theme = useTheme();
   return <SymbolView name={name} size={size} tintColor={color || theme.tint} style={{ width: size, height: size }} />;
-}
-export function Glass({ children, style, ...props }: ViewProps) {
-  const theme = useTheme();
-  const [reduced, setReduced] = useState(false);
-  useEffect(() => {
-    if (Platform.OS !== 'ios') return;
-    void AccessibilityInfo.isReduceTransparencyEnabled().then(setReduced);
-    const listener = AccessibilityInfo.addEventListener('reduceTransparencyChanged', setReduced);
-    return () => listener.remove();
-  }, []);
-  if (Platform.OS === 'ios' && isLiquidGlassAvailable() && !reduced)
-    return <GlassView glassEffectStyle="regular" colorScheme={theme.scheme} style={style} {...props}>{children}</GlassView>;
-  return <View style={[{ backgroundColor: theme.panel }, style]} {...props}>{children}</View>;
 }
 export function Page({ title, children, scroll = true, compactHeader = true, toolbar }: React.PropsWithChildren<{ title: string; scroll?: boolean; compactHeader?: boolean; toolbar?: React.ReactNode }>) {
   const theme = useTheme();
@@ -36,13 +22,17 @@ export function Page({ title, children, scroll = true, compactHeader = true, too
       ...(Platform.OS === 'web' && { headerLeft: () => <Text accessibilityRole="header" style={{ color: theme.text, fontSize: 20, fontWeight: '700' }}>{title}</Text> }) }),
     headerShadowVisible: false, headerLargeTitleShadowVisible: false, headerTintColor: theme.tint,
     headerStyle: { backgroundColor: 'transparent' },
-    ...(!toolbar && { headerRight: () => <Pressable accessibilityRole="button" accessibilityLabel="Connect to mixer" onPress={() => router.push('/connect')} style={styles.headerButton}>
+    ...(!toolbar && Platform.OS !== 'ios' && { headerRight: () => <Pressable accessibilityRole="button" accessibilityLabel="Connect to mixer" onPress={() => router.push('/connect')} style={styles.headerButton}>
       <Icon name={{ ios: mix.status === 'connected' ? 'wifi' : 'wifi.slash', android: 'wifi', web: 'wifi' }} color={mix.status === 'connected' ? theme.green : theme.tint} />
     </Pressable> }),
   };
   return <View style={{ flex: 1, backgroundColor: theme.bg }}>
     <Stack.Screen options={options} />
     {toolbar}
+    {!toolbar && Platform.OS === 'ios' && <Stack.Toolbar placement="right">
+      <Stack.Toolbar.Button icon={mix.status === 'connected' ? 'wifi' : 'wifi.slash'} tintColor={mix.status === 'connected' ? theme.green : theme.tint}
+        accessibilityLabel="Connect to mixer" onPress={() => router.push('/connect')} />
+    </Stack.Toolbar>}
     {scroll ? <ScrollView contentInsetAdjustmentBehavior="automatic" keyboardShouldPersistTaps="handled" automaticallyAdjustKeyboardInsets
       contentContainerStyle={styles.page}>{children}</ScrollView> : <View style={{ flex: 1, paddingTop: Platform.OS === 'ios' ? headerHeight : 0 }}>{children}</View>}
     {!state.hydrated && <View style={styles.loading}><ActivityIndicator /></View>}
@@ -72,9 +62,9 @@ export function Message({ children, error = false }: React.PropsWithChildren<{ e
 export function EmptyMixer({ profile = false }: { profile?: boolean }) {
   const theme = useTheme();
   return <View style={{ paddingHorizontal: 18, paddingTop: 70, alignItems: 'center', gap: 18 }}>
-    <Glass style={{ width: 96, height: 96, borderRadius: 30, alignItems: 'center', justifyContent: 'center' }}>
+    <View style={{ width: 96, height: 96, borderRadius: 30, alignItems: 'center', justifyContent: 'center' }}>
       <Icon name={{ ios: profile ? 'person.crop.circle' : 'headphones', android: profile ? 'account_circle' : 'headphones', web: profile ? 'account_circle' : 'headphones' }} size={46} />
-    </Glass>
+    </View>
     <Text style={{ color: theme.text, fontSize: 27, fontWeight: '700', textAlign: 'center' }}>{profile ? 'Not connected' : 'No mixer connected'}</Text>
     <Text style={{ color: theme.muted, fontSize: 17, lineHeight: 25, textAlign: 'center', maxWidth: 300 }}>
       {profile ? 'Connect to a mixer to sign in.' : 'Select a server to view channels.'}
