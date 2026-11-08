@@ -1,6 +1,7 @@
 import React, { useCallback, useMemo } from 'react';
 import { FlatList, Pressable, Text, View, useWindowDimensions } from 'react-native';
 import { router, useFocusEffect } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useSession } from '../../../src/mixer/context';
 import { useTheme } from '../../../src/theme';
 import { orderedChannels, levelText, type Channel } from '../../../src/mixer/model';
@@ -14,6 +15,7 @@ export default function Mixer() {
   const { session, state, mix } = useSession();
   const theme = useTheme();
   const { width, height } = useWindowDimensions();
+  const insets = useSafeAreaInsets();
   const landscape = width > height;
   const stripHeight = Math.max(90, height - 170);
   useFocusEffect(useCallback(() => {
@@ -49,7 +51,7 @@ export default function Mixer() {
   return <Page title="Mixer" scroll={false} compactHeader toolbar={<MixerToolbar />}>
     {!state.server ? <EmptyMixer /> : <FlatList key={landscape ? 'strips' : 'rows'} horizontal={landscape} extraData={state.preferences}
       data={channels} renderItem={renderChannel} keyExtractor={item => String(item.channel)} contentInsetAdjustmentBehavior="never"
-      contentContainerStyle={{ padding: 20, paddingBottom: landscape ? 20 : 130 }} keyboardShouldPersistTaps="handled"
+      contentContainerStyle={{ padding: 20, paddingLeft: landscape ? insets.left + 20 : 20, paddingRight: landscape ? insets.right + 20 : 20, paddingBottom: landscape ? 20 : 130 }} keyboardShouldPersistTaps="handled"
       ListHeaderComponent={!landscape ? <View style={{ gap: 17, marginBottom: 20 }}>
         <Segmented label="Fader mode" value={mix.parameter} options={[{ value: 'level', label: 'Level' }, { value: 'pan', label: 'Pan' }]} onChange={value => session.mixer.setParameter(value === 'pan' ? 'pan' : 'level')} />
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
