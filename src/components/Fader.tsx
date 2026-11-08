@@ -24,7 +24,7 @@ export default function Fader({ channel, label, color, vertical = false, length 
   const lastDispatch = useSharedValue(0);
   const drag = useRef<DragToken | null>(null);
   const haptics = useRef(new DragHaptics(() => { void Haptics.selectionAsync().catch(() => {}); })).current;
-  const inset = vertical ? 26 : 20;
+  const inset = 26;
   const travel = Math.max(0, width - inset * 2);
   const begin = useCallback((initial: number, epoch: number) => {
     if (epoch !== session.mixer.state.epoch) return;
@@ -110,8 +110,8 @@ export default function Fader({ channel, label, color, vertical = false, length 
         session.mixer.drag(token, clamp(position + (event.nativeEvent.actionName === 'increment' ? 0.02 : -0.02))); session.mixer.flush(token);
         void Haptics.selectionAsync().catch(() => {});
       }}
-      style={[{ position: 'absolute', left: vertical ? 23 : 6, top: vertical ? 4 : 10,
-        width: 28, height: vertical ? 44 : 36, borderRadius: 4,
+      style={[{ position: 'absolute', left: vertical ? 23 : 4, top: vertical ? 4 : 14,
+        width: vertical ? 28 : 44, height: vertical ? 44 : 28, borderRadius: 4,
         backgroundColor: '#18232B', borderWidth: 1, borderColor: dragging ? '#728893' : '#435560',
         shadowColor: '#000000', shadowOffset: { width: 0, height: 3 }, shadowOpacity: 0.4, shadowRadius: 3, elevation: 4,
         alignItems: 'center', justifyContent: 'center' }, thumbStyle]}>

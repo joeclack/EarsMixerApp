@@ -18,12 +18,12 @@ export default memo(function FaderHandleSurface({ vertical, color, ready, draggi
         start={start} end={end} style={StyleSheet.absoluteFill} />
       <View style={vertical
         ? { position: 'absolute', left: -4, right: -4, top: -5, height: 14, borderBottomWidth: 1, borderBottomLeftRadius: 20, borderBottomRightRadius: 20, borderColor: '#A7BBC5', opacity: 0.45 }
-        : { position: 'absolute', top: -4, bottom: -4, left: -5, width: 12, borderRightWidth: 1, borderTopRightRadius: 20, borderBottomRightRadius: 20, borderColor: '#A7BBC5', opacity: 0.45 }} />
+        : { position: 'absolute', top: -4, bottom: -4, left: -5, width: 14, borderRightWidth: 1, borderTopRightRadius: 20, borderBottomRightRadius: 20, borderColor: '#A7BBC5', opacity: 0.45 }} />
       <View style={vertical
         ? { position: 'absolute', left: -4, right: -4, bottom: -5, height: 14, borderTopWidth: 1, borderTopLeftRadius: 20, borderTopRightRadius: 20, borderColor: '#020508', opacity: 0.9 }
-        : { position: 'absolute', top: -4, bottom: -4, right: -5, width: 12, borderLeftWidth: 1, borderTopLeftRadius: 20, borderBottomLeftRadius: 20, borderColor: '#020508', opacity: 0.9 }} />
+        : { position: 'absolute', top: -4, bottom: -4, right: -5, width: 14, borderLeftWidth: 1, borderTopLeftRadius: 20, borderBottomLeftRadius: 20, borderColor: '#020508', opacity: 0.9 }} />
       <View style={{ flexDirection: vertical ? 'column' : 'row', gap: 4 }}>
-        {Array.from({ length: vertical ? 5 : 4 }, (_, index) => <View key={index} style={{ width: vertical ? 16 : 1.5, height: vertical ? 1.5 : 20, borderRadius: 1, backgroundColor: '#010406' }}>
+        {Array.from({ length: 5 }, (_, index) => <View key={index} style={{ width: vertical ? 16 : 1.5, height: vertical ? 1.5 : 16, borderRadius: 1, backgroundColor: '#010406' }}>
           <View style={{ flex: 1, borderRadius: 1, backgroundColor: color, opacity: ready ? dragging ? 0.9 : 0.55 : 0.2,
             shadowColor: color, shadowOpacity: 0.85, shadowRadius: dragging ? 4 : 2, shadowOffset: { width: 0, height: 0 } }} />
         </View>)}
