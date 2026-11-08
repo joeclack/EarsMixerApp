@@ -1,9 +1,9 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { PanResponder, View } from 'react-native';
+import { PanResponder, View, Text } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { useSession } from '../mixer/context';
 import { useTheme } from '../theme';
-import { clamp, levelText } from '../mixer/model';
+import { clamp, levelText, dbToPosition } from '../mixer/model';
 import type { DragToken } from '../mixer/client';
 
 export default function Fader({ channel, label, color, vertical = false, length = 200 }: { channel: number; label: string; color: string; vertical?: boolean; length?: number }) {
@@ -48,7 +48,7 @@ export default function Fader({ channel, label, color, vertical = false, length 
       if (!current.moved) {
         current.moved = true; setDragging(true);
       }
-      const travel = latest.current.width - 32;
+      const travel = latest.current.width - (latest.current.vertical ? 40 : 32);
       const position = clamp(current.start + movement / travel);
       // Keep a movement-driven feedback loop alive for the gesture. Network
       // values and release/settling never trigger feedback.
@@ -70,12 +70,16 @@ export default function Fader({ channel, label, color, vertical = false, length 
   const ready = mix.status === 'connected' && mix.values[channel] !== undefined;
   const position = session.mixer.position(channel);
   return <View onLayout={event => setWidth(vertical ? event.nativeEvent.layout.height : event.nativeEvent.layout.width)} style={{ height: vertical ? length : 48, width: vertical ? 56 : undefined, alignSelf: vertical ? 'center' : undefined, justifyContent: 'center', opacity: session.mixer.displayValue(channel) !== undefined ? 1 : 0.35 }}>
-    {vertical && <View pointerEvents="none" style={{ position: 'absolute', top: 16, bottom: 16, left: 0, right: 0, justifyContent: 'space-between' }}>
+    {vertical && <View pointerEvents="none" style={{ position: 'absolute', top: 20, bottom: 20, left: 0, right: 0, justifyContent: 'space-between' }}>
       {Array.from({ length: 9 }, (_, index) => <View key={index} style={{ height: 1, width: index % 2 ? 8 : 14, backgroundColor: theme.line }} />)}
     </View>}
-    <View pointerEvents="none" style={vertical ? { position: 'absolute', top: 16, bottom: 16, width: 6, left: 25, borderRadius: 4, backgroundColor: theme.secondary, justifyContent: 'flex-end' } : { height: 6, borderRadius: 4, marginHorizontal: 16, backgroundColor: theme.secondary }}>
+    <View pointerEvents="none" style={vertical ? { position: 'absolute', top: 20, bottom: 20, width: 6, left: 25, borderRadius: 4, backgroundColor: theme.secondary, justifyContent: 'flex-end' } : { height: 6, borderRadius: 4, marginHorizontal: 16, backgroundColor: theme.secondary }}>
       <View style={vertical ? { height: (position * 100) + '%' as any, width: 6, borderRadius: 4, backgroundColor: color } : { width: (position * 100) + '%' as any, height: 6, borderRadius: 4, backgroundColor: color }} />
     </View>
+    {vertical && mix.parameter === 'level' && <View pointerEvents="none" style={{ position: 'absolute', left: 0, top: 20 + Math.max(0, width - 40) * (1 - dbToPosition(0)) - 7, height: 14, justifyContent: 'center' }}>
+      <Text style={{ color: theme.text, fontSize: 9, fontWeight: '600' }}>0 dB</Text>
+      <View style={{ position: 'absolute', left: 23, width: 12, height: 1, backgroundColor: theme.text }} />
+    </View>}
     <View {...responder.panHandlers} accessible accessibilityRole="adjustable" accessibilityLabel={label + (mix.parameter === 'pan' ? ' pan' : ' level')}
       accessibilityState={{ disabled: !ready }} accessibilityValue={{ min: 0, max: 100, now: Math.round(position * 100), text: levelText(session.mixer.displayValue(channel), mix.parameter) }}
       accessibilityActions={[{ name: 'increment' }, { name: 'decrement' }]} onAccessibilityAction={event => {
@@ -83,7 +87,7 @@ export default function Fader({ channel, label, color, vertical = false, length 
         session.mixer.drag(token, clamp(position + (event.nativeEvent.actionName === 'increment' ? 0.02 : -0.02))); session.mixer.flush(token);
         void Haptics.selectionAsync().catch(() => {});
       }}
-      style={{ position: 'absolute', left: vertical ? 9 : Math.max(0, width - 32) * position, top: vertical ? Math.max(0, width - 32) * (1 - position) : undefined, width: 32, height: 32, borderRadius: vertical ? 6 : 16,
+      style={{ position: 'absolute', left: vertical ? 9 : Math.max(0, width - 32) * position, top: vertical ? 4 + Math.max(0, width - 40) * (1 - position) : undefined, width: 32, height: 32, borderRadius: vertical ? 6 : 16,
         backgroundColor: '#FFFFFF', borderWidth: 0.5, borderColor: '#00000012',
         shadowColor: '#000000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: dragging ? 0.24 : 0.15, shadowRadius: dragging ? 7 : 3, elevation: 3,
         transform: [{ scale: dragging ? 1.12 : 1 }] }} />

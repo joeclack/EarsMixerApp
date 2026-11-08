@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import { FlatList, Pressable, Text, View, useWindowDimensions } from 'react-native';
 import { router, useFocusEffect } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -17,7 +17,11 @@ export default function Mixer() {
   const { width, height } = useWindowDimensions();
   const insets = useSafeAreaInsets();
   const landscape = width > height;
-  const stripHeight = Math.max(90, height - 170);
+  const [bankHeight, setBankHeight] = useState(height);
+  const topPadding = landscape ? insets.top + 12 : 20;
+  const bottomPadding = landscape ? insets.bottom + 12 : 130;
+  const cardHeight = Math.max(120, bankHeight - topPadding - bottomPadding);
+  const stripHeight = Math.max(40, cardHeight - 80);
   useFocusEffect(useCallback(() => {
     // Cached positions remain visible while fresh desk values are requested.
     if (session.mixer.state.status === 'connected') session.mixer.refresh();
@@ -31,8 +35,8 @@ export default function Mixer() {
     const next = favourites.channels.includes(channel) ? favourites.channels.filter(id => id !== channel) : [...favourites.channels, channel];
     session.preferences({ favouritesByAux: { ...state.preferences.favouritesByAux, [mix.aux]: { ...favourites, channels: next } } });
   };
-  const renderChannel = ({ item }: { item: Channel }) => <View testID={'channel-' + item.channel} style={{ width: landscape ? 76 : undefined, marginRight: landscape ? 6 : 0, paddingHorizontal: landscape ? 6 : compact ? 12 : 17, paddingVertical: landscape ? 8 : compact ? 6 : 17, borderRadius: compact ? 14 : 20, backgroundColor: theme.panel, marginBottom: compact ? 6 : 10 }}>
-    <View style={{ flexDirection: landscape ? 'column' : 'row', alignItems: 'center', gap: landscape ? 6 : 10 }}>
+  const renderChannel = ({ item }: { item: Channel }) => <View testID={'channel-' + item.channel} style={{ height: landscape ? cardHeight : undefined, overflow: 'hidden', width: landscape ? 76 : undefined, marginRight: landscape ? 6 : 0, paddingHorizontal: landscape ? 6 : compact ? 12 : 17, paddingVertical: landscape ? 8 : compact ? 6 : 17, borderRadius: compact ? 14 : 20, backgroundColor: theme.panel, marginBottom: compact ? 6 : 10 }}>
+    <View style={{ height: landscape ? 64 : undefined, flexShrink: 0, flexDirection: landscape ? 'column' : 'row', alignItems: 'center', gap: landscape ? 6 : 10 }}>
       <Text numberOfLines={landscape ? 2 : compact ? 1 : 2} style={{ color: theme.text, fontSize: landscape ? 12 : compact ? 15 : 17, minHeight: landscape ? 34 : undefined, textAlign: landscape ? 'center' : 'left', fontWeight: '600', flex: landscape ? undefined : 1 }}>{item.label}</Text>
       {(landscape || compact) && <Text style={{ color: theme.muted, fontSize: 12, fontVariant: ['tabular-nums'] }}>{levelText(session.mixer.displayValue(item.channel), mix.parameter)}</Text>}
       {!landscape && <Pressable accessibilityRole="button" accessibilityLabel={(favourites.channels.includes(item.channel) ? 'Remove favourite ' : 'Favourite ') + item.label}
@@ -48,10 +52,10 @@ export default function Mixer() {
       <Text style={{ color: theme.text, marginLeft: 'auto', fontSize: 13, fontWeight: '500', fontVariant: ['tabular-nums'] }}>{levelText(session.mixer.displayValue(item.channel), mix.parameter)}</Text>
     </View>}
   </View>;
-  return <Page title="Mixer" scroll={false} compactHeader toolbar={<MixerToolbar />}>
-    {!state.server ? <EmptyMixer /> : <FlatList key={landscape ? 'strips' : 'rows'} horizontal={landscape} extraData={state.preferences}
+  return <Page title="Mixer" scroll={false} compactHeader hideHeader={landscape} toolbar={<MixerToolbar />}>
+    {!state.server ? <EmptyMixer /> : <FlatList key={landscape ? 'strips' : 'rows'} horizontal={landscape} onLayout={event => setBankHeight(event.nativeEvent.layout.height)} extraData={state.preferences}
       data={channels} renderItem={renderChannel} keyExtractor={item => String(item.channel)} contentInsetAdjustmentBehavior="never"
-      contentContainerStyle={{ padding: 20, paddingLeft: landscape ? insets.left + 20 : 20, paddingRight: landscape ? insets.right + 20 : 20, paddingBottom: landscape ? 20 : 130 }} keyboardShouldPersistTaps="handled"
+      contentContainerStyle={{ paddingTop: topPadding, paddingLeft: landscape ? insets.left + 20 : 20, paddingRight: landscape ? insets.right + 20 : 20, paddingBottom: bottomPadding }} keyboardShouldPersistTaps="handled"
       ListHeaderComponent={!landscape ? <View style={{ gap: 17, marginBottom: 20 }}>
         <Segmented label="Fader mode" value={mix.parameter} options={[{ value: 'level', label: 'Level' }, { value: 'pan', label: 'Pan' }]} onChange={value => session.mixer.setParameter(value === 'pan' ? 'pan' : 'level')} />
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
