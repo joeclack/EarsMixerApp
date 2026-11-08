@@ -1,4 +1,5 @@
 import React from 'react';
+import { useResetDeviceData } from './useResetDeviceData';
 import ProfileCard from './ProfileCard';
 import { Switch, Text, View, Pressable } from 'react-native';
 import { router } from 'expo-router';
@@ -9,6 +10,7 @@ import { Row, Section } from './ui';
 import Segmented from './Segmented';
 export default function SettingsContent() {
   const { session, state } = useSession(), theme = useTheme();
+  const reset = useResetDeviceData();
   return <>
     <View style={{ marginBottom: 26 }}><ProfileCard /></View>
     <Section title="Appearance"><Row title="Theme" /><Segmented label="Appearance" value={state.settings.appearance}
@@ -24,6 +26,7 @@ export default function SettingsContent() {
         <Text style={{ color: theme.danger, fontSize: 15 }}>Disconnect</Text>
       </Pressable>}
     </View></Section>
+    <Section><Row title="Reset device data" destructive onPress={reset.confirm} /></Section>
     <Section title="About"><Row title="EarsMixer"><Text style={{ color: theme.muted }}>{Constants.expoConfig?.version}</Text></Row></Section>
   </>;
 }

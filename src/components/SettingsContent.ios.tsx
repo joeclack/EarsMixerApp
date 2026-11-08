@@ -1,6 +1,7 @@
 import React from 'react';
+import { useResetDeviceData } from './useResetDeviceData';
 import { Host, Form, Section, Toggle, Picker, Text, Button, LabeledContent, HStack, Spacer, TextField, useNativeState } from '@expo/ui/swift-ui';
-import { tag, pickerStyle, buttonStyle, lineLimit, scrollContentBackground } from '@expo/ui/swift-ui/modifiers';
+import { tag, pickerStyle, buttonStyle, lineLimit, scrollContentBackground, disabled } from '@expo/ui/swift-ui/modifiers';
 import { router } from 'expo-router';
 import Constants from 'expo-constants';
 import { useSession } from '../mixer/context';
@@ -8,6 +9,7 @@ import { useTheme } from '../theme';
 export default function SettingsContent() {
   const { session, state } = useSession(), theme = useTheme();
   const nickname = useNativeState(state.settings.nickname);
+  const reset = useResetDeviceData(() => nickname.set(''));
   return <Host style={{ flex: 1 }} colorScheme={theme.scheme} seedColor={theme.tint}>
     <Form modifiers={[scrollContentBackground('hidden')]}>
       <Section title="This device">
@@ -32,6 +34,9 @@ export default function SettingsContent() {
           <Spacer />
           {state.server && <Button label="Disconnect" role="destructive" modifiers={[buttonStyle('borderless')]} onPress={() => session.disconnect()} />}
         </HStack>
+      </Section>
+      <Section>
+        <Button label="Reset device data" role="destructive" onPress={reset.confirm} modifiers={[disabled(reset.resetting)]} />
       </Section>
       <Section title="About">
         <LabeledContent label="EarsMixer"><Text>{Constants.expoConfig?.version || '—'}</Text></LabeledContent>

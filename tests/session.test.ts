@@ -71,3 +71,26 @@ test('app switcher retains connection; background and relaunch retain channels w
   assert(sent.every(message => !message.address || message.address.endsWith('/?')));
   restored.disconnect();
 });
+
+test('device reset removes local profiles and caches without writing desk levels', async () => {
+  const data = new Map<string, string>([['unrelated.setting', 'keep'], ['earsmixer.native.channels:http://old.local/', '{}']]);
+  const sent: any[] = [];
+  const socket: Socket = { readyState: 1, send: raw => sent.push(JSON.parse(raw)), close() {}, onopen: null, onclose: null, onmessage: null, onerror: null };
+  const session = new MixerSession({ getItem: async key => data.get(key) || null, setItem: async (key, value) => { data.set(key, value); },
+    getAllKeys: async () => [...data.keys()], multiRemove: async keys => { keys.forEach(key => data.delete(key)); } }, () => socket,
+    (async (url: string) => Response.json({ url, qr: 'data:image/png;base64,AAA' })) as typeof fetch);
+  session.setSettings({ nickname: 'Joe', appearance: 'dark' });
+  await session.connect('mixer.local'); socket.onopen?.();
+  socket.onmessage?.({ data: JSON.stringify({ config: { channels: [{ channel: 1, label: 'Kick', order: 1 }], aux: [{ channel: 2, label: 'Drums' }] } }) });
+  socket.onmessage?.({ data: JSON.stringify({ address: '/Input_Channels/1/Aux_Send/2/send_level', args: [-10] }) });
+  session.preferences({ compact: true, channelOrder: [1], favouritesByAux: { '2': { channels: [1], enabled: true } } });
+  const drag = session.mixer.beginDrag(1)!;
+  session.mixer.drag(drag, 0.8);
+  await session.resetDeviceData();
+  assert.deepEqual([...data], [['unrelated.setting', 'keep']]);
+  assert.equal(session.state.settings.nickname, '');
+  assert.equal(session.state.server, null);
+  assert.deepEqual(session.state.preferences.favouritesByAux, {});
+  assert.equal(session.state.lastServer, null);
+  assert(sent.every(message => !message.address || message.address.endsWith('/?')));
+});

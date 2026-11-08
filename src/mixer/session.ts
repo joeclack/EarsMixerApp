@@ -1,7 +1,7 @@
 import { normalizeMixerAddress, probeMixer, readSavedMixers, rememberMixer, type SavedMixer } from '../connection';
 import { MixerClient, type Socket } from './client';
 import { emptyPreferences, readPreferences, type Preferences, parseConfig } from './model';
-type Storage = { getItem(key: string): Promise<string | null>; setItem(key: string, value: string): Promise<void> };
+type Storage = { getItem(key: string): Promise<string | null>; setItem(key: string, value: string): Promise<void>; getAllKeys?(): Promise<readonly string[]>; multiRemove?(keys: string[]): Promise<void> };
 export type Settings = { appearance: 'system' | 'light' | 'dark'; nickname: string };
 export type SessionState = {
   hydrated: boolean; lastServer: string | null; server: string | null; recent: SavedMixer[]; settings: Settings;
@@ -112,6 +112,17 @@ export class MixerSession {
     this.patch({ preferences });
     if ('selectedAux' in update) this.mixer.selectAux(preferences.selectedAux);
     if (this.state.server) void this.persist('earsmixer.native.profile:' + this.state.server, { preferences });
+  }
+  async resetDeviceData() {
+    if (!this.storage.getAllKeys || !this.storage.multiRemove) throw new Error('Device storage cannot be reset.');
+    // Close the socket and cancel queued gestures before clearing data. No OSC
+    // values are sent, including when a drag was pending when Reset was tapped.
+    this.disconnect(false);
+    await this.queue;
+    const keys = (await this.storage.getAllKeys()).filter(key => key.startsWith('earsmixer.'));
+    await this.storage.multiRemove(keys);
+    this.patch({ server: null, lastServer: null, recent: [], settings: { appearance: 'system', nickname: '' },
+      preferences: emptyPreferences(), connecting: false, message: '' });
   }
   setLifecycle(state: string) {
     if (state === 'inactive') { this.persistValues(); this.mixer.cancelWrites(); return; }
