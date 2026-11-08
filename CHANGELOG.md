@@ -1,6 +1,10 @@
 # Changelog
 
-## Unreleased
+## 0.3.0 — Device layouts and mixer controls
+
+- Show the selected AUX name as the mixer page heading.
+- Restore the device-local Haptic feedback toggle, enabled by default.
+- Remember the selected template and show its name in the mixer menu.
 
 - Move fader gestures and track animation onto the UI thread; isolate channel readouts and theme/navigation subscriptions from unrelated level updates.
 - Add bounded three-tick haptic bursts for fast position jumps.

@@ -4,14 +4,14 @@ import { DEMO_URL, createDemoSocket, demoTemplates, demoTemplate } from './demo'
 import { MixerClient, type Socket } from './client';
 import { emptyPreferences, readPreferences, type Preferences, parseConfig, hiddenChannels } from './model';
 type Storage = { getItem(key: string): Promise<string | null>; setItem(key: string, value: string): Promise<void>; getAllKeys?(): Promise<readonly string[]>; multiRemove?(keys: string[]): Promise<void> };
-export type Settings = { appearance: 'system' | 'light' | 'dark'; nickname: string };
+export type Settings = { appearance: 'system' | 'light' | 'dark'; nickname: string; haptics: boolean };
 export type SessionState = {
   selectedTemplate: MixerTemplate | null; hydrated: boolean; demo: boolean; setupComplete: boolean; lastServer: string | null; server: string | null; recent: SavedMixer[]; settings: Settings;
   preferences: Preferences; connecting: boolean; message: string;
 };
 export class MixerSession {
   readonly mixer: MixerClient;
-  state: SessionState = { selectedTemplate: null, hydrated: false, demo: false, setupComplete: false, lastServer: null, server: null, recent: [], settings: { appearance: 'system', nickname: '' },
+  state: SessionState = { selectedTemplate: null, hydrated: false, demo: false, setupComplete: false, lastServer: null, server: null, recent: [], settings: { appearance: 'system', nickname: '', haptics: true },
     preferences: emptyPreferences(), connecting: false, message: '' };
   private listeners = new Set<() => void>();
   private attempt = 0;
@@ -51,6 +51,7 @@ export class MixerSession {
       try { const saved = JSON.parse(last || 'null'); if (typeof saved === 'string') lastServer = normalizeMixerAddress(saved); } catch {}
       this.patch({ setupComplete: setup === 'true', lastServer, recent: readSavedMixers(recent), settings: {
         appearance: settings.appearance === 'dark' || settings.appearance === 'light' ? settings.appearance : 'system',
+        haptics: settings.haptics !== false,
         nickname: typeof settings.nickname === 'string' ? settings.nickname.slice(0, 80) : '',
       } });
     } catch { this.patch({ message: 'Could not load device settings.' }); }
@@ -158,7 +159,7 @@ export class MixerSession {
     await this.queue;
     const keys = (await this.storage.getAllKeys()).filter(key => key.startsWith('earsmixer.'));
     await this.storage.multiRemove(keys);
-    this.patch({ selectedTemplate: null, setupComplete: false, server: null, lastServer: null, recent: [], settings: { appearance: 'system', nickname: '' },
+    this.patch({ selectedTemplate: null, setupComplete: false, server: null, lastServer: null, recent: [], settings: { appearance: 'system', nickname: '', haptics: true },
       preferences: emptyPreferences(), connecting: false, message: '' });
   }
   setLifecycle(state: string) {
