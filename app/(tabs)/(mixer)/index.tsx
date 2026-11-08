@@ -35,10 +35,11 @@ export default function Mixer() {
     </View>
     <View style={{ alignSelf: landscape ? 'center' : 'stretch', width: landscape ? 64 : undefined,
       borderRadius: 999, backgroundColor: theme.panel, borderWidth: 0.5, borderColor: theme.line,
+      boxShadow: [{ offsetX: 0, offsetY: 2, blurRadius: 5, spreadDistance: 0, color: theme.dark ? '#00000050' : '#00000018', inset: true }],
       paddingHorizontal: landscape ? 0 : 16, paddingVertical: landscape ? 12 : 4, overflow: 'hidden' }}>
       <Fader channel={item.channel} label={item.label} color={theme.tint} vertical={landscape} length={stripHeight} />
     </View>
-  </View>, [landscape, cardHeight, stripHeight, theme.panel, theme.line, theme.text, theme.muted, theme.tint]);
+  </View>, [landscape, cardHeight, stripHeight, theme.dark, theme.panel, theme.line, theme.text, theme.muted, theme.tint]);
   return <Page title={state.demo ? 'Demo' : 'Mixer'} scroll={false} compactHeader hideHeader={landscape} toolbar={<MixerToolbar />}>
     {!state.server ? <EmptyMixer /> : <FlatList key={landscape ? 'strips' : 'rows'} horizontal={landscape} onLayout={event => setBankHeight(event.nativeEvent.layout.height)} extraData={state.preferences}
       data={channels} renderItem={renderChannel} keyExtractor={item => String(item.channel)} contentInsetAdjustmentBehavior="never"
