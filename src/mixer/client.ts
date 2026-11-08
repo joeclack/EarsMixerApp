@@ -6,7 +6,9 @@ export interface Socket {
   onerror: (() => void) | null; onmessage: ((event: { data: any }) => void) | null;
   send(value: string): void; close(): void;
 }
+export type AuxPeer = { id: string; nickname: string | null };
 export type MixState = {
+  peers: AuxPeer[];
   status: 'disconnected' | 'connecting' | 'loading' | 'connected';
   config: MixerConfig | null; aux: number | null; parameter: Parameter;
   values: Record<number, number>; epoch: number;
@@ -58,7 +60,7 @@ export class MixerClient {
     this.valueCache = { ...this.valueCache, [key]: { ...this.valueCache[key], [channel]: value } };
     this.cacheRevision++;
   }
-  state: MixState = { status: 'disconnected', config: null, aux: null, parameter: 'level', values: {}, epoch: 0 };
+  state: MixState = { peers: [], status: 'disconnected', config: null, aux: null, parameter: 'level', values: {}, epoch: 0 };
   private socket: Socket | null = null;
   private url: string | null = null;
   private username: string | null = null;
@@ -87,7 +89,7 @@ export class MixerClient {
     const socket = this.socket; this.socket = null;
     if (socket) { socket.onclose = socket.onerror = socket.onmessage = socket.onopen = null; socket.close(); }
     if (!preserveConfig) this.valueCache = {};
-    this.emit({ status: 'disconnected', config: preserveConfig ? this.state.config : null, values: {}, aux: preserveConfig ? this.state.aux : null });
+    this.emit({ peers: [], status: 'disconnected', config: preserveConfig ? this.state.config : null, values: {}, aux: preserveConfig ? this.state.aux : null });
   }
   restoreConfig(config: MixerConfig, aux: number | null) {
     this.cancelWrites();
@@ -96,7 +98,7 @@ export class MixerClient {
   private open() {
     if (!this.url) return;
     this.liveLevels = {}; this.levelGeneration++;
-    this.emit({ status: 'connecting', values: {} });
+    this.emit({ peers: [], status: 'connecting', values: {} });
     const socket = this.socketFactory(this.url.replace(/^http/, 'ws'));
     this.socket = socket;
     this.timeout = setTimeout(() => { if (this.socket === socket && this.state.status !== 'connected') this.lost(socket); }, 10000);
@@ -112,7 +114,7 @@ export class MixerClient {
     if (this.query) clearTimeout(this.query);
     this.cancelWrites();
     this.liveLevels = {};
-    this.emit({ status: this.url ? 'connecting' : 'disconnected', values: {} });
+    this.emit({ peers: [], status: this.url ? 'connecting' : 'disconnected', values: {} });
     if (this.url) this.retry = setTimeout(() => this.open(), Math.min(10000, 1000 * 2 ** this.attempt++));
   }
   private send(message: object) {
@@ -125,7 +127,7 @@ export class MixerClient {
     this.desiredAux = aux;
     const available = this.state.config?.aux || [];
     const selected = available.find(a => a.channel === aux)?.channel ?? available[0]?.channel ?? null;
-    if (selected !== this.state.aux) { this.liveLevels = {}; this.emit({ aux: selected }); this.refresh(); }
+    if (selected !== this.state.aux) { this.liveLevels = {}; this.emit({ aux: selected, peers: [] }); this.refresh(); }
   }
   setParameter(parameter: Parameter) {
     if (parameter !== this.state.parameter) { this.emit({ parameter }); this.refresh(); }
@@ -217,6 +219,19 @@ export class MixerClient {
     let message: any;
     try { message = JSON.parse(String(raw)); } catch { return; }
     if (!message || typeof message !== 'object') return;
+    if (message.presence) {
+      const { aux, peers } = message.presence;
+      if (aux !== this.state.aux || this.state.status !== 'connected' || !Array.isArray(peers)) return;
+      const seen = new Set<string>();
+      const valid: AuxPeer[] = [];
+      for (const peer of peers.slice(0, 1000)) {
+        if (!peer || typeof peer.id !== 'string' || !/^[1-9]\d{0,15}$/.test(peer.id) || seen.has(peer.id) ||
+          !(peer.nickname === null || typeof peer.nickname === 'string' && peer.nickname.length <= 80)) continue;
+        seen.add(peer.id); valid.push({ id: peer.id, nickname: peer.nickname?.trim() || null });
+      }
+      if (JSON.stringify(valid) !== JSON.stringify(this.state.peers)) this.emit({ peers: valid });
+      return;
+    }
     if (message.config) {
       const config = parseConfig(message.config);
       if (!config) return;
@@ -224,7 +239,7 @@ export class MixerClient {
       this.attempt = 0;
       this.cancelWrites();
       const aux = config.aux.find(a => a.channel === this.desiredAux)?.channel ?? config.aux[0]?.channel ?? null;
-      this.emit({ config, status: 'connected', aux, values: {} }); this.refresh(); return;
+      this.emit({ peers: [], config, status: 'connected', aux, values: {} }); this.refresh(); return;
     }
     if (!Array.isArray(message.args) || typeof message.address !== 'string') return;
     if (message.address === '/MixReload') { this.refresh(); return; }

@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.5.0 — AUX presence
+
+- Show profile circles and nicknames for other connected users on the selected AUX. Tap the circles to see everyone.
+- Update presence on joins, disconnects, nickname changes and AUX changes; clear it while disconnected or switching mixes.
+- Requires the server's AUX presence update (Windows 1.5.0 / Node package 2.7.0). Older servers continue to work without presence.
+
 ## 0.4.0 — Saved AUX levels
 
 - Save send levels on the phone separately for each mixer and AUX, with channel names and edit times.
