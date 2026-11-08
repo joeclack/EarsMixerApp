@@ -1,3 +1,5 @@
+import ScreenSurface from '../src/components/ScreenSurface';
+import { useHeaderHeight } from 'expo-router/react-navigation';
 import { useCallback } from 'react';
 import { router, Stack, useFocusEffect } from 'expo-router';
 import { Platform, Pressable, Text, View } from 'react-native';
@@ -6,9 +8,10 @@ import { useTheme } from '../src/theme';
 import ChannelOrder from '../src/components/ChannelOrder';
 export default function LayoutEditor() {
   const { session } = useSession(), theme = useTheme();
+  const headerHeight = useHeaderHeight();
   useFocusEffect(useCallback(() => { session.mixer.cancelWrites(); }, [session]));
-  return <View style={{ flex: 1, backgroundColor: theme.bg }}>
-    <Stack.Screen options={{ title: 'Edit channels' }} />
+  return <ScreenSurface>
+    <Stack.Screen options={{ title: 'Edit channels', headerTransparent: true, headerStyle: { backgroundColor: 'transparent' }, headerShadowVisible: false }} />
     {Platform.OS === 'web' ? <Stack.Screen options={{ headerRight: () =>
       <Pressable accessibilityRole="button" onPress={() => router.back()} style={{ padding: 12 }}>
         <Text style={{ color: theme.tint, fontSize: 17 }}>Done</Text>
@@ -17,6 +20,6 @@ export default function LayoutEditor() {
         <Stack.Toolbar.Button variant="done" accessibilityLabel="Done" onPress={() => router.back()}>Done</Stack.Toolbar.Button>
       </Stack.Toolbar>}
 
-    <ChannelOrder />
-  </View>;
+    <View style={{ flex: 1, paddingTop: headerHeight }}><ChannelOrder /></View>
+  </ScreenSurface>;
 }

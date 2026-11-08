@@ -3,9 +3,9 @@ import { Image, StyleSheet, View } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useTheme } from '../theme';
 
-// Static layers sit behind the entire mixer, including its transparent header.
+// Static layers sit behind each screen, including its transparent header.
 // The grain repeats at its natural size so it stays fine in either orientation.
-export default memo(function MixerBackground() {
+export default memo(function AppBackground() {
   const { dark } = useTheme();
   return <View pointerEvents="none" accessible={false} accessibilityElementsHidden importantForAccessibility="no-hide-descendants"
     style={[StyleSheet.absoluteFill, { overflow: 'hidden' }]}>

@@ -1,6 +1,6 @@
 import React from 'react';
 import { Host, List, Section, Text, Toggle } from '@expo/ui/swift-ui';
-import { environment } from '@expo/ui/swift-ui/modifiers';
+import { environment, scrollContentBackground } from '@expo/ui/swift-ui/modifiers';
 import { useSession } from '../mixer/context';
 import { orderedChannels, hiddenChannels } from '../mixer/model';
 import { useTheme } from '../theme';
@@ -9,7 +9,7 @@ export default function ChannelOrder() {
   const hidden = hiddenChannels(mix.config, state.preferences, mix.aux);
   const channels = orderedChannels(mix.config, state.preferences);
   return <Host style={{ flex: 1 }} colorScheme={theme.scheme}>
-    <List modifiers={[environment('editMode', 'active')]}>
+    <List modifiers={[environment('editMode', 'active'), scrollContentBackground('hidden')]}>
       <Section footer={<Text>Drag to reorder. Turn off channels to hide them.</Text>}>
         <List.ForEach data={channels} keyExtractor={channel => String(channel.channel)} onMove={(indices, destination) => {
           const moving = channels.filter((_item, index) => indices.includes(index));

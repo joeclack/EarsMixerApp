@@ -1,3 +1,4 @@
+import ScreenSurface from '../src/components/ScreenSurface';
 import { useEffect, useRef, useState } from 'react';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { router } from 'expo-router';
@@ -23,7 +24,7 @@ export default function Scan() {
     if (router.canGoBack()) router.back();
     else router.replace('/');
   }
-  return <SafeAreaView style={{ flex: 1, backgroundColor: theme.bg }}>
+  return <ScreenSurface><SafeAreaView style={{ flex: 1 }}>
     <View style={{ flexDirection: 'row', padding: 20, alignItems: 'center', gap: 14 }}>
       <Text style={{ color: theme.text, fontSize: 22, fontWeight: '700', flex: 1 }}>Scan mixer code</Text>
       <NativeButton title="Done" onPress={close} />
@@ -52,5 +53,5 @@ export default function Scan() {
     <Text accessibilityLiveRegion="polite" style={{ color: error ? theme.danger : theme.muted, padding: 24, fontSize: 15, lineHeight: 23, textAlign: 'center' }}>
       {busy ? 'Connecting to your mixer…' : error || 'Open the QR code in your EarsMixer dashboard or tray.'}
     </Text>
-  </SafeAreaView>;
+  </SafeAreaView></ScreenSurface>;
 }

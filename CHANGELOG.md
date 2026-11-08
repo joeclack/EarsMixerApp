@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.6.1 — App surfaces
+
+- Use the textured charcoal/silver background throughout Settings, first-time setup, connection and template sheets, channel editing, QR scanning and startup.
+- Keep navigation headers transparent and the texture outside safe-area padding so it covers each full screen.
+- Let native forms and lists reveal the shared background while keeping native controls and sheet presentation.
+
 ## 0.6.0 — Mixer surface
 
 - Add a matte charcoal mixer background with fine static grain, soft blue-grey lighting, a faint teal wash and subtle edge shading.

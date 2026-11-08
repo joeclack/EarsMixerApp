@@ -6,16 +6,17 @@ import { useHeaderHeight } from 'expo-router/react-navigation';
 import { useTheme } from '../theme';
 import { useSession } from '../mixer/context';
 import NativeButton from './NativeButton';
+import ScreenSurface from './ScreenSurface';
 
 export function Icon({ name, size = 22, color }: { name: SymbolViewProps['name']; size?: number; color?: ColorValue }) {
   const theme = useTheme();
   return <SymbolView name={name} size={size} tintColor={color || theme.tint} style={{ width: size, height: size }} />;
 }
-export function Page({ title, children, scroll = true, compactHeader = true, toolbar, hideHeader = false, background }: React.PropsWithChildren<{ title: string; scroll?: boolean; compactHeader?: boolean; toolbar?: React.ReactNode; hideHeader?: boolean; background?: React.ReactNode }>) {
+export function Page({ title, children, scroll = true, compactHeader = true, toolbar, hideHeader = false }: React.PropsWithChildren<{ title: string; scroll?: boolean; compactHeader?: boolean; toolbar?: React.ReactNode; hideHeader?: boolean }>) {
   const theme = useTheme();
   const { state, mix } = useSession();
   const headerHeight = useHeaderHeight();
-  const headerTransparent = Platform.OS === 'ios' || Boolean(background);
+  const headerTransparent = true;
   const options = {
     headerShown: !hideHeader, title, headerLargeTitleEnabled: !compactHeader, headerTransparent,
     headerTitleStyle: { color: theme.text },
@@ -27,8 +28,7 @@ export function Page({ title, children, scroll = true, compactHeader = true, too
       <Icon name={{ ios: mix.status === 'connected' ? 'wifi' : 'wifi.slash', android: 'wifi', web: 'wifi' }} color={mix.status === 'connected' ? theme.green : theme.danger} />
     </Pressable> }),
   };
-  return <View style={{ flex: 1, backgroundColor: theme.bg }}>
-    {background}
+  return <ScreenSurface>
     <Stack.Screen options={options} />
     {!hideHeader && toolbar}
     {!hideHeader && !toolbar && Platform.OS === 'ios' && <Stack.Toolbar placement="right">
@@ -36,9 +36,9 @@ export function Page({ title, children, scroll = true, compactHeader = true, too
         accessibilityLabel="Connect to mixer" onPress={() => router.push('/connect')} />
     </Stack.Toolbar>}
     {scroll ? <ScrollView contentInsetAdjustmentBehavior="automatic" keyboardShouldPersistTaps="handled" automaticallyAdjustKeyboardInsets
-      contentContainerStyle={styles.page}>{children}</ScrollView> : <View style={{ flex: 1, paddingTop: !hideHeader && headerTransparent ? headerHeight : 0 }}>{children}</View>}
+      contentContainerStyle={[styles.page, !hideHeader && Platform.OS !== 'ios' && { paddingTop: headerHeight + 20 }]}>{children}</ScrollView> : <View style={{ flex: 1, paddingTop: !hideHeader && headerTransparent ? headerHeight : 0 }}>{children}</View>}
     {!state.hydrated && <View style={styles.loading}><ActivityIndicator /></View>}
-  </View>;
+  </ScreenSurface>;
 }
 export function Section({ title, footer, children }: React.PropsWithChildren<{ title?: string; footer?: string }>) {
   const theme = useTheme();

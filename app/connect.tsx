@@ -1,3 +1,4 @@
+import ScreenSurface from '../src/components/ScreenSurface';
 import React, { useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, Keyboard, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 import { router } from 'expo-router';
@@ -43,7 +44,7 @@ export default function Connect() {
     try { await session.connect(value); router.back(); }
     catch (error) { setError(error instanceof Error ? error.message : 'Could not connect.'); }
   }
-  return <ScrollView keyboardShouldPersistTaps="handled" automaticallyAdjustKeyboardInsets contentContainerStyle={{ padding: 24, paddingTop: 32, paddingBottom: insets.bottom + 24 }}>
+  return <ScreenSurface><ScrollView keyboardShouldPersistTaps="handled" automaticallyAdjustKeyboardInsets contentContainerStyle={{ padding: 24, paddingTop: 32, paddingBottom: insets.bottom + 24 }}>
       <View style={{ flexDirection: 'row', gap: 12, alignItems: 'center', marginBottom: 20 }}>
         <View style={{ flex: 1 }}>
           <Text accessibilityRole="header" style={{ color: theme.text, fontSize: 28, fontWeight: '700', letterSpacing: -0.6 }}>Connect to mixer</Text>
@@ -94,5 +95,5 @@ export default function Connect() {
         setError('');
         void session.startDemo().then(() => router.back()).catch(() => setError('Could not start demo. Try again.'));
       }} />
-  </ScrollView>;
+  </ScrollView></ScreenSurface>;
 }

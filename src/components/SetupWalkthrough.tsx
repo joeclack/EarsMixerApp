@@ -1,3 +1,4 @@
+import ScreenSurface from './ScreenSurface';
 import { useEffect, useState } from 'react';
 import { Keyboard, KeyboardAvoidingView, Platform, ScrollView, Text, TextInput, View } from 'react-native';
 import { router } from 'expo-router';
@@ -39,7 +40,7 @@ export default function SetupWalkthrough() {
     })().catch(() => {}).finally(() => { if (!controller.signal.aborted) setChecking(false); });
     return () => { controller.abort(); setChecking(false); };
   }, [step, session]);
-  return <SafeAreaView edges={['top', 'bottom', 'left', 'right']} style={{ flex: 1, backgroundColor: theme.bg }}>
+  return <ScreenSurface><SafeAreaView edges={['top', 'bottom', 'left', 'right']} style={{ flex: 1 }}>
     <View style={{ paddingHorizontal: 28, paddingTop: 16, paddingBottom: 12, maxWidth: 600, width: '100%', alignSelf: 'center' }}>
       <Text accessibilityLiveRegion="polite" style={{ color: theme.muted, fontSize: 14 }}>Step {step + 1} of {steps.length}</Text>
     </View>
@@ -75,5 +76,5 @@ export default function SetupWalkthrough() {
         }} />
       </View>
     </KeyboardAvoidingView>
-  </SafeAreaView>;
+  </SafeAreaView></ScreenSurface>;
 }
