@@ -26,7 +26,8 @@ export default function Fader({ channel, label, color, vertical = false, length 
     onPanResponderGrant: () => {
       const token = session.mixer.beginDrag(channel);
       if (!token) return;
-      drag.current = { token, start: session.mixer.position(channel), moved: false, tick: NaN, tickAt: 0 };
+      const start = session.mixer.position(channel);
+      drag.current = { token, start, moved: false, tick: Math.round(start * Math.max(0, latest.current.width - 32) / 6), tickAt: 0 };
     },
     onPanResponderMove: (_event, gesture) => {
       const current = drag.current;
@@ -38,14 +39,17 @@ export default function Fader({ channel, label, color, vertical = false, length 
       if (!current.moved) {
         current.moved = true; setDragging(true);
       }
-      session.mixer.drag(current.token, clamp(current.start + movement / (latest.current.width - 32)));
-      const value = session.mixer.state.values[channel];
-      const tick = Math.round(value * (current.token.parameter === 'pan' ? 100 : 2));
+      const travel = latest.current.width - 32;
+      const position = clamp(current.start + movement / travel);
+      // Simulated detents every six points of finger travel. Never derive
+      // feedback from incoming OSC values or replay missed ticks later.
+      const tick = Math.round(position * travel / 6);
       const now = Date.now();
-      if (Number.isFinite(tick) && tick !== current.tick && now - current.tickAt >= 70) {
+      if (Number.isFinite(tick) && tick !== current.tick && now - current.tickAt >= 40) {
         current.tick = tick; current.tickAt = now;
         void Haptics.selectionAsync().catch(() => {});
       }
+      session.mixer.drag(current.token, position);
     },
     onPanResponderRelease: () => {
       if (drag.current?.moved) session.mixer.flush(drag.current.token);
