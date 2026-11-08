@@ -14,22 +14,13 @@ export default function Fader({ channel, label, color, vertical = false, length 
   const thumb = useRef(new Animated.Value(session.mixer.position(channel))).current;
   const latest = useRef({ width, mix, vertical });
   latest.current = { width, mix, vertical };
-  const drag = useRef<{ token: DragToken; start: number; moved: boolean; finger: number; pulsed: number; motionAt: number } | null>(null);
-  const feedback = useRef<ReturnType<typeof setInterval> | null>(null);
-  const stopFeedback = () => { if (feedback.current) clearInterval(feedback.current); feedback.current = null; };
-  const pulse = () => {
-    const current = drag.current;
-    if (!current || current.token.epoch !== session.mixer.state.epoch || Date.now() - current.motionAt > 100 || Math.abs(current.finger - current.pulsed) < 0.5) return;
-    current.pulsed = current.finger;
-    void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Soft).catch(() => {});
-  };
+  const drag = useRef<{ token: DragToken; start: number; moved: boolean; percent: number } | null>(null);
   const cancel = () => {
-    stopFeedback();
     if (drag.current) session.mixer.cancelDrag(drag.current.token);
     drag.current = null; setDragging(false);
   };
   useEffect(() => { cancel(); }, [mix.epoch, width, vertical]);
-  useEffect(() => () => { stopFeedback(); if (drag.current) session.mixer.cancelDrag(drag.current.token); }, [session]);
+  useEffect(() => () => { if (drag.current) session.mixer.cancelDrag(drag.current.token); }, [session]);
   const responder = useMemo(() => PanResponder.create({
     onStartShouldSetPanResponder: () => latest.current.mix.status === 'connected' && latest.current.mix.values[channel] !== undefined,
     onMoveShouldSetPanResponder: (_event, gesture) => (latest.current.vertical ? Math.abs(gesture.dy) > Math.abs(gesture.dx) : Math.abs(gesture.dx) > Math.abs(gesture.dy)),
@@ -37,7 +28,7 @@ export default function Fader({ channel, label, color, vertical = false, length 
       const token = session.mixer.beginDrag(channel);
       if (!token) return;
       const start = session.mixer.position(channel);
-      drag.current = { token, start, moved: false, finger: 0, pulsed: 0, motionAt: 0 };
+      drag.current = { token, start, moved: false, percent: Math.round(start * 100) };
     },
     onPanResponderMove: (_event, gesture) => {
       const current = drag.current;
@@ -52,13 +43,12 @@ export default function Fader({ channel, label, color, vertical = false, length 
       const travel = latest.current.width - (latest.current.vertical ? 52 : 40);
       const position = clamp(current.start + movement / travel);
       thumb.setValue(position);
-      // Keep a movement-driven feedback loop alive for the gesture. Network
-      // values and release/settling never trigger feedback.
-      const finger = position * travel;
-      if (finger !== current.finger) { current.finger = finger; current.motionAt = Date.now(); }
-      if (!feedback.current) {
-        pulse();
-        feedback.current = setInterval(pulse, 45);
+      // Haptic detents follow local handle travel, independent of dB/pan,
+      // server replies and animation/render timing. No timer or release pulse.
+      const percent = Math.round(position * 100);
+      if (percent !== current.percent) {
+        current.percent = percent;
+        void Haptics.selectionAsync().catch(() => {});
       }
       session.mixer.drag(current.token, position);
     },
