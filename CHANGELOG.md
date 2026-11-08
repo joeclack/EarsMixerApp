@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.7.1 — App icon
+
+- Set the generated teal-fader artwork as the Expo/iOS app icon and web favicon.
+- Add an Android adaptive launcher asset with enough clearance to retain all three faders under different icon masks.
+
 ## 0.7.0 — Icon faders
 
 - Bring the icon's sculpted graphite cap into the live faders: textured concave grip, teal indicator, silver centre stripe and stronger contact shadow.

@@ -19,7 +19,7 @@ const config: ExpoConfig = {
   android: {
     package: 'com.joeclack.earsmixerapp',
     permissions: ['android.permission.INTERNET', 'android.permission.ACCESS_NETWORK_STATE'],
-    adaptiveIcon: { foregroundImage: './assets/icon.png', backgroundColor: '#101215' },
+    adaptiveIcon: { foregroundImage: './assets/android-icon-foreground.png', backgroundColor: '#101A20' },
   },
   scheme: 'earsmixer',
   plugins: [

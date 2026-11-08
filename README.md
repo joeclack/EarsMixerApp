@@ -2,7 +2,7 @@
 
 iOS and Android companion for [EarsMixer](https://github.com/joeclack/EarsMixer). Connect your phone to the same network as the EarsMixer server, enter its address or scan the QR code from the server's admin dashboard/tray, then control your monitor mix.
 
-## Native interface · 0.7.0
+## Native interface · 0.7.1
 
 - Native Mixer screen with a Settings gear in its toolbar. Settings opens as a page with a back button to Mixer.
 - SwiftUI glass buttons, segmented controls, settings forms and drag-to-reorder lists on iOS, with SF Symbols and automatic light/dark appearance.
@@ -91,3 +91,5 @@ Use Edit channels to hide unwanted channels or show them again. Visibility is sa
 Choose **Try demo** in the connection sheet or Settings to explore 20 channels, four AUX mixes and sample templates without a server. Faders, pan, hiding and reordering work locally. The demo has separate layout storage, makes no HTTP or WebSocket connection, and does not replace the last saved real mixer. Use Disconnect to exit, or connect to a real server from the connection sheet.
 
 Other connected users on the selected AUX appear as profile circles above the faders. Tap to see their nicknames. This requires server 1.5.0 (Node package 2.7.0) or later; older servers simply show no presence.
+
+The launcher icon uses the generated teal-fader artwork. Icon changes require a new standalone native build; Expo Go retains its own launcher icon.
