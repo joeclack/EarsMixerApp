@@ -45,6 +45,7 @@ export class MixerClient {
   private retry: ReturnType<typeof setTimeout> | null = null;
   private query: ReturnType<typeof setTimeout> | null = null;
   private timeout: ReturnType<typeof setTimeout> | null = null;
+  private activeDrags = new Map<number, DragToken>();
   private pending = new Map<number, { token: DragToken; value: number; timer: ReturnType<typeof setTimeout> }>();
   private attempt = 0;
   private queryGeneration = 0;
@@ -107,6 +108,7 @@ export class MixerClient {
   cancelWrites() {
     for (const entry of this.pending.values()) clearTimeout(entry.timer);
     this.pending.clear();
+    this.activeDrags.clear();
     this.emit({ epoch: this.state.epoch + 1 });
   }
   refresh() {
@@ -139,7 +141,9 @@ export class MixerClient {
   beginDrag(channel: number): DragToken | null {
     if (this.state.status !== 'connected' || !this.state.aux || this.state.values[channel] === undefined ||
       !this.state.config?.channels.some(c => c.channel === channel)) return null;
-    return { epoch: this.state.epoch, channel, aux: this.state.aux, parameter: this.state.parameter };
+    const token = { epoch: this.state.epoch, channel, aux: this.state.aux, parameter: this.state.parameter };
+    this.activeDrags.set(channel, token);
+    return token;
   }
   private valid(token: DragToken) {
     return token.epoch === this.state.epoch && token.aux === this.state.aux && token.parameter === this.state.parameter &&
@@ -148,7 +152,9 @@ export class MixerClient {
   drag(token: DragToken, position: number) {
     if (!this.valid(token) || !Number.isFinite(position)) return;
     const value = token.parameter === 'level' ? positionToDb(clamp(position)) : clamp(position);
-    this.emit({ values: { ...this.state.values, [token.channel]: value } });
+    // Update the model immediately, but publish at the network cadence so
+    // every pointer event does not re-render the entire channel bank.
+    this.state = { ...this.state, values: { ...this.state.values, [token.channel]: value } };
     const previous = this.pending.get(token.channel);
     if (previous) { previous.value = value; return; }
     this.pending.set(token.channel, { token, value, timer: setTimeout(() => this.flush(token), 35) });
@@ -160,6 +166,7 @@ export class MixerClient {
     if (this.valid(token) && this.send({ address: this.address(token.channel, token.aux, token.parameter), args: [entry.value] })) { this.remember(token.channel, entry.value); this.emit({}); }
   }
   cancelDrag(token: DragToken) {
+    if (this.activeDrags.get(token.channel) === token) this.activeDrags.delete(token.channel);
     const entry = this.pending.get(token.channel);
     if (entry?.token === token) { clearTimeout(entry.timer); this.pending.delete(token.channel); }
   }
@@ -188,8 +195,9 @@ export class MixerClient {
       if (Number(match[2]) !== this.state.aux || match[3] !== this.state.parameter ||
         !config?.channels.some(c => c.channel === channel) || !Number.isFinite(value) ||
         (match[3] === 'level' ? value < -150 || value > 10 : value < 0 || value > 1)) return;
+      if (this.activeDrags.has(channel) || this.pending.has(channel)) return;
       this.remember(channel, value);
-      if (!this.pending.has(channel)) this.emit({ values: { ...this.state.values, [channel]: value } });
+      this.emit({ values: { ...this.state.values, [channel]: value } });
       return;
     }
     const channelName = /^\/Input_Channels\/(\d+)\/Channel_Input\/name$/.exec(message.address);

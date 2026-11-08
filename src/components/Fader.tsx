@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { PanResponder, View, Text } from 'react-native';
+import { Animated, PanResponder, View, Text } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { useSession } from '../mixer/context';
 import { useTheme } from '../theme';
@@ -11,6 +11,7 @@ export default function Fader({ channel, label, color, vertical = false, length 
   const theme = useTheme();
   const [width, setWidth] = useState(0);
   const [dragging, setDragging] = useState(false);
+  const thumb = useRef(new Animated.Value(session.mixer.position(channel))).current;
   const latest = useRef({ width, mix, vertical });
   latest.current = { width, mix, vertical };
   const drag = useRef<{ token: DragToken; start: number; moved: boolean; finger: number; pulsed: number; motionAt: number } | null>(null);
@@ -50,6 +51,7 @@ export default function Fader({ channel, label, color, vertical = false, length 
       }
       const travel = latest.current.width - (latest.current.vertical ? 52 : 40);
       const position = clamp(current.start + movement / travel);
+      thumb.setValue(position);
       // Keep a movement-driven feedback loop alive for the gesture. Network
       // values and release/settling never trigger feedback.
       const finger = position * travel;
@@ -69,6 +71,7 @@ export default function Fader({ channel, label, color, vertical = false, length 
   }), [channel, session]);
   const ready = mix.status === 'connected' && mix.values[channel] !== undefined;
   const position = session.mixer.position(channel);
+  useEffect(() => { if (!drag.current?.moved) thumb.setValue(position); }, [position, mix.epoch, width, vertical, thumb]);
   const inset = vertical ? 26 : 20;
   const travel = Math.max(0, width - inset * 2);
   const scale = mix.parameter === 'level'
@@ -99,14 +102,15 @@ export default function Fader({ channel, label, color, vertical = false, length 
         </View>;
       })}
     </View>
-    <View {...responder.panHandlers} accessible accessibilityRole="adjustable" accessibilityLabel={label + (mix.parameter === 'pan' ? ' pan' : ' level')}
+    <Animated.View {...responder.panHandlers} accessible accessibilityRole="adjustable" accessibilityLabel={label + (mix.parameter === 'pan' ? ' pan' : ' level')}
       accessibilityState={{ disabled: !ready }} accessibilityValue={{ min: 0, max: 100, now: Math.round(position * 100), text: levelText(session.mixer.displayValue(channel), mix.parameter) }}
       accessibilityActions={[{ name: 'increment' }, { name: 'decrement' }]} onAccessibilityAction={event => {
         const token = session.mixer.beginDrag(channel); if (!token) return;
         session.mixer.drag(token, clamp(position + (event.nativeEvent.actionName === 'increment' ? 0.02 : -0.02))); session.mixer.flush(token);
         void Haptics.selectionAsync().catch(() => {});
       }}
-      style={{ position: 'absolute', left: vertical ? 23 : 4 + travel * position, top: vertical ? 4 + travel * (1 - position) : 14,
+      style={{ position: 'absolute', left: vertical ? 23 : 4, top: vertical ? 4 : 14,
+        transform: vertical ? [{ translateY: thumb.interpolate({ inputRange: [0, 1], outputRange: [travel, 0] }) }] : [{ translateX: thumb.interpolate({ inputRange: [0, 1], outputRange: [0, travel] }) }],
         width: vertical ? 28 : 32, height: 44, borderRadius: 4,
         backgroundColor: '#18232B', borderWidth: 1, borderColor: dragging ? '#728893' : '#435560',
         shadowColor: '#000000', shadowOffset: { width: 0, height: 3 }, shadowOpacity: 0.4, shadowRadius: 3, elevation: 4,
@@ -118,6 +122,6 @@ export default function Fader({ channel, label, color, vertical = false, length 
             borderRadius: 1, shadowColor: color, shadowOpacity: 0.9, shadowRadius: dragging ? 5 : 3, shadowOffset: { width: 0, height: 0 } }} />
         </View>)}
       </View>
-    </View>
+    </Animated.View>
   </View>;
 }

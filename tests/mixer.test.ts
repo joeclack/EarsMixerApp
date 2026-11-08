@@ -94,3 +94,23 @@ test('pan uses desk range 0 to 1 and a disconnected client never replays changes
   assert.equal(client.beginDrag(1), null);
   assert.equal(sockets[1].messages.filter(m => m.address && !m.address.endsWith('/?')).length, 0);
 });
+
+test('optimistic dragging updates immediately and ignores delayed desk values until release', t => {
+  const { client, level, writes } = setup(t);
+  level(-12);
+  let updates = 0;
+  const unsubscribe = client.subscribe(() => updates++);
+  const token = client.beginDrag(1)!;
+  client.drag(token, 0.8); client.drag(token, 0.85);
+  assert.equal(client.state.values[1], positionToDb(0.85));
+  assert.equal(updates, 0);
+  client.flush(token);
+  assert.equal(writes().length, 1);
+  assert.equal(writes()[0].args[0], positionToDb(0.85));
+  level(-50);
+  assert.equal(client.state.values[1], positionToDb(0.85));
+  client.cancelDrag(token);
+  level(-15);
+  assert.equal(client.state.values[1], -15);
+  unsubscribe();
+});
