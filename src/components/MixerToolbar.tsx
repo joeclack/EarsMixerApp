@@ -1,14 +1,12 @@
-import { Platform, Pressable, Text, View, useWindowDimensions } from 'react-native';
+import { Platform, Pressable, Text } from 'react-native';
 import { router, Stack } from 'expo-router';
 import { useSession } from '../mixer/context';
 import { useTheme } from '../theme';
 import { Icon, styles } from './ui';
-import Segmented from './Segmented';
 
 export default function MixerToolbar() {
-  const { session, state, mix } = useSession();
+  const { session, mix } = useSession();
   const theme = useTheme();
-  const { width, height } = useWindowDimensions();
   const selected = mix.config?.aux.find(aux => aux.channel === mix.aux);
   const label = selected?.label || 'Choose mix';
   const status = mix.status === 'connected' ? 'Connected' : mix.status === 'disconnected' ? 'Disconnected' : 'Connecting';
@@ -20,11 +18,6 @@ export default function MixerToolbar() {
       </Stack.Toolbar.View>
     </Stack.Toolbar>
     <Stack.Toolbar placement="right" tintColor={theme.tint}>
-    {width > height && state.server && <Stack.Toolbar.View hidesSharedBackground>
-      <View style={{ width: 170 }}><Segmented label="Fader mode" value={mix.parameter}
-        options={[{ value: 'level', label: 'Level' }, { value: 'pan', label: 'Pan' }]}
-        onChange={value => session.mixer.setParameter(value === 'pan' ? 'pan' : 'level')} /></View>
-    </Stack.Toolbar.View>}
     {!!mix.config?.aux.length && <Stack.Toolbar.Menu title="Choose your mix" accessibilityLabel={'Choose your mix, ' + label}
       disabled={mix.status !== 'connected' || !mix.config?.aux.length}>
       <Stack.Toolbar.Label>{label.length > 18 ? label.slice(0, 17) + '…' : label}</Stack.Toolbar.Label>
