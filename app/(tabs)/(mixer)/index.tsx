@@ -9,6 +9,7 @@ import { Page, EmptyMixer, Icon } from '../../../src/components/ui';
 import NativeButton from '../../../src/components/NativeButton';
 import Fader, { FaderValue } from '../../../src/components/Fader';
 import MixerToolbar from '../../../src/components/MixerToolbar';
+import AuxPresence from '../../../src/components/AuxPresence';
 
 export default function Mixer() {
   const { session, state, mix } = useSession();
@@ -40,7 +41,8 @@ export default function Mixer() {
       <Fader channel={item.channel} label={item.label} color={theme.tint} vertical={landscape} length={stripHeight} />
     </View>
   </View>, [landscape, cardHeight, stripHeight, theme.dark, theme.panel, theme.line, theme.text, theme.muted, theme.tint]);
-  return <Page title={state.demo ? 'Demo' : 'Mixer'} scroll={false} compactHeader hideHeader={landscape} toolbar={<MixerToolbar />}>
+  return <Page title={mix.config?.aux.find(aux => aux.channel === mix.aux)?.label || 'Mixer'} scroll={false} compactHeader hideHeader={landscape} toolbar={<MixerToolbar />}>
+    <AuxPresence />
     {!state.server ? <EmptyMixer /> : <FlatList key={landscape ? 'strips' : 'rows'} horizontal={landscape} onLayout={event => setBankHeight(event.nativeEvent.layout.height)} extraData={state.preferences}
       data={channels} renderItem={renderChannel} keyExtractor={item => String(item.channel)} contentInsetAdjustmentBehavior="never"
       contentContainerStyle={{ paddingTop: topPadding, paddingLeft: landscape ? insets.left + 20 : 20, paddingRight: landscape ? insets.right + 20 : 20, paddingBottom: bottomPadding }} keyboardShouldPersistTaps="handled"

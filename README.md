@@ -2,7 +2,7 @@
 
 iOS and Android companion for [EarsMixer](https://github.com/joeclack/EarsMixer). Connect your phone to the same network as the EarsMixer server, enter its address or scan the QR code from the server's admin dashboard/tray, then control your monitor mix.
 
-## Native interface · 0.2.0
+## Native interface · 0.5.1
 
 - Native Mixer screen with a Settings gear in its toolbar. Settings opens as a page with a back button to Mixer.
 - SwiftUI glass buttons, segmented controls, settings forms and drag-to-reorder lists on iOS, with SF Symbols and automatic light/dark appearance.
@@ -78,7 +78,7 @@ The iOS native build workflow compiles a simulator app and runs the Maestro scre
 
 ## Device-local preferences
 
-The mobile app uses an optional nickname and stores appearance, channel order, hidden channels, selected AUX and compact mode on the device automatically. No account or password is required. Layouts are kept separately for each server. Last-known levels and pan are cached for display while reconnecting. Fresh desk values replace them before dragging is enabled; cached values are never sent to the desk. Removing the app removes its local layouts.
+The mobile app uses an optional nickname and stores appearance, channel order, hidden channels, selected AUX and haptic feedback on the device automatically. No account or password is required. Layouts are kept separately for each server. Last-known levels and pan are cached for display while reconnecting. Fresh desk values replace them before dragging is enabled; the display cache is never sent to the desk automatically. A separate level state is saved per server/AUX after edits on this phone. When opening, reconnecting or switching AUX, differing fresh desk levels trigger a restore choice. Only confirming **Load saved levels** applies saved send levels, including hidden channels; pan stays unchanged. Settings → Recent states shows AUX names and last-edit times. Removing the app removes its local layouts.
 
 Landscape uses vertical channel strips; portrait uses horizontal faders. Recent server addresses are checked alongside native Bonjour discovery. Native discovery requires a rebuilt app and the server discovery update; Expo Go can check recent addresses and use QR/manual connections.
 
@@ -89,3 +89,5 @@ Use Edit channels to hide unwanted channels or show them again. Visibility is sa
 ## Demo mode
 
 Choose **Try demo** in the connection sheet or Settings to explore 20 channels, four AUX mixes and sample templates without a server. Faders, pan, hiding and reordering work locally. The demo has separate layout storage, makes no HTTP or WebSocket connection, and does not replace the last saved real mixer. Use Disconnect to exit, or connect to a real server from the connection sheet.
+
+Other connected users on the selected AUX appear as profile circles above the faders. Tap to see their nicknames. This requires server 1.5.0 (Node package 2.7.0) or later; older servers simply show no presence.

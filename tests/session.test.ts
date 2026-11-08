@@ -11,8 +11,9 @@ test('nickname, appearance and per-server layouts automatically persist without 
     (async (url: string) => { requests.push(url); return Response.json({ url, qr: 'data:image/png;base64,AAA' }); }) as typeof fetch);
   const first = make(); await first.hydrate();
   assert.equal(first.state.setupComplete, false);
+  assert.equal(first.state.settings.haptics, true);
   await first.completeSetup();
-  first.setSettings({ nickname: 'Drummer', appearance: 'dark' });
+  first.setSettings({ nickname: 'Drummer', appearance: 'dark', haptics: false });
   await first.connect('one.local');
   first.preferences({ channelOrder: [3, 1, 2], selectedAux: 2, compact: true });
   await first.connect('two.local');
@@ -26,6 +27,7 @@ test('nickname, appearance and per-server layouts automatically persist without 
   await second.connect('one.local');
   assert.equal(second.state.settings.nickname, 'Drummer');
   assert.equal(second.state.settings.appearance, 'dark');
+  assert.equal(second.state.settings.haptics, false);
   assert.equal(second.state.preferences.selectedAux, 2);
   await second.restartSetup();
   assert.equal(second.state.setupComplete, false);

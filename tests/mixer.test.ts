@@ -134,3 +134,27 @@ test('set all levels off writes minus infinity for every channel in the current 
   assert.equal(client.setAllLevelsOff(2), false);
   assert.equal(writes().length, 4);
 });
+
+test('AUX presence accepts only current peers, updates names and clears on switches and disconnect', t => {
+  const { client, socket, writes } = setup(t);
+  const peers = () => client.state.peers;
+  socket.receive({ presence: { aux: 2, peers: [{ id: '2', nickname: 'Wrong AUX' }] } });
+  assert.deepEqual(peers(), []);
+  socket.receive({ presence: { aux: 1, peers: [{ id: '2', nickname: '  Drummer  ' }, { id: '3', nickname: null },
+    { id: '2', nickname: 'Duplicate' }, { id: 'bad', nickname: 'Bad ID' }, { id: '4', nickname: {} }] } });
+  assert.deepEqual(peers(), [{ id: '2', nickname: 'Drummer' }, { id: '3', nickname: null }]);
+  socket.receive({ presence: { aux: 1, peers: [{ id: '2', nickname: 'Joe' }] } });
+  assert.equal(peers()[0].nickname, 'Joe');
+  client.selectAux(2);
+  assert.deepEqual(peers(), []);
+  socket.receive({ presence: { aux: 1, peers: [{ id: '2', nickname: 'Late old message' }] } });
+  assert.deepEqual(peers(), []);
+  socket.receive({ presence: { aux: 2, peers: [{ id: '3', nickname: 'Singer' }] } });
+  assert.equal(peers()[0].nickname, 'Singer');
+  socket.receive({ presence: { aux: 2, peers: [] } });
+  assert.deepEqual(peers(), []);
+  socket.receive({ presence: { aux: 2, peers: [{ id: '3', nickname: 'Singer' }] } });
+  client.disconnect(true);
+  assert.deepEqual(peers(), []);
+  assert.equal(writes().length, 0);
+});

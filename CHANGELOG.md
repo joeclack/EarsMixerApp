@@ -1,6 +1,27 @@
 # Changelog
 
-## Unreleased
+## 0.5.1 — Recent states
+
+- Simplify Recent states in Settings to show only the AUX name and last-edited timestamp.
+
+## 0.5.0 — AUX presence
+
+- Show profile circles and nicknames for other connected users on the selected AUX. Tap the circles to see everyone.
+- Update presence on joins, disconnects, nickname changes and AUX changes; clear it while disconnected or switching mixes.
+- Requires the server's AUX presence update (Windows 1.5.0 / Node package 2.7.0). Older servers continue to work without presence.
+
+## 0.4.0 — Saved AUX levels
+
+- Save send levels on the phone separately for each mixer and AUX, with channel names and edit times.
+- Compare fresh desk levels on opening, reconnecting or switching AUX; ask before restoring saved levels, including hidden channels. Keep pan unchanged.
+- Show AUX level summaries and last-edited dates in Settings → Recent states.
+- Keep saved states separate from the live display cache so a reconnect cannot overwrite them before a restore decision.
+
+## 0.3.0 — Device layouts and mixer controls
+
+- Show the selected AUX name as the mixer page heading.
+- Restore the device-local Haptic feedback toggle, enabled by default.
+- Remember the selected template and show its name in the mixer menu.
 
 - Move fader gestures and track animation onto the UI thread; isolate channel readouts and theme/navigation subscriptions from unrelated level updates.
 - Add bounded three-tick haptic bursts for fast position jumps.

@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useEffect, useState, useSyncExternalStore } from 'react';
-import { AppState } from 'react-native';
+import { Alert, AppState, Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { MixerSession } from './session';
 import type { Socket } from './client';
@@ -12,7 +12,23 @@ export function MixerProvider({ children }: React.PropsWithChildren) {
     const subscription = AppState.addEventListener('change', state => session.setLifecycle(state));
     return () => { subscription.remove(); session.disconnect(false); };
   }, [session]);
-  return <Context.Provider value={session}>{children}</Context.Provider>;
+  return <Context.Provider value={session}><LevelRestorePrompt />{children}</Context.Provider>;
+}
+function LevelRestorePrompt() {
+  const { session, state } = useSessionState();
+  const prompt = state.restorePrompt;
+  useEffect(() => {
+    if (!prompt) return;
+    const title = 'Load saved levels for ' + prompt.saved.name + '?';
+    const message = 'Desk levels differ from this phone’s saved state (' + new Date(prompt.saved.editedAt).toLocaleString() + ').';
+    if (Platform.OS === 'web') {
+      session.resolveLevelRestore(prompt, window.confirm(title + '\n\n' + message));
+    } else Alert.alert(title, message, [
+      { text: 'Keep desk levels', style: 'cancel', onPress: () => session.resolveLevelRestore(prompt, false) },
+      { text: 'Load saved levels', onPress: () => session.resolveLevelRestore(prompt, true) },
+    ], { cancelable: false });
+  }, [session, prompt]);
+  return null;
 }
 export function useSessionState() {
   const session = useContext(Context);

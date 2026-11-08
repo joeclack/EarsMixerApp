@@ -16,7 +16,7 @@ export default function MixerToolbar() {
   return <>
     <Stack.Toolbar placement="left">
       <Stack.Toolbar.View hidesSharedBackground>
-        <Text accessibilityRole="header" style={{ color: theme.text, fontSize: 20, fontWeight: '700' }}>{state.demo ? 'Demo' : 'Mixer'}</Text>
+        <Text accessibilityRole="header" numberOfLines={1} style={{ color: theme.text, fontSize: 20, fontWeight: '700' }}>{selected?.label || 'Mixer'}</Text>
       </Stack.Toolbar.View>
     </Stack.Toolbar>
     <Stack.Toolbar placement="right" tintColor={theme.tint}>

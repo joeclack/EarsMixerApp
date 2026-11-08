@@ -23,7 +23,7 @@ export default function Fader({ channel, label, color, vertical = false, length 
   const active = useSharedValue(false);
   const lastDispatch = useSharedValue(0);
   const drag = useRef<DragToken | null>(null);
-  const haptics = useRef(new DragHaptics(() => { void Haptics.selectionAsync().catch(() => {}); })).current;
+  const haptics = useRef(new DragHaptics(() => { if (session.state.settings.haptics) void Haptics.selectionAsync().catch(() => {}); })).current;
   const inset = 26;
   const travel = Math.max(0, width - inset * 2);
   const begin = useCallback((initial: number, epoch: number) => {
@@ -108,7 +108,7 @@ export default function Fader({ channel, label, color, vertical = false, length 
       accessibilityActions={[{ name: 'increment' }, { name: 'decrement' }]} onAccessibilityAction={event => {
         const token = session.mixer.beginDrag(channel); if (!token) return;
         session.mixer.drag(token, clamp(position + (event.nativeEvent.actionName === 'increment' ? 0.02 : -0.02))); session.mixer.flush(token);
-        void Haptics.selectionAsync().catch(() => {});
+        if (session.state.settings.haptics) void Haptics.selectionAsync().catch(() => {});
       }}
       style={[{ position: 'absolute', left: vertical ? 23 : 4, top: vertical ? 4 : 14,
         width: vertical ? 28 : 44, height: vertical ? 44 : 28, borderRadius: 4,
