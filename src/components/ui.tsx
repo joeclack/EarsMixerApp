@@ -33,7 +33,7 @@ export function Page({ title, children, scroll = true, compactHeader = true, too
     ...(toolbar && { title: '', headerTitle: '', headerBackVisible: false,
       ...(Platform.OS === 'web' && { headerLeft: () => <Text accessibilityRole="header" style={{ color: theme.text, fontSize: 20, fontWeight: '700' }}>{title}</Text> }) }),
     headerShadowVisible: false, headerLargeTitleShadowVisible: false, headerTintColor: theme.tint,
-    headerStyle: { backgroundColor: Platform.OS === 'ios' && !compactHeader ? 'transparent' : theme.bg },
+    headerStyle: { backgroundColor: 'transparent' },
     ...(!toolbar && { headerRight: () => <Pressable accessibilityRole="button" accessibilityLabel="Connect to mixer" onPress={() => router.push('/connect')} style={styles.headerButton}>
       <Icon name={{ ios: mix.status === 'connected' ? 'wifi' : 'wifi.slash', android: 'wifi', web: 'wifi' }} color={mix.status === 'connected' ? theme.green : theme.tint} />
     </Pressable> }),

@@ -4,7 +4,7 @@ import { useTheme } from '../theme';
 import { Icon, Message } from './ui';
 export default function ProfileCard() {
   const { session, state } = useSession(), theme = useTheme();
-  return <View style={{ padding: 18, backgroundColor: theme.panel, borderRadius: 20, gap: 12 }}>
+  return <View style={{ paddingVertical: 8, gap: 12 }}>
     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
       <Icon name={{ ios: 'person.crop.circle', android: 'account_circle', web: 'account_circle' }} size={32} />
       <Text style={{ color: theme.text, fontSize: 19, fontWeight: '600' }}>This device</Text>

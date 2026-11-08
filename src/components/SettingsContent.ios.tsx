@@ -1,7 +1,7 @@
 import React from 'react';
 import ProfileCard from './ProfileCard';
 import { Host, Form, Section, Toggle, Picker, Text, Button, LabeledContent, HStack, Spacer, RNHostView } from '@expo/ui/swift-ui';
-import { tag, pickerStyle, buttonStyle, lineLimit } from '@expo/ui/swift-ui/modifiers';
+import { tag, pickerStyle, buttonStyle, lineLimit, scrollContentBackground } from '@expo/ui/swift-ui/modifiers';
 import { router } from 'expo-router';
 import Constants from 'expo-constants';
 import { useSession } from '../mixer/context';
@@ -9,7 +9,7 @@ import { useTheme } from '../theme';
 export default function SettingsContent() {
   const { session, state } = useSession(), theme = useTheme();
   return <Host style={{ flex: 1 }} colorScheme={theme.scheme} seedColor={theme.tint}>
-    <Form>
+    <Form modifiers={[scrollContentBackground('hidden')]}>
       <Section><RNHostView matchContents={{ vertical: true }}><ProfileCard /></RNHostView></Section>
       <Section title="Appearance">
         <Picker label="Appearance" systemImage="circle.lefthalf.filled" selection={state.settings.appearance}
