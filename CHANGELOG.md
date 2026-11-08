@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.4.0 — Saved AUX levels
+
+- Save send levels on the phone separately for each mixer and AUX, with channel names and edit times.
+- Compare fresh desk levels on opening, reconnecting or switching AUX; ask before restoring saved levels, including hidden channels. Keep pan unchanged.
+- Show AUX level summaries and last-edited dates in Settings → Recent states.
+- Keep saved states separate from the live display cache so a reconnect cannot overwrite them before a restore decision.
+
 ## 0.3.0 — Device layouts and mixer controls
 
 - Show the selected AUX name as the mixer page heading.

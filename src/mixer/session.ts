@@ -1,3 +1,4 @@
+import { readLevelStates, stateKey, type SavedLevelState } from './recentStates';
 import { normalizeMixerAddress, probeMixer, readSavedMixers, rememberMixer, type SavedMixer } from '../connection';
 import { requestTemplates, templatePreferences, type MixerTemplate } from './templates';
 import { DEMO_URL, createDemoSocket, demoTemplates, demoTemplate } from './demo';
@@ -6,28 +7,82 @@ import { emptyPreferences, readPreferences, type Preferences, parseConfig, hidde
 type Storage = { getItem(key: string): Promise<string | null>; setItem(key: string, value: string): Promise<void>; getAllKeys?(): Promise<readonly string[]>; multiRemove?(keys: string[]): Promise<void> };
 export type Settings = { appearance: 'system' | 'light' | 'dark'; nickname: string; haptics: boolean };
 export type SessionState = {
+  recentStates: Record<string, SavedLevelState>; restorePrompt: { key: string; generation: number; saved: SavedLevelState } | null;
   selectedTemplate: MixerTemplate | null; hydrated: boolean; demo: boolean; setupComplete: boolean; lastServer: string | null; server: string | null; recent: SavedMixer[]; settings: Settings;
   preferences: Preferences; connecting: boolean; message: string;
 };
 export class MixerSession {
   readonly mixer: MixerClient;
-  state: SessionState = { selectedTemplate: null, hydrated: false, demo: false, setupComplete: false, lastServer: null, server: null, recent: [], settings: { appearance: 'system', nickname: '', haptics: true },
+  state: SessionState = { recentStates: {}, restorePrompt: null, selectedTemplate: null, hydrated: false, demo: false, setupComplete: false, lastServer: null, server: null, recent: [], settings: { appearance: 'system', nickname: '', haptics: true },
     preferences: emptyPreferences(), connecting: false, message: '' };
   private listeners = new Set<() => void>();
   private attempt = 0;
   private suspended = false;
+  private statesLoaded: Promise<void> | null = null;
+  private compared = '';
+  private comparisonTarget = '';
+  private loadLevelStates() {
+    return this.statesLoaded ??= this.storage.getItem('earsmixer.native.level-states.v1').then(raw => {
+      this.patch({ recentStates: readLevelStates(raw) });
+    });
+  }
+  private saveLevelState(aux: number, changes: Record<number, number>, initial = false) {
+    const { server } = this.state, config = this.mixer.state.config;
+    if (!server || !config || !Object.keys(changes).length) return;
+    const key = stateKey(server, aux), previous = this.state.recentStates[key];
+    const saved: SavedLevelState = { server, aux, name: config.aux.find(a => a.channel === aux)?.label || 'AUX ' + aux,
+      editedAt: Date.now(), levels: { ...previous?.levels, ...this.mixer.liveLevels, ...changes },
+      labels: Object.fromEntries(config.channels.map(c => [c.channel, c.label])) };
+    this.patch({ recentStates: { ...this.state.recentStates, [key]: saved } });
+    // Coalesce drag writes with the existing on-device cache timer.
+    if (initial) void this.persist('earsmixer.native.level-states.v1', this.state.recentStates);
+    else if (!this.valueTimer) this.valueTimer = setTimeout(() => this.persistValues(), 350);
+  }
+  private compareLevelState() {
+    const { server } = this.state, { aux, config, status } = this.mixer.state;
+    if (!server || !aux || !config || status !== 'connected') {
+      this.compared = '';
+      if (this.state.restorePrompt) this.patch({ restorePrompt: null });
+      return;
+    }
+    const key = stateKey(server, aux), generation = this.mixer.levelGeneration;
+    if (this.comparisonTarget !== key) { this.comparisonTarget = key; this.compared = ''; }
+    const comparison = key;
+    if (this.state.restorePrompt && (this.state.restorePrompt.key !== key || this.state.restorePrompt.generation !== generation)) this.patch({ restorePrompt: null });
+    if (this.compared === comparison || !config.channels.length || config.channels.some(c => this.mixer.liveLevels[c.channel] === undefined)) return;
+    this.compared = comparison;
+    let saved = this.state.recentStates[key];
+    if (!saved) { this.saveLevelState(aux, this.mixer.liveLevels, true); return; }
+    if (config.channels.some(c => saved.levels[c.channel] === undefined)) {
+      saved = { ...saved, levels: { ...this.mixer.liveLevels, ...saved.levels }, labels: Object.fromEntries(config.channels.map(c => [c.channel, c.label])) };
+      this.patch({ recentStates: { ...this.state.recentStates, [key]: saved } });
+      void this.persist('earsmixer.native.level-states.v1', this.state.recentStates);
+    }
+    const differs = config.channels.some(c => saved.levels[c.channel] !== undefined && Math.abs(saved.levels[c.channel] - this.mixer.liveLevels[c.channel]) > 0.05);
+    if (differs) this.patch({ restorePrompt: { key, generation, saved } });
+  }
+  resolveLevelRestore(prompt: NonNullable<SessionState['restorePrompt']>, restore: boolean) {
+    if (this.state.restorePrompt !== prompt) return;
+    this.patch({ restorePrompt: null });
+    if (restore && this.state.server === prompt.saved.server && this.mixer.state.aux === prompt.saved.aux && this.mixer.levelGeneration === prompt.generation) {
+      if (!this.mixer.restoreLevels(prompt.saved.aux, prompt.saved.levels)) this.patch({ message: 'Could not restore all levels. Check the mixer connection.' });
+    }
+  }
   private queue = Promise.resolve();
   private valueTimer: ReturnType<typeof setTimeout> | null = null;
   private persistValues() {
     if (this.valueTimer) clearTimeout(this.valueTimer);
     this.valueTimer = null;
+    void this.persist('earsmixer.native.level-states.v1', this.state.recentStates);
     if (this.state.server) void this.persist("earsmixer.native.values:" + this.state.server, this.mixer.getValueCache());
   }
   constructor(private storage: Storage, factory: (url: string) => Socket, private fetcher: typeof fetch = fetch) {
     this.mixer = new MixerClient(url => url === DEMO_URL.replace(/^http/, 'ws') ? createDemoSocket() : factory(url));
+    this.mixer.onLevelEdit((aux, levels) => this.saveLevelState(aux, levels));
     let previous: unknown = null;
     let revision = 0;
     this.mixer.subscribe(() => {
+      this.compareLevelState();
       const { config, status } = this.mixer.state;
       if (this.mixer.cacheRevision !== revision) {
         revision = this.mixer.cacheRevision;
@@ -44,6 +99,7 @@ export class MixerSession {
   private patch(update: Partial<SessionState>) { this.state = { ...this.state, ...update }; this.listeners.forEach(fn => fn()); }
   async hydrate() {
     try {
+      await this.loadLevelStates();
       const [recent, raw, last, setup] = await Promise.all([this.storage.getItem('earsmixer.connections.v1'), this.storage.getItem('earsmixer.native.settings.v1'), this.storage.getItem('earsmixer.native.last-server.v1'), this.storage.getItem('earsmixer.native.setup.v1')]);
       let settings: Partial<Settings> = {};
       try { settings = JSON.parse(raw || '{}') || {}; } catch {}
@@ -99,8 +155,10 @@ export class MixerSession {
   startDemo() { return this.connect(DEMO_URL); }
   async connect(input: string) {
     const attempt = ++this.attempt;
-    this.patch({ connecting: true, message: '' });
+    this.compared = '';
+    this.patch({ connecting: true, restorePrompt: null, message: '' });
     try {
+      await this.loadLevelStates();
       const server = input === DEMO_URL ? DEMO_URL : await probeMixer(input, { fetchImpl: this.fetcher });
       this.persistValues();
       await this.queue;
@@ -134,7 +192,7 @@ export class MixerSession {
     this.persistValues();
     if (forgetConnection && !this.state.demo) { this.patch({ lastServer: null }); void this.persist('earsmixer.native.last-server.v1', null); }
     ++this.attempt; this.mixer.disconnect();
-    this.patch({ selectedTemplate: null, server: null, demo: false, connecting: false, preferences: emptyPreferences(), message: '' });
+    this.patch({ restorePrompt: null, selectedTemplate: null, server: null, demo: false, connecting: false, preferences: emptyPreferences(), message: '' });
   }
   setChannelHidden(channel: number, hidden: boolean) {
     const aux = this.mixer.state.aux;
@@ -159,7 +217,8 @@ export class MixerSession {
     await this.queue;
     const keys = (await this.storage.getAllKeys()).filter(key => key.startsWith('earsmixer.'));
     await this.storage.multiRemove(keys);
-    this.patch({ selectedTemplate: null, setupComplete: false, server: null, lastServer: null, recent: [], settings: { appearance: 'system', nickname: '', haptics: true },
+    this.compared = '';
+    this.patch({ recentStates: {}, restorePrompt: null, selectedTemplate: null, setupComplete: false, server: null, lastServer: null, recent: [], settings: { appearance: 'system', nickname: '', haptics: true },
       preferences: emptyPreferences(), connecting: false, message: '' });
   }
   setLifecycle(state: string) {
@@ -169,6 +228,8 @@ export class MixerSession {
       this.suspended = true;
       this.mixer.disconnect(true);
     } else if (state === 'active') {
+      if (this.state.restorePrompt) { this.suspended = false; return; }
+      this.compared = '';
       if (this.suspended && this.state.server) {
         this.mixer.identify(this.state.settings.nickname.trim() || null);
         this.mixer.connect(this.state.server, true);

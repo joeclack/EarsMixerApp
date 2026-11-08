@@ -1,6 +1,7 @@
+import { levelOverview } from '../mixer/recentStates';
 import React from 'react';
 import { useResetDeviceData } from './useResetDeviceData';
-import { Host, Form, Section, Toggle, Picker, Text, Button, LabeledContent, HStack, Spacer, TextField, useNativeState } from '@expo/ui/swift-ui';
+import { Host, Form, Section, Toggle, Picker, Text, Button, LabeledContent, VStack, HStack, Spacer, TextField, useNativeState } from '@expo/ui/swift-ui';
 import { tag, pickerStyle, buttonStyle, lineLimit, scrollContentBackground, disabled } from '@expo/ui/swift-ui/modifiers';
 import { router } from 'expo-router';
 import Constants from 'expo-constants';
@@ -25,6 +26,14 @@ export default function SettingsContent() {
       <Section title="Mixer">
         <Toggle label="Haptic feedback" isOn={state.settings.haptics} onIsOnChange={haptics => session.setSettings({ haptics })} />
         <Button label="Edit channels" systemImage="line.3.horizontal" onPress={() => router.push('/layout')} />
+      </Section>
+      <Section title="Recent states">
+        {!Object.keys(state.recentStates).length && <Text>No saved levels</Text>}
+        {Object.entries(state.recentStates).sort(([, a], [, b]) => b.editedAt - a.editedAt).map(([key, saved]) => <VStack key={key} alignment="leading" spacing={6}>
+          <Text>{saved.name}</Text>
+          <Text>{new URL(saved.server).host + ' · ' + new Date(saved.editedAt).toLocaleString()}</Text>
+          <Text modifiers={[lineLimit(4)]}>{levelOverview(saved)}</Text>
+        </VStack>)}
       </Section>
       <Section title="Connection">
         <HStack spacing={12}>

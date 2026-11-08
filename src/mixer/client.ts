@@ -16,6 +16,28 @@ export type ValueCache = Record<string, Record<number, number>>;
 export class MixerClient {
   private valueCache: ValueCache = {};
   cacheRevision = 0;
+  liveLevels: Record<number, number> = {};
+  levelGeneration = 0;
+  private levelEdits = new Set<(aux: number, levels: Record<number, number>) => void>();
+  onLevelEdit(fn: (aux: number, levels: Record<number, number>) => void) { this.levelEdits.add(fn); return () => { this.levelEdits.delete(fn); }; }
+  private editedLevels(levels: Record<number, number>) {
+    if (this.state.aux) this.levelEdits.forEach(fn => fn(this.state.aux!, levels));
+  }
+  restoreLevels(aux: number, levels: Record<number, number>) {
+    if (aux !== this.state.aux || this.state.status !== 'connected' || this.socket?.readyState !== 1 || !this.state.config) return false;
+    const entries = this.state.config.channels.filter(c => Number.isFinite(levels[c.channel]) && levels[c.channel] >= -150 && levels[c.channel] <= 10);
+    this.cancelWrites();
+    const applied: Record<number, number> = {};
+    for (const c of entries) {
+      const value = levels[c.channel];
+      if (!this.send({ address: this.address(c.channel, aux, 'level'), args: [value] })) break;
+      applied[c.channel] = value; this.remember(c.channel, value, 'level');
+    }
+    this.liveLevels = { ...this.liveLevels, ...applied };
+    this.editedLevels(applied);
+    this.emit(this.state.parameter === 'level' ? { values: { ...this.state.values, ...applied } } : {});
+    return Object.keys(applied).length === entries.length;
+  }
   getValueCache() { return this.valueCache; }
   displayValue(channel: number) { return this.state.values[channel] ?? this.valueCache[this.state.aux + ":" + this.state.parameter]?.[channel]; }
   restoreValues(raw: unknown) {
@@ -55,6 +77,7 @@ export class MixerClient {
   connect(url: string, preserveConfig = false) { this.disconnect(preserveConfig); this.url = url; this.attempt = 0; this.open(); }
   disconnect(preserveConfig = false) {
     this.url = null;
+    this.liveLevels = {}; this.levelGeneration++;
     this.queryGeneration++;
     if (this.retry) clearTimeout(this.retry);
     if (this.timeout) clearTimeout(this.timeout);
@@ -72,6 +95,7 @@ export class MixerClient {
   }
   private open() {
     if (!this.url) return;
+    this.liveLevels = {}; this.levelGeneration++;
     this.emit({ status: 'connecting', values: {} });
     const socket = this.socketFactory(this.url.replace(/^http/, 'ws'));
     this.socket = socket;
@@ -87,6 +111,7 @@ export class MixerClient {
     if (this.timeout) clearTimeout(this.timeout);
     if (this.query) clearTimeout(this.query);
     this.cancelWrites();
+    this.liveLevels = {};
     this.emit({ status: this.url ? 'connecting' : 'disconnected', values: {} });
     if (this.url) this.retry = setTimeout(() => this.open(), Math.min(10000, 1000 * 2 ** this.attempt++));
   }
@@ -100,7 +125,7 @@ export class MixerClient {
     this.desiredAux = aux;
     const available = this.state.config?.aux || [];
     const selected = available.find(a => a.channel === aux)?.channel ?? available[0]?.channel ?? null;
-    if (selected !== this.state.aux) { this.emit({ aux: selected }); this.refresh(); }
+    if (selected !== this.state.aux) { this.liveLevels = {}; this.emit({ aux: selected }); this.refresh(); }
   }
   setParameter(parameter: Parameter) {
     if (parameter !== this.state.parameter) { this.emit({ parameter }); this.refresh(); }
@@ -117,6 +142,7 @@ export class MixerClient {
       this.remember(channel.channel, -150, 'level');
       if (this.state.parameter === 'level') values[channel.channel] = -150;
     }
+    if (success) { this.liveLevels = Object.fromEntries(config.channels.map(c => [c.channel, -150])); this.editedLevels(this.liveLevels); }
     this.emit(this.state.status === 'connected' ? { values } : {});
     return success;
   }
@@ -127,6 +153,7 @@ export class MixerClient {
     this.emit({ epoch: this.state.epoch + 1 });
   }
   refresh() {
+    this.liveLevels = {}; this.levelGeneration++;
     this.cancelWrites();
     if (this.query) clearTimeout(this.query);
     this.emit({ values: {} });
@@ -134,15 +161,16 @@ export class MixerClient {
     this.send({ selectedAux: this.state.aux });
     const generation = ++this.queryGeneration;
     const query = (attempt: number) => {
-      const missing = this.state.config?.channels.filter(c => this.state.values[c.channel] === undefined) || [];
+      const missing = this.state.config?.channels.filter(c => this.state.values[c.channel] === undefined || this.liveLevels[c.channel] === undefined) || [];
       let index = 0;
       const next = () => {
         if (generation !== this.queryGeneration || this.socket?.readyState !== 1) return;
         const channel = missing[index++];
         if (channel) {
           this.send({ address: this.address(channel.channel) + '/?', args: [] });
+          if (this.state.parameter !== 'level') this.send({ address: this.address(channel.channel, this.state.aux, 'level') + '/?', args: [] });
           this.query = setTimeout(next, 12);
-        } else if (attempt < 3 && this.state.config?.channels.some(c => this.state.values[c.channel] === undefined)) {
+        } else if (attempt < 3 && this.state.config?.channels.some(c => this.state.values[c.channel] === undefined || this.liveLevels[c.channel] === undefined)) {
           this.query = setTimeout(() => query(attempt + 1), 1000);
         }
       };
@@ -178,7 +206,7 @@ export class MixerClient {
     const entry = this.pending.get(token.channel);
     if (!entry || entry.token !== token) return;
     clearTimeout(entry.timer); this.pending.delete(token.channel);
-    if (this.valid(token) && this.send({ address: this.address(token.channel, token.aux, token.parameter), args: [entry.value] })) { this.remember(token.channel, entry.value); this.emit({}); }
+    if (this.valid(token) && this.send({ address: this.address(token.channel, token.aux, token.parameter), args: [entry.value] })) { this.remember(token.channel, entry.value); if (token.parameter === 'level') { this.liveLevels[token.channel] = entry.value; this.editedLevels({ [token.channel]: entry.value }); } this.emit({}); }
   }
   cancelDrag(token: DragToken) {
     if (this.activeDrags.get(token.channel) === token) this.activeDrags.delete(token.channel);
@@ -207,11 +235,13 @@ export class MixerClient {
     const match = /^\/Input_Channels\/(\d+)\/Aux_Send\/(\d+)\/send_(level|pan)$/.exec(message.address);
     if (match) {
       const value = message.args[0], channel = Number(match[1]);
-      if (Number(match[2]) !== this.state.aux || match[3] !== this.state.parameter ||
+      if (Number(match[2]) !== this.state.aux || (match[3] !== this.state.parameter && match[3] !== 'level') ||
         !config?.channels.some(c => c.channel === channel) || !Number.isFinite(value) ||
         (match[3] === 'level' ? value < -150 || value > 10 : value < 0 || value > 1)) return;
       if (this.activeDrags.has(channel) || this.pending.has(channel)) return;
-      this.remember(channel, value);
+      if (match[3] === 'level') this.liveLevels = { ...this.liveLevels, [channel]: value };
+      this.remember(channel, value, match[3] as Parameter);
+      if (match[3] !== this.state.parameter) { this.emit({}); return; }
       this.emit({ values: { ...this.state.values, [channel]: value } });
       return;
     }
