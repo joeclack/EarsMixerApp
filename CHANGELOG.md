@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.11.2 — Native web AUX selection
+
+- Use the browser's native select for AUX selection in the web mixer, with the current mix selected and controls disabled while disconnected.
+
 ## 0.11.1 — Web connection input
 
 - Keep the manual mixer address input above its decorative panel gradient so typed text and the placeholder remain visible in Expo web.
