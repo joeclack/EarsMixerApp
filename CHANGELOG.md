@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.11.1 — Web connection input
+
+- Keep the manual mixer address input above its decorative panel gradient so typed text and the placeholder remain visible in Expo web.
+
 ## 0.11.0 — Interaction feedback
 
 - Briefly confirm successful template application, saved-level restoration and setting all sends to off, with a gentle entrance/exit and optional success haptic.
