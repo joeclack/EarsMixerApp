@@ -1,4 +1,5 @@
 import { clamp, dbToPosition, parseConfig, positionToDb, type MixerConfig, type Parameter } from './model';
+import { captureBalance, groupKey, groupLevels, type GroupBalance } from './groups';
 
 export interface Socket {
   readyState: number;
@@ -14,9 +15,36 @@ export type MixState = {
   values: Record<number, number>; epoch: number;
 };
 export type MixerControls = Omit<MixState, 'values'>;
-export type DragToken = { epoch: number; aux: number; channel: number; parameter: Parameter };
+export type DragToken = { epoch: number; aux: number; channel: number; parameter: Parameter; members?: number[]; balance?: GroupBalance };
 export type ValueCache = Record<string, Record<number, number>>;
 export class MixerClient {
+  private groups: Record<string, number[][]> = {};
+  private balances: Record<string, GroupBalance> = {};
+  configureGroups(groups: Record<string, number[][]>) {
+    this.cancelWrites(); this.groups = groups;
+    const validKeys = new Set(Object.entries(groups).flatMap(([aux, entries]) => entries.map(members => groupKey(Number(aux), members))));
+    this.balances = Object.fromEntries(Object.entries(this.balances).filter(([key]) => validKeys.has(key)));
+  }
+  getGroupBalances() { return this.balances; }
+  restoreGroupBalances(raw: unknown) {
+    this.balances = {};
+    if (!raw || typeof raw !== 'object') return;
+    for (const [key, entry] of Object.entries(raw).slice(0, 1000)) {
+      if (!/^[1-9]\d*:[1-9]\d*(,[1-9]\d*)+$/.test(key) || !entry || typeof entry !== 'object') continue;
+      const value = entry as GroupBalance, members = key.split(':')[1].split(',').map(Number);
+      if (!value.offsets || !value.expected || !members.every(id =>
+        (value.offsets[id] === null || (Number.isFinite(value.offsets[id]) && value.offsets[id]! <= 0 && value.offsets[id]! >= -160)) &&
+        Number.isFinite(value.expected[id]) && value.expected[id] >= -150 && value.expected[id] <= 10)) continue;
+      this.balances[key] = { offsets: Object.fromEntries(members.map(id => [id, value.offsets[id]])), expected: Object.fromEntries(members.map(id => [id, value.expected[id]])) };
+    }
+  }
+  private members(channel: number) { return channel < 0 ? this.groups[String(this.state.aux)]?.find(group => -group[0] === channel) : undefined; }
+  canDrag(channel: number): boolean {
+    const members = this.members(channel);
+    return this.state.status === 'connected' && !!this.state.aux && this.socket?.readyState === 1 &&
+      (channel < 0 ? this.state.parameter === 'level' && !!members && members.every(id => this.canDrag(id)) :
+        this.state.values[channel] !== undefined && !!this.state.config?.channels.some(c => c.channel === channel));
+  }
   private valueCache: ValueCache = {};
   cacheRevision = 0;
   liveLevels: Record<number, number> = {};
@@ -42,7 +70,15 @@ export class MixerClient {
     return Object.keys(applied).length === entries.length;
   }
   getValueCache() { return this.valueCache; }
-  displayValue(channel: number) { return this.state.values[channel] ?? this.valueCache[this.state.aux + ":" + this.state.parameter]?.[channel]; }
+  displayValue(channel: number): number | undefined {
+    if (channel < 0) {
+      const members = this.members(channel);
+      if (!members || this.state.parameter !== 'level') return undefined;
+      const values = members.map(id => this.displayValue(id));
+      return values.every(value => value !== undefined) ? Math.max(...values as number[]) : undefined;
+    }
+    return this.state.values[channel] ?? this.valueCache[this.state.aux + ":" + this.state.parameter]?.[channel];
+  }
   restoreValues(raw: unknown) {
     const cache: ValueCache = {};
     if (raw && typeof raw === "object") for (const [key, values] of Object.entries(raw).slice(0, 512)) {
@@ -73,9 +109,10 @@ export class MixerClient {
   private readControls(): MixerControls { const { values: _values, ...controls } = this.state; return controls; }
   controlsSnapshot = () => this.controls;
   subscribeControls = (fn: () => void) => { this.controlListeners.add(fn); return () => { this.controlListeners.delete(fn); }; };
-  channelSnapshot(channel: number) {
+  channelSnapshot(channel: number): string {
     const { status, epoch, aux, parameter, values } = this.state;
-    return [status, epoch, aux, parameter, values[channel], this.displayValue(channel)].join('|');
+    return [status, epoch, aux, parameter, values[channel], this.displayValue(channel),
+      ...(this.members(channel) || []).map(id => this.channelSnapshot(id))].join('|');
   }
   subscribeChannel(channel: number, fn: () => void) {
     let entry = this.channels.get(channel);
@@ -214,22 +251,32 @@ export class MixerClient {
     return '/Input_Channels/' + channel + '/Aux_Send/' + aux + '/send_' + parameter;
   }
   beginDrag(channel: number): DragToken | null {
-    if (this.state.status !== 'connected' || !this.state.aux || this.state.values[channel] === undefined ||
-      !this.state.config?.channels.some(c => c.channel === channel)) return null;
-    const token = { epoch: this.state.epoch, channel, aux: this.state.aux, parameter: this.state.parameter };
+    if (!this.canDrag(channel)) return null;
+    const members = this.members(channel);
+    if ((members || [channel]).some(id => this.activeDrags.has(id))) return null;
+    const token: DragToken = { epoch: this.state.epoch, channel, aux: this.state.aux!, parameter: this.state.parameter };
+    if (members) {
+      const key = groupKey(token.aux, members), previous = this.balances[key];
+      const balance = previous && members.every(id => Math.abs(previous.expected[id] - this.liveLevels[id]) < 0.1)
+        ? previous : captureBalance(members, this.liveLevels);
+      token.members = members; token.balance = balance;
+      this.balances[key] = balance;
+      for (const id of members) this.activeDrags.set(id, token);
+    }
     this.activeDrags.set(channel, token);
     return token;
   }
   private valid(token: DragToken) {
     return token.epoch === this.state.epoch && token.aux === this.state.aux && token.parameter === this.state.parameter &&
-      this.state.status === 'connected' && this.socket?.readyState === 1 && this.state.values[token.channel] !== undefined;
+      this.canDrag(token.channel) && this.activeDrags.get(token.channel) === token;
   }
   drag(token: DragToken, position: number) {
     if (!this.valid(token) || !Number.isFinite(position)) return;
     const value = token.parameter === 'level' ? positionToDb(clamp(position)) : clamp(position);
     // Update the model immediately, but publish at the network cadence so
     // every pointer event does not re-render the entire channel bank.
-    this.state = { ...this.state, values: { ...this.state.values, [token.channel]: value } };
+    const levels = token.balance ? groupLevels(token.balance, value) : { [token.channel]: value };
+    this.state = { ...this.state, values: { ...this.state.values, ...levels } };
     const previous = this.pending.get(token.channel);
     if (previous) { previous.value = value; return; }
     this.pending.set(token.channel, { token, value, timer: setTimeout(() => this.flush(token), 35) });
@@ -238,9 +285,21 @@ export class MixerClient {
     const entry = this.pending.get(token.channel);
     if (!entry || entry.token !== token) return;
     clearTimeout(entry.timer); this.pending.delete(token.channel);
-    if (this.valid(token) && this.send({ address: this.address(token.channel, token.aux, token.parameter), args: [entry.value] })) { this.remember(token.channel, entry.value); if (token.parameter === 'level') { this.liveLevels[token.channel] = entry.value; this.editedLevels({ [token.channel]: entry.value }); } this.emit({}); }
+    if (!this.valid(token)) return;
+    const levels = token.balance ? groupLevels(token.balance, entry.value) : { [token.channel]: entry.value };
+    const applied: Record<number, number> = {};
+    for (const [id, value] of Object.entries(levels)) {
+      if (!this.send({ address: this.address(Number(id), token.aux, token.parameter), args: [value] })) return;
+      this.remember(Number(id), value); applied[Number(id)] = value;
+    }
+    if (token.balance && token.members) {
+      this.balances[groupKey(token.aux, token.members)] = { offsets: { ...token.balance.offsets }, expected: { ...applied } };
+    }
+    if (token.parameter === 'level') { this.liveLevels = { ...this.liveLevels, ...applied }; this.editedLevels(applied); }
+    this.emit({});
   }
   cancelDrag(token: DragToken) {
+    for (const id of token.members || []) if (this.activeDrags.get(id) === token) this.activeDrags.delete(id);
     if (this.activeDrags.get(token.channel) === token) this.activeDrags.delete(token.channel);
     const entry = this.pending.get(token.channel);
     if (entry?.token === token) { clearTimeout(entry.timer); this.pending.delete(token.channel); }

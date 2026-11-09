@@ -20,6 +20,11 @@ export default function LayoutEditor() {
         <Stack.Toolbar.Button variant="done" accessibilityLabel="Done" onPress={() => router.back()}>Done</Stack.Toolbar.Button>
       </Stack.Toolbar>}
 
-    <View style={{ flex: 1, paddingTop: headerHeight }}><ChannelOrder /></View>
+    <View style={{ flex: 1, paddingTop: headerHeight }}>
+      <Pressable accessibilityRole="button" onPress={() => router.push('/groups')} style={{ minHeight: 48, padding: 16 }}>
+        <Text style={{ color: theme.tint, fontSize: 17 }}>Manage channel groups</Text>
+      </Pressable>
+      <ChannelOrder />
+    </View>
   </ScreenSurface>;
 }

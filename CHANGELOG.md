@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.12.0 — Channel groups
+
+- Create and remove device-local channel groups per server/AUX in Edit channels → Manage channel groups, or the mixer options menu.
+- Show linked channels as one fader titled with their channel names. Open a group for individual adjustments and close it to control their relative dB balance.
+- Use the loudest member as the group level; preserve offsets through all-off and lifting again. Individually off members stay off until raised individually. Fresh desk edits establish the next group balance.
+- Keep pan individual, wait for fresh values from every member, and cancel pending group writes on navigation, AUX/mode changes and backgrounding. Preserve groups when applying shared layout templates.
+- Save membership and remembered balances on the device; no server protocol change is required.
+
 ## 0.11.2 — Native web AUX selection
 
 - Use the browser's native select for AUX selection in the web mixer, with the current mix selected and controls disabled while disconnected.

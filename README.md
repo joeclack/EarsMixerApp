@@ -2,7 +2,7 @@
 
 Native iOS and Android companion for [EarsMixer](https://github.com/joeclack/EarsMixer). Control your own DiGiCo monitor mix over the local network, with layouts and preferences saved on your phone.
 
-Current app version: **0.11.0**. Use the latest [EarsMixer server](https://github.com/joeclack/EarsMixer/releases/latest), currently **1.7.0**, for discovery, shared templates and connected-user presence. This repository contains the mobile client; the server repository contains the console connection, browser mixer, admin dashboard and Windows service. Musicians use optional device-local nicknames, without accounts or passwords. The server's admin password is separate.
+Current app version: **0.12.0**. Use the latest [EarsMixer server](https://github.com/joeclack/EarsMixer/releases/latest), currently **1.7.0**, for discovery, shared templates and connected-user presence. This repository contains the mobile client; the server repository contains the console connection, browser mixer, admin dashboard and Windows service. Musicians use optional device-local nicknames, without accounts or passwords. The server's admin password is separate.
 
 ## Using the app
 
@@ -48,6 +48,16 @@ The app saves changes automatically:
 **Settings → Recent states** lists each saved AUX name and its last-edit date/time. **Reset device data** clears this phone's nickname, layouts, hidden channels, preferences, connections, cached values and saved states, then returns to setup. It does not change desk levels or pan. Uninstalling the app removes its local data.
 
 The operating system can suspend networking when the app is backgrounded. EarsMixer preserves its cached display, closes live controls in the background and reconnects when active. Cached values do not mean the phone is still controlling the console.
+
+## Channel groups
+
+Open **… → Channel groups**, or **Edit channels → Manage channel groups**. Select two or more channels and tap **Group selected**. Each channel can belong to one group per AUX. Group membership is saved on this device separately for each server and AUX; applying a shared template keeps your groups.
+
+The mixer shows a linked-channel marker and one fader titled with all member names, such as **Guitar L / Guitar R**. Tap **Open** to adjust the individual channels and **Close** to return to the group fader. Creating, opening, closing or removing a group does not change levels. Hidden or unavailable members make that group display as individual visible channels until every member is available again.
+
+The group level represents its loudest member. Moving it applies the same dB change to each member, preserving their balance: 0/−5 dB becomes −10/−15 dB when the group is lowered to −10 dB. The quieter member can reach off first; the group bottom sets all members off. Raising the group again restores its remembered offsets. Channels already individually off remain off until raised individually. If every member was individually off and no balance was previously recorded, open the group to raise a channel first.
+
+Individual edits and fresh desk changes establish the next group balance. Controls wait for fresh values from every member after a reconnect. Pan mode shows the individual channels and never links their pans. Group movements send ordinary per-channel commands to the server, so writes are not atomic on the console.
 
 ## Templates
 

@@ -16,7 +16,7 @@ import type { DragToken } from '../mixer/client';
 export default memo(function Fader({ channel, label, vertical = false, length = 200 }: { channel: number; label: string; vertical?: boolean; length?: number }) {
   const { session, mix } = useFaderSession(channel);
   const [width, setWidth] = useState(0);
-  const ready = mix.status === 'connected' && mix.values[channel] !== undefined;
+  const ready = session.mixer.canDrag(channel);
   const position = session.mixer.position(channel);
   const thumb = useSharedValue(position);
   const start = useSharedValue(position);

@@ -29,6 +29,7 @@ export default function MixerToolbar() {
           onClick={event => { session.mixer.setParameter(mode); event.currentTarget.closest('details')?.removeAttribute('open'); }}>{mode === 'level' ? 'Level' : 'Pan'}</button>)}
         <button onClick={event => { event.currentTarget.closest('details')?.removeAttribute('open'); router.push('/templates'); }}>{state.selectedTemplate ? state.selectedTemplate.name + ': Templates' : 'Templates'}</button>
         <button onClick={event => { event.currentTarget.closest('details')?.removeAttribute('open'); router.push('/layout'); }}>Edit channels</button>
+        <button onClick={event => { event.currentTarget.closest('details')?.removeAttribute('open'); router.push('/groups'); }}>Channel groups</button>
         <button disabled={mix.status !== 'connected' || !mix.aux} onClick={event => { event.currentTarget.closest('details')?.removeAttribute('open'); setAllLevelsOff(); }} style={{ color: theme.danger }}>Set all levels to off</button>
       </div>
     </details>}

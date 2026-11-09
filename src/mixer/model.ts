@@ -6,11 +6,12 @@ export type Preferences = {
   selectedAux: number | null; channelOrder: number[];
   favouritesByAux: Record<string, { channels: number[]; enabled: boolean }>;
   hiddenByAux: Record<string, number[]>;
+  groupsByAux: Record<string, number[][]>;
   view: 'list' | 'grid'; compact: boolean;
 };
 export type User = { id: string; username: string; displayName: string };
 export type Account = { user: User | null; preferences: Preferences | null; revision: number };
-export const emptyPreferences = (): Preferences => ({ selectedAux: null, channelOrder: [], favouritesByAux: {}, hiddenByAux: {}, view: 'list', compact: true });
+export const emptyPreferences = (): Preferences => ({ selectedAux: null, channelOrder: [], favouritesByAux: {}, hiddenByAux: {}, groupsByAux: {}, view: 'list', compact: true });
 const record = (v: unknown): v is Record<string, any> => !!v && typeof v === 'object' && !Array.isArray(v);
 const positive = (v: unknown): v is number => Number.isSafeInteger(v) && Number(v) > 0;
 export function readPreferences(v: unknown): Preferences | null {
@@ -32,7 +33,20 @@ export function readPreferences(v: unknown): Preferences | null {
       !Array.isArray(entry.channels) || entry.channels.length > 1000 || !entry.channels.every(positive)) return null;
     favouritesByAux[id] = { channels: [...new Set(entry.channels)], enabled: entry.enabled };
   }
-  return { selectedAux: v.selectedAux, channelOrder: [...new Set(v.channelOrder)], favouritesByAux, hiddenByAux, view: v.view, compact: true };
+  const groupsByAux: Preferences['groupsByAux'] = {};
+  if (v.groupsByAux !== undefined) {
+    if (!record(v.groupsByAux) || Object.keys(v.groupsByAux).length > 256) return null;
+    for (const [aux, groups] of Object.entries(v.groupsByAux)) {
+      if (!/^[1-9]\d*$/.test(aux) || !Array.isArray(groups) || groups.length > 500) return null;
+      const seen = new Set<number>();
+      for (const group of groups) {
+        if (!Array.isArray(group) || group.length < 2 || group.length > 1000 || !group.every(positive)) return null;
+        for (const id of group) { if (seen.has(id)) return null; seen.add(id); }
+      }
+      groupsByAux[aux] = groups.map(group => [...group]);
+    }
+  }
+  return { selectedAux: v.selectedAux, channelOrder: [...new Set(v.channelOrder)], favouritesByAux, hiddenByAux, groupsByAux, view: v.view, compact: true };
 }
 export function parseConfig(value: unknown): MixerConfig | null {
   if (!record(value) || !Array.isArray(value.channels) || !Array.isArray(value.aux)) return null;

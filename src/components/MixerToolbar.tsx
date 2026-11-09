@@ -41,6 +41,7 @@ export default function MixerToolbar() {
       </Stack.Toolbar.Menu>
       <Stack.Toolbar.MenuAction onPress={() => router.push('/templates')}>{state.selectedTemplate ? state.selectedTemplate.name + ': Templates' : 'Templates'}</Stack.Toolbar.MenuAction>
       <Stack.Toolbar.MenuAction onPress={() => router.push('/layout')}>Edit channels</Stack.Toolbar.MenuAction>
+      <Stack.Toolbar.MenuAction onPress={() => router.push('/groups')}>Channel groups</Stack.Toolbar.MenuAction>
       <Stack.Toolbar.MenuAction destructive disabled={mix.status !== 'connected' || !mix.aux} onPress={setAllLevelsOff}>Set all levels to off</Stack.Toolbar.MenuAction>
     </Stack.Toolbar.Menu>}
     {Platform.OS === 'ios' ? <Stack.Toolbar.Button icon="gearshape" accessibilityLabel="Settings" onPress={() => router.push('/settings')} /> :
