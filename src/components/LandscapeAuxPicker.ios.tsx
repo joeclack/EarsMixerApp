@@ -11,7 +11,7 @@ export default function LandscapeAuxPicker({ auxes, selected, disabled: unavaila
   return <Host colorScheme={theme.scheme} style={{ width: 64, height: 64 }}>
     <Menu label={<Image systemName="headphones" size={22} modifiers={[frame({ width: 44, height: 44 })]} />}
       modifiers={[menuStyle('button'), buttonStyle(Number(Platform.Version) >= 26 ? 'glass' : 'bordered'), buttonBorderShape('circle'),
-        tint(theme.tint), disabled(unavailable), accessibilityLabel('Choose AUX, ' + label)]}>
+        frame({ width: 64, height: 64 }), tint(theme.tint), disabled(unavailable), accessibilityLabel('Choose AUX, ' + label)]}>
       <Picker label="Choose AUX" selection={selected} onSelectionChange={value => { if (typeof value === 'number') onChange(value); }} modifiers={[pickerStyle('inline')]}>
         {auxes.map(aux => <Text key={aux.channel} modifiers={[tag(aux.channel)]}>{aux.label}</Text>)}
       </Picker>
