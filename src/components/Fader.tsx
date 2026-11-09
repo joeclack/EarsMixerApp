@@ -101,7 +101,7 @@ export default memo(function Fader({ channel, label, vertical = false, length = 
   const pressHaptic = useCallback(() => {
     if (session.state.settings.haptics) void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy).catch(() => {});
   }, [session]);
-  const enlarge = useMemo(() => Gesture.LongPress().enabled(!vertical && !!onEnlarge).minDuration(300).maxDistance(3).onBegin(() => {
+  const enlarge = useMemo(() => Gesture.LongPress().enabled(!vertical && !!onEnlarge).minDuration(220).maxDistance(3).onBegin(() => {
     'worklet';
     // Wait for a stationary hold. A scroll, drag or early release cancels this
     // timer on the UI thread before a haptic is dispatched to the RN runtime.
@@ -111,7 +111,7 @@ export default memo(function Fader({ channel, label, vertical = false, length = 
     }), ReduceMotion.Never));
     if (!reducedMotion) scale.set(withSequence(
       withTiming(0.985, { duration: 60 }),
-      withTiming(1.035, { duration: 240, easing: Easing.bezier(0.23, 1, 0.32, 1) }),
+      withTiming(1.035, { duration: 160, easing: Easing.bezier(0.23, 1, 0.32, 1) }),
     ));
   }).onStart(() => {
     'worklet';
