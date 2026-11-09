@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.16.1 — Connected group controls
+
+- Give every expanded landscape member the same width with no gaps between channels. Place the rotated group name in a side rail at the start of the group, with a close icon above it.
+- Open groups with a single tap on the title or digital display instead of a long press. Add a display chevron and open/close haptics that respect the device setting.
+
 ## 0.16.0 — Named groups, editing and scope
 
 - Replace channel selection on the groups page with a list of existing groups. Open a group to edit it, create a new group with Save, or select multiple groups and delete them together.

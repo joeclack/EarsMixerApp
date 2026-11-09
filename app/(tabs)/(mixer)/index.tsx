@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { FlatList, Text, View, useWindowDimensions } from 'react-native';
 import { router, useFocusEffect } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import * as Haptics from 'expo-haptics';
 import { useSession } from '../../../src/mixer/context';
 import { useTheme } from '../../../src/theme';
 import { hiddenChannels } from '../../../src/mixer/model';
@@ -12,6 +13,7 @@ import Fader, { FaderValue } from '../../../src/components/Fader';
 import FaderHousing from '../../../src/components/FaderHousing';
 import FaderDisplay from '../../../src/components/FaderDisplay';
 import GroupExpandTarget from '../../../src/components/GroupExpandTarget';
+import CloseButton from '../../../src/components/CloseButton';
 import { FADER_INSET } from '../../../src/components/faderGeometry';
 import MixerToolbar from '../../../src/components/MixerToolbar';
 import AuxPresence from '../../../src/components/AuxPresence';
@@ -35,8 +37,8 @@ export default function Mixer() {
     [mix.config, mix.aux, mix.parameter, expanded, state.preferences]);
   const topPadding = landscape ? insets.top + 12 : 20;
   const bottomPadding = insets.bottom + (landscape ? 12 : 20);
-  // Every landscape strip starts at its LCD. Group controls use horizontal
-  // space beside the first display instead of reducing anyone's fader travel.
+  // Every landscape strip starts at its LCD. The group's name and close control
+  // have their own side rail, leaving equal widths and travel for every member.
   const cardHeight = Math.max(108 + FADER_INSET * 2, bankHeight - topPadding - bottomPadding);
   const stripHeight = Math.max(FADER_INSET * 2, cardHeight - 108);
   const renderSection = useCallback(({ item }: { item: MixerSection }) => {
@@ -45,21 +47,22 @@ export default function Mixer() {
     const open = grouped && item.channels.length > 0;
     const canClose = open && mix.parameter !== 'pan';
     const expand = () => {
+      if (expanded.includes(group.channel)) return;
       session.mixer.cancelWrites();
       setExpanded(ids => ids.includes(group.channel) ? ids : [...ids, group.channel]);
+      if (session.state.settings.haptics) void Haptics.selectionAsync().catch(() => {});
     };
     const close = () => {
+      if (!expanded.includes(group.channel)) return;
       session.mixer.cancelWrites();
       setExpanded(ids => ids.filter(id => id !== group.channel));
+      if (session.state.settings.haptics) void Haptics.selectionAsync().catch(() => {});
     };
-    const renderFader = (channel: MixerRow, index: number) => <View key={channel.channel} testID={'channel-' + channel.channel}
-      style={landscape ? { width: grouped && !open ? 136 : canClose && index === 0 ? 152 : 88, alignItems: 'center', gap: 8 } : { gap: 8 }}>
+    const renderFader = (channel: MixerRow) => <View key={channel.channel} testID={'channel-' + channel.channel}
+      style={landscape ? { width: grouped && !open ? 136 : 88, alignItems: 'center', gap: 8 } : { gap: 8 }}>
       {landscape ? grouped && !open ? <GroupExpandTarget label={group.label} onExpand={expand}>
-        <FaderDisplay channel={channel.channel} label={channel.label} />
-      </GroupExpandTarget> : <View style={{ width: '100%', height: 64, flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-        <View style={{ width: 88 }}><FaderDisplay channel={channel.channel} label={channel.label} /></View>
-        {canClose && index === 0 && <NativeButton compact title="Close" accessibilityLabel={'Close ' + group.label + ' group'} onPress={close} />}
-      </View> : !channel.members && <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 8 }}>
+        <FaderDisplay channel={channel.channel} label={channel.label} expandable />
+      </GroupExpandTarget> : <FaderDisplay channel={channel.channel} label={channel.label} /> : !channel.members && <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 8 }}>
         <Text numberOfLines={2} style={{ color: theme.text, fontSize: 15, fontWeight: '600', flex: 1 }}>{channel.label}</Text>
         <FaderValue channel={channel.channel} />
       </View>}
@@ -68,7 +71,7 @@ export default function Mixer() {
       </View>
     </View>;
     return <View testID={grouped ? 'group-' + group.channel : undefined} style={{
-      height: landscape ? cardHeight : undefined, width: landscape ? (grouped ? (open ? item.channels.length * 96 - 8 + (canClose ? 64 : 0) : 136) + 12 : 96) : undefined,
+      height: landscape ? cardHeight : undefined, width: landscape ? (grouped ? (open ? item.channels.length * 88 + 44 : 136) + 12 : 96) : undefined,
       marginRight: landscape ? 8 : 0, marginBottom: landscape ? 0 : 16,
       ...(grouped ? { borderWidth: 2, borderColor: theme.groupEdge, borderRadius: 16, backgroundColor: theme.groupSurface,
         paddingHorizontal: landscape ? 4 : 10, paddingTop: landscape ? 4 : 0, paddingBottom: landscape ? 4 : 12 }
@@ -78,20 +81,32 @@ export default function Mixer() {
         flexDirection: 'row', alignItems: 'center', borderBottomWidth: 1, borderBottomColor: theme.line, marginBottom: 10 }}>
         <Icon name={{ ios: 'link', android: 'link', web: 'link' }} size={14} />
         <Text numberOfLines={2} accessibilityRole="header" style={{ flex: 1, minWidth: 0, color: theme.text, fontSize: 15, fontWeight: '700' }}>{group.label}</Text>
-        {canClose ? <NativeButton compact title="Close" accessibilityLabel={'Close ' + group.label + ' group'} onPress={close} />
+        {canClose ? <CloseButton label={'Close ' + group.label + ' group'} onPress={close} />
           : <Text style={{ color: theme.muted, fontSize: 11 }}>Pan</Text>}
       </View> : <GroupExpandTarget label={group.label} onExpand={expand}>
         <View style={{ minHeight: 48, paddingHorizontal: 6, gap: 8, flexDirection: 'row', alignItems: 'center', marginBottom: 10 }}>
           <Icon name={{ ios: 'link', android: 'link', web: 'link' }} size={14} />
           <Text numberOfLines={2} style={{ flex: 1, color: theme.text, fontSize: 15, fontWeight: '700' }}>{group.label}</Text>
           <FaderValue channel={group.channel} />
+          <Icon name={{ ios: 'chevron.down', android: 'expand_more', web: 'expand_more' }} size={16} />
         </View>
       </GroupExpandTarget>)}
-      <View style={{ flexDirection: landscape ? 'row' : 'column', gap: landscape ? 8 : 16 }}>
+      <View style={{ flexDirection: landscape ? 'row' : 'column', gap: landscape ? 0 : 16 }}>
+        {landscape && open && <View style={{ width: 44, height: cardHeight - 12, alignItems: 'center' }}>
+          <View style={{ width: 44, height: 44, alignItems: 'center', justifyContent: 'center' }}>
+            {canClose && <CloseButton label={'Close ' + group.label + ' group'} onPress={close} />}
+          </View>
+          <View style={{ width: 44, flex: 1, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
+            <Text numberOfLines={1} accessibilityRole="header" accessibilityLabel={group.label} style={{
+              width: Math.max(0, cardHeight - 64), height: 32, flexShrink: 0, textAlign: 'center', lineHeight: 32,
+              color: theme.text, fontSize: 15, fontWeight: '700', transform: [{ rotate: '90deg' }],
+            }}>{group.label}</Text>
+          </View>
+        </View>}
         {(open ? item.channels : [group]).map(renderFader)}
       </View>
     </View>;
-  }, [landscape, cardHeight, stripHeight, theme, mix.parameter, session]);
+  }, [landscape, cardHeight, stripHeight, theme, mix.parameter, session, expanded]);
   return <Page title={mix.config?.aux.find(aux => aux.channel === mix.aux)?.label || 'Mixer'} scroll={false} compactHeader hideHeader={landscape} toolbar={<MixerToolbar />}>
     <AuxPresence />
     <MixerLoadingBoundary>{!state.server ? <EmptyMixer /> : <FlatList key={landscape ? 'strips' : 'rows'} horizontal={landscape} onLayout={event => setBankHeight(event.nativeEvent.layout.height)} extraData={state.preferences}
