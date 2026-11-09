@@ -40,7 +40,9 @@ export default memo(function Fader({ channel, label, vertical = false, length = 
   const begin = useCallback((initial: number, epoch: number) => {
     if (epoch !== session.mixer.state.epoch) return;
     drag.current = session.mixer.beginDrag(channel);
+    if (!drag.current) return;
     haptics.begin(initial);
+    if (session.state.settings.haptics) void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
   }, [session, channel, haptics]);
   const update = useCallback((next: number) => {
     if (!drag.current || drag.current.epoch !== session.mixer.state.epoch) return;
