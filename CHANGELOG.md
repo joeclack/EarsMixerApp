@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.14.0 — Animated fader loading
+
+- Replace the icon and spinner on startup and mixer loading screens with three abstract faders moving independently. Use transform-only animations, pause in the background, and show static faders with Reduce Motion enabled.
+- Remove the configured icon from the static native splash so new builds transition from a plain launch background into the animated app loader. Expo Go retains its own initial launch screen.
+- Add Settings → Developer tools → Preview loading animation in development builds, with a Done button to return. The preview does not change connections or saved settings and is unavailable in production.
+
 ## 0.13.1 — Setup name AutoFill
 
 - Mark the optional setup nickname field as a person's name so iOS and other supported keyboards can suggest a saved name for tap-to-fill. Capitalise words and disable spelling corrections for names.

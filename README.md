@@ -2,7 +2,7 @@
 
 Native iOS and Android companion for [EarsMixer](https://github.com/joeclack/EarsMixer). Control your own DiGiCo monitor mix over the local network, with layouts and preferences saved on your phone.
 
-Current app version: **0.13.1**. Use the latest [EarsMixer server](https://github.com/joeclack/EarsMixer/releases/latest), currently **1.7.0**, for discovery, shared templates and connected-user presence. This repository contains the mobile client; the server repository contains the console connection, browser mixer, admin dashboard and Windows service. Musicians use optional device-local nicknames, without accounts or passwords. The server's admin password is separate.
+Current app version: **0.14.0**. Use the latest [EarsMixer server](https://github.com/joeclack/EarsMixer/releases/latest), currently **1.7.0**, for discovery, shared templates and connected-user presence. This repository contains the mobile client; the server repository contains the console connection, browser mixer, admin dashboard and Windows service. Musicians use optional device-local nicknames, without accounts or passwords. The server's admin password is separate.
 
 ## Using the app
 
@@ -44,7 +44,7 @@ The app saves changes automatically:
 
 - Nickname, appearance and the haptic feedback preference stay on the device.
 - Channel order, selected AUX and selected template are stored separately for each server. Hidden channels are stored per AUX. Use **… → Edit channels** to reorder or hide unwanted channels; there are no favourites or compact-mode switches.
-- Channel metadata and last-known Level/Pan values are cached locally. The fader bank appears as soon as channel metadata is available, while live values refresh independently. Handle artwork preloads at startup, with a drawn surface visible immediately during image decoding. Dragging waits for fresh values. Until channel metadata is available, the app shows its icon and an activity indicator without loading text.
+- Channel metadata and last-known Level/Pan values are cached locally. The fader bank appears as soon as channel metadata is available, while live values refresh independently. Handle artwork preloads at startup, with a drawn surface visible immediately during image decoding. Dragging waits for fresh values. While settings or channel metadata load, three abstract faders animate independently without loading text. Reduce Motion shows static faders.
 - The display cache is never automatically written to the desk. Separately, edits on this phone save a level state for each server/AUX. On opening, reconnecting, returning to the app or switching AUX, differing live and saved levels prompt **Keep desk levels** or **Load saved levels**. Only confirming recall applies those saved send levels, including hidden channels; pan is unchanged.
 
 **Settings → Recent states** lists each saved AUX name and its last-edit date/time. **Reset device data** clears this phone's nickname, layouts, hidden channels, preferences, connections, cached values and saved states, then returns to setup. It does not change desk levels or pan. Uninstalling the app removes its local data.
@@ -71,7 +71,7 @@ Administrators manage shared templates in the server dashboard. The limited serv
 
 The interface uses textured graphite or silver surfaces, recessed fader housings, illuminated teal tracks and sculpted rectangular handles with centre markers. Settings and setup share restrained hardware details while native buttons, pickers, switches and sheets retain their system styling. Choose System, Light or Dark in Settings.
 
-The generated fader artwork is used for the launcher icon, native splash and uncached loading state. Launcher and splash changes require a new native build; Expo Go retains its own launcher icon.
+The generated fader artwork remains the launcher icon. Loading screens use three simple animated faders, independent of console data and image assets. New native builds use a plain initial launch background before the animation can render; Expo Go retains its own initial launch screen. In development, open **Settings → Developer tools → Preview loading animation** to view the loader until you tap **Done**.
 
 Fader haptics follow gesture travel rather than delayed desk feedback. **Settings → Haptic feedback** controls slider and success haptics. Brief confirmations appear after applying a template, loading saved levels or setting all sends to off. Selection and setup transitions respect reduced motion, and confirmations support screen readers.
 

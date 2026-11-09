@@ -1,6 +1,6 @@
 import ScreenSurface from '../src/components/ScreenSurface';
 import ConfirmationToast from '../src/components/ConfirmationToast';
-import IconLoading from '../src/components/IconLoading';
+import FaderLoading from '../src/components/FaderLoading';
 import React, { useEffect, useRef } from 'react';
 import { Appearance, Platform } from 'react-native';
 import { Stack, ThemeProvider, DarkTheme, DefaultTheme, router, useRootNavigationState, usePathname } from 'expo-router';
@@ -60,7 +60,7 @@ function Navigation() {
     })();
     return () => controller.abort();
   }, [state.hydrated, state.setupComplete, navigation?.key, pathname, session]);
-  if (!state.hydrated) return <ScreenSurface><IconLoading /></ScreenSurface>;
+  if (!state.hydrated) return <ScreenSurface><FaderLoading /></ScreenSurface>;
   return <ThemeProvider value={theme.dark ? DarkTheme : DefaultTheme}>
     <StatusBar style={theme.dark ? 'light' : 'dark'} />
     <Stack screenOptions={{ contentStyle: { backgroundColor: theme.bg }, headerTintColor: theme.tint }}>
@@ -72,6 +72,7 @@ function Navigation() {
       <Stack.Screen name="scan" options={{ presentation: 'fullScreenModal', headerShown: false }} />
       <Stack.Screen name="layout" options={{ title: 'Channel order', presentation: 'modal' }} />
       <Stack.Screen name="groups" options={{ title: 'Channel groups' }} />
+      <Stack.Screen name="loading-preview" options={{ presentation: 'fullScreenModal', headerShown: false }} />
     </Stack>
   </ThemeProvider>;
 }

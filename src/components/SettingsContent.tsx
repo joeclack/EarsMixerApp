@@ -36,7 +36,10 @@ export default function SettingsContent() {
       {!state.demo && <Row title="Try demo" onPress={() => void session.startDemo()} />}
     </Section>
     <Section><Row title="Reset device data" destructive onPress={reset.confirm} /></Section>
-    <Section title="Developer tools" symbol={{ ios: 'wrench.and.screwdriver', android: 'build', web: 'build' }}><Row title="Test first-time setup" onPress={() => void session.restartSetup()} /></Section>
+    <Section title="Developer tools" symbol={{ ios: 'wrench.and.screwdriver', android: 'build', web: 'build' }}>
+      <Row title="Test first-time setup" onPress={() => void session.restartSetup()} />
+      {__DEV__ && <Row title="Preview loading animation" onPress={() => router.push('/loading-preview')} />}
+    </Section>
     <Section title="About" symbol={{ ios: 'info.circle', android: 'info', web: 'info' }}><Row title="EarsMixer"><Text style={{ color: theme.muted }}>{Constants.expoConfig?.version}</Text></Row></Section>
   </>;
 }
