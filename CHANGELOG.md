@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.17.3 — Explicit router configuration
+
+- Replace the deprecated initialRouteName setting with anchor. Explicitly present the groups list and editor as pushed card screens, including when reached from the channel-order modal.
+
 ## 0.17.2 — More visible loading fly-out
 
 - Slow the loading exit to 650 ms, let the faders grow visibly before flying beyond the screen, and delay the fade. Apply the same timing to the preview Done action; retain the short fade with Reduce Motion.

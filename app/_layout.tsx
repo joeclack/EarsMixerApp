@@ -17,7 +17,7 @@ const sheetOptions = {
   sheetAllowedDetents: [0.6, 0.9], sheetGrabberVisible: true,
 };
 
-export const unstable_settings = { initialRouteName: '(tabs)' };
+export const unstable_settings = { anchor: '(tabs)' };
 function Navigation() {
   const { session, state } = useSessionState();
   const theme = useTheme();
@@ -69,8 +69,8 @@ function Navigation() {
       <Stack.Screen name="templates" options={sheetOptions} />
       <Stack.Screen name="scan" options={{ presentation: 'fullScreenModal', headerShown: false }} />
       <Stack.Screen name="layout" options={{ title: 'Channel order', presentation: 'modal' }} />
-      <Stack.Screen name="groups" options={{ title: 'Channel groups', headerBackTitle: 'Mixer' }} />
-      <Stack.Screen name="group" options={{ title: 'Edit group', headerBackTitle: 'Groups' }} />
+      <Stack.Screen name="groups" options={{ title: 'Channel groups', headerBackTitle: 'Mixer', presentation: 'card' }} />
+      <Stack.Screen name="group" options={{ title: 'Edit group', headerBackTitle: 'Groups', presentation: 'card' }} />
       <Stack.Screen name="loading-preview" options={{ presentation: 'fullScreenModal', headerShown: false }} />
     </Stack>
   </ThemeProvider>}</LoadingTransition>;
