@@ -107,6 +107,7 @@ export default memo(function Fader({ channel, label, vertical = false, length = 
   }).onStart(() => {
     'worklet';
     if (!reducedMotion) scale.set(withTiming(1.05, { duration: 70 }));
+    scheduleOnRN(pressHaptic);
     if (onEnlarge) scheduleOnRN(onEnlarge);
   }).onFinalize(() => {
     'worklet';
