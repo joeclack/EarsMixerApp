@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.13.1 — Setup name AutoFill
+
+- Mark the optional setup nickname field as a person's name so iOS and other supported keyboards can suggest a saved name for tap-to-fill. Capitalise words and disable spelling corrections for names.
+
 ## 0.13.0 — Landscape console strips
 
 - Add illuminated LCD-style displays above landscape faders, showing each channel's name and current level (or pan in Pan mode), including grouped channels.
