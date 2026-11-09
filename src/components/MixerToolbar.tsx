@@ -1,9 +1,10 @@
 import { useSetAllLevelsOff } from './useSetAllLevelsOff';
-import { Platform, Pressable, Text } from 'react-native';
+import { Platform, Pressable } from 'react-native';
 import { router, Stack } from 'expo-router';
 import { useSession } from '../mixer/context';
 import { useTheme } from '../theme';
 import { Icon, styles } from './ui';
+import MixerHeading from './MixerHeading';
 
 export default function MixerToolbar() {
   const { session, state, mix } = useSession();
@@ -16,7 +17,7 @@ export default function MixerToolbar() {
   return <>
     <Stack.Toolbar placement="left">
       <Stack.Toolbar.View hidesSharedBackground>
-        <Text accessibilityRole="header" numberOfLines={1} style={{ color: theme.text, fontSize: 20, fontWeight: '700' }}>{selected?.label || 'Mixer'}</Text>
+        <MixerHeading />
       </Stack.Toolbar.View>
     </Stack.Toolbar>
     <Stack.Toolbar placement="right" tintColor={theme.tint}>

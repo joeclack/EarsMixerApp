@@ -7,6 +7,7 @@ import { useTheme } from '../theme';
 import { useSession } from '../mixer/context';
 import NativeButton from './NativeButton';
 import ScreenSurface from './ScreenSurface';
+import MixerHeading from './MixerHeading';
 
 export function Icon({ name, size = 22, color }: { name: SymbolViewProps['name']; size?: number; color?: ColorValue }) {
   const theme = useTheme();
@@ -21,7 +22,7 @@ export function Page({ title, children, scroll = true, compactHeader = true, too
     headerShown: !hideHeader, title, headerLargeTitleEnabled: !compactHeader, headerTransparent,
     headerTitleStyle: { color: theme.text },
     ...(toolbar && { title: '', headerTitle: '', headerBackVisible: false,
-      ...(Platform.OS === 'web' && { headerLeft: () => <Text accessibilityRole="header" style={{ color: theme.text, fontSize: 20, fontWeight: '700' }}>{title}</Text> }) }),
+      ...(Platform.OS === 'web' && { headerLeft: () => <MixerHeading /> }) }),
     headerShadowVisible: false, headerLargeTitleShadowVisible: false, headerTintColor: theme.tint,
     headerStyle: { backgroundColor: 'transparent' },
     ...(!toolbar && Platform.OS !== 'ios' && { headerRight: () => <Pressable accessibilityRole="button" accessibilityLabel="Connect to mixer" onPress={() => router.push('/connect')} style={styles.headerButton}>

@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.9.1 — AUX identity
+
+- Add a discreet Monitor mix label above the selected AUX name in the portrait toolbar, or Demo mix when trying the app locally.
+- Keep the heading within its share of toolbar space, retain nearby connected-user avatars and preserve the full-height landscape view.
+
 ## 0.9.0 — Automatic fader transitions
 
 - Ease automatic fader movement out with a fast start and a gentle finish, including setting all sends to off and loading saved levels.
