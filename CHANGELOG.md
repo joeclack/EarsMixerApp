@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.17.10 — Channel visibility switch
+
+- Use the Expo UI switch’s supported label prop in the channel editor, keeping the channel-specific description and resolving the TypeScript error that stopped both mobile CI workflows before native builds.
+
 ## 0.17.9 — Consistent toast border
 
 - Use one border colour around confirmation toasts, removing the contrasting bottom rim and its visible colour split at the corners.

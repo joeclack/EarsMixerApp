@@ -18,7 +18,7 @@ export default function ChannelOrder() {
         {!!item.detail && <Text style={{ color: theme.muted, fontSize: 13 }}>{item.detail}</Text>}
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
           <Host matchContents colorScheme={theme.scheme} seedColor={theme.tint}>
-            <Switch accessibilityLabel={'Show ' + item.label} value={item.visible} onValueChange={visible => order.show(item.key, visible)} />
+            <Switch label={'Show ' + item.label} value={item.visible} onValueChange={visible => order.show(item.key, visible)} />
           </Host>
           {item.group && <NativeButton compact title="Edit" accessibilityLabel={'Edit ' + item.label + ' group'} onPress={() => order.edit(item.group!.id)} />}
           <View style={{ flex: 1 }} />
