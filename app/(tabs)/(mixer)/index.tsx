@@ -79,7 +79,6 @@ export default function Mixer() {
         {landscape ? <FaderHousing vertical><Fader channel={channel.channel} label={channel.label} vertical length={stripHeight} /></FaderHousing>
           : <ExpandableFader channel={channel.channel} label={channel.label} onEnlarge={() => {
             session.mixer.cancelWrites(); setFocused(channel.channel);
-            if (session.state.settings.haptics) void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
           }} />}
       </View>
     </View>;

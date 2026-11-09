@@ -94,8 +94,12 @@ export default memo(function Fader({ channel, label, vertical = false, length = 
     return session.mixer.subscribeChannel(channel, syncPosition);
   }, [session, channel, thumb, active, vertical, width]);
   const epoch = mix.epoch;
+  const pressHaptic = useCallback(() => {
+    if (session.state.settings.haptics) void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
+  }, [session]);
   const enlarge = useMemo(() => Gesture.LongPress().enabled(!vertical && !!onEnlarge).minDuration(450).maxDistance(3).onBegin(() => {
     'worklet';
+    scheduleOnRN(pressHaptic);
     if (!reducedMotion) scale.set(withSequence(
       withTiming(0.985, { duration: 60 }),
       withTiming(1.035, { duration: 390, easing: Easing.bezier(0.23, 1, 0.32, 1) }),
@@ -107,7 +111,7 @@ export default memo(function Fader({ channel, label, vertical = false, length = 
   }).onFinalize(() => {
     'worklet';
     scale.set(reducedMotion ? 1 : active.value ? withTiming(1, { duration: 80 }) : withSpring(1, { duration: 200, dampingRatio: 0.7 }));
-  }), [vertical, onEnlarge, mix.epoch, reducedMotion, scale, active]);
+  }), [vertical, onEnlarge, mix.epoch, reducedMotion, scale, active, pressHaptic]);
   const gesture = useMemo(() => {
     const pan = Gesture.Pan().enabled(ready && travel > 0).minDistance(3).simultaneousWithExternalGesture(enlarge);
     if (vertical) pan.activeOffsetY([-3, 3]).failOffsetX([-8, 8]);
@@ -154,7 +158,7 @@ export default memo(function Fader({ channel, label, vertical = false, length = 
       accessibilityHint={onEnlarge ? 'Touch and hold to open a full-screen fader' : undefined}
       accessibilityState={{ disabled: !ready }} accessibilityValue={{ min: 0, max: 100, now: Math.round(position * 100), text: levelText(session.mixer.displayValue(channel), mix.parameter) }}
       accessibilityActions={[{ name: 'increment' }, { name: 'decrement' }, ...(onEnlarge ? [{ name: 'expand', label: 'Open full-screen fader' }] : [])]} onAccessibilityAction={event => {
-        if (event.nativeEvent.actionName === 'expand') { onEnlarge?.(); return; }
+        if (event.nativeEvent.actionName === 'expand') { pressHaptic(); onEnlarge?.(); return; }
         const token = session.mixer.beginDrag(channel); if (!token) return;
         session.mixer.drag(token, clamp(position + (event.nativeEvent.actionName === 'increment' ? 0.02 : -0.02))); session.mixer.flush(token); session.mixer.cancelDrag(token);
         if (session.state.settings.haptics) void Haptics.selectionAsync().catch(() => {});
