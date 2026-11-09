@@ -111,7 +111,7 @@ export default memo(function Fader({ channel, label, vertical = false, length = 
   }, [ready, travel, vertical, mix.epoch, thumb, start, active, lastDispatch, begin, update, finish]);
   const thumbStyle = useAnimatedStyle(() => ({ transform: vertical ? [{ translateY: travel * (1 - thumb.value) }] : [{ translateX: travel * thumb.value }] }));
   const fillStyle = useAnimatedStyle(() => vertical ? { height: travel * thumb.value } : { width: travel * thumb.value });
-  return <View onLayout={event => setWidth(vertical ? event.nativeEvent.layout.height : event.nativeEvent.layout.width)} style={{ height: vertical ? length : 56, width: vertical ? 64 : undefined, alignSelf: vertical ? 'center' : undefined }}>
+  return <View onLayout={event => setWidth(vertical ? event.nativeEvent.layout.height : event.nativeEvent.layout.width)} style={{ height: vertical ? length : 56, width: vertical ? 80 : undefined, alignSelf: vertical ? 'center' : undefined }}>
     <View pointerEvents="none" style={vertical
       ? { position: 'absolute', top: inset, bottom: inset, left: FADER_TRACK_CENTER - 4, width: 8, borderRadius: 4, backgroundColor: '#010709', justifyContent: 'flex-end' }
       : { position: 'absolute', left: inset, right: inset, top: 24, height: 8, borderRadius: 4, backgroundColor: '#010709' }}>
@@ -151,6 +151,37 @@ const FaderScale = memo(function FaderScale({ width, travel, vertical, parameter
   width: number; travel: number; vertical: boolean; parameter: 'level' | 'pan'; color: string;
 }) {
   const inset = FADER_INSET;
+  if (vertical) {
+    const red = '#A82B40';
+    const marks = parameter === 'level'
+      ? [10, 5, 0, -5, -10, -20, -30, -40, -60].map(db => ({ position: dbToPosition(db), label: db > 0 ? '+' + db : String(db), major: db === 0 }))
+      : [{ position: 1, label: 'R', major: false }, { position: 0.5, label: 'C', major: true }, { position: 0, label: 'L', major: false }];
+    const spaced: typeof marks = [];
+    for (const mark of marks) {
+      const previous = spaced.at(-1);
+      const tooClose = previous && travel * (previous.position - mark.position) < 15;
+      if (tooClose && !mark.major) continue;
+      if (tooClose) spaced.pop();
+      spaced.push(mark);
+    }
+    const unity = inset + travel * (1 - dbToPosition(0));
+    return <View pointerEvents="none" style={{ position: 'absolute', inset: 0 }}>
+      {spaced.map(mark => {
+        const point = inset + travel * (1 - mark.position);
+        return <View key={mark.label} style={{ position: 'absolute', top: point, left: 0, right: 0 }}>
+          <View style={{ position: 'absolute', left: 4, width: 18, height: 1, backgroundColor: red }} />
+          <View style={{ position: 'absolute', right: 4, width: 14, height: 1, backgroundColor: red }} />
+          <Text style={{ position: 'absolute', left: 4, top: mark.major ? -22 : -14, fontSize: 9, lineHeight: 12, fontWeight: mark.major ? '800' : '600', color: red }}>{mark.label}</Text>
+        </View>;
+      })}
+      {parameter === 'level' && <>
+        <View testID="unity-arrow-left" style={{ position: 'absolute', top: unity - 6, left: 5, width: 0, height: 0,
+          borderTopWidth: 6, borderBottomWidth: 6, borderLeftWidth: 11, borderTopColor: 'transparent', borderBottomColor: 'transparent', borderLeftColor: red }} />
+        <View testID="unity-arrow-right" style={{ position: 'absolute', top: unity - 6, right: 5, width: 0, height: 0,
+          borderTopWidth: 6, borderBottomWidth: 6, borderRightWidth: 11, borderTopColor: 'transparent', borderBottomColor: 'transparent', borderRightColor: red }} />
+      </>}
+    </View>;
+  }
   const scaleText = '#849BA5', scaleLine = '#26383F';
   const scale = parameter === 'level'
     ? [-40, -20, -10, 0, 10].map(db => ({ position: dbToPosition(db), label: db === 0 ? '0 dB' : db > 0 ? '+' + db : String(db), major: db === 0 }))

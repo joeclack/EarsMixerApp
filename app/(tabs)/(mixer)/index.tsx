@@ -10,6 +10,7 @@ import { Page, EmptyMixer, Icon } from '../../../src/components/ui';
 import NativeButton from '../../../src/components/NativeButton';
 import Fader, { FaderValue } from '../../../src/components/Fader';
 import FaderHousing from '../../../src/components/FaderHousing';
+import FaderDisplay from '../../../src/components/FaderDisplay';
 import { FADER_INSET } from '../../../src/components/faderGeometry';
 import MixerToolbar from '../../../src/components/MixerToolbar';
 import AuxPresence from '../../../src/components/AuxPresence';
@@ -27,7 +28,7 @@ export default function Mixer() {
   const topPadding = landscape ? insets.top + 12 : 20;
   const bottomPadding = insets.bottom + (landscape ? 12 : 20);
   const cardHeight = Math.max(96 + FADER_INSET * 2, bankHeight - topPadding - bottomPadding);
-  const stripHeight = Math.max(FADER_INSET * 2, cardHeight - 96);
+  const stripHeight = Math.max(FADER_INSET * 2, cardHeight - 104);
   useFocusEffect(useCallback(() => {
     // Cached positions remain visible while fresh desk values are requested.
     if (session.mixer.state.status === 'connected') session.mixer.refresh();
@@ -41,20 +42,21 @@ export default function Mixer() {
       session.mixer.cancelWrites();
       setExpanded(ids => ids.includes(item.channel) ? ids.filter(id => id !== item.channel) : [...ids, item.channel]);
     };
-    return <View testID={'channel-' + item.channel} style={{ height: landscape ? cardHeight : undefined, width: landscape ? (item.members ? 144 : 76) : undefined, marginRight: landscape ? 6 : 0, marginBottom: landscape ? 0 : 12,
-      ...(item.group ? { borderLeftWidth: 2, borderLeftColor: theme.tint, paddingLeft: landscape ? 4 : 10 } : {}) }}>
+    return <View testID={'channel-' + item.channel} style={{ height: landscape ? cardHeight : undefined, width: landscape ? (item.members ? 144 : 96) : undefined, marginRight: landscape ? 6 : 0, marginBottom: landscape ? 0 : 12,
+      ...(landscape ? { borderWidth: 1, borderColor: '#B42B43', borderRadius: 12, borderBottomLeftRadius: 44, borderBottomRightRadius: 44, paddingHorizontal: 3, paddingVertical: 4, backgroundColor: theme.dark ? '#111C24' : '#D5DFE2' } : {}),
+      ...(item.group && !landscape ? { borderLeftWidth: 2, borderLeftColor: theme.tint, paddingLeft: 10 } : {}) }}>
     <View style={{ height: landscape ? (item.members ? 120 : 64) : undefined, marginBottom: 8, paddingHorizontal: landscape ? 0 : 8, flexShrink: 0, flexDirection: landscape ? 'column' : 'row', alignItems: 'center', gap: landscape ? 6 : 10 }}>
-      <Text numberOfLines={landscape || item.members ? 2 : 1} style={{ color: theme.text, fontSize: landscape ? 12 : 15, minHeight: landscape ? 34 : undefined, textAlign: landscape ? 'center' : 'left', fontWeight: '600', flex: landscape ? undefined : 1 }}>{item.label}</Text>
-      {item.members && <Icon name={{ ios: 'link', android: 'link', web: 'link' }} size={16} />}
-      {(!item.members || !open) && <FaderValue channel={item.channel} />}
+      {landscape ? <FaderDisplay channel={item.channel} label={item.label} /> : <Text numberOfLines={item.members ? 2 : 1} style={{ color: theme.text, fontSize: 15, fontWeight: '600', flex: 1 }}>{item.label}</Text>}
+      {item.members && !landscape && <Icon name={{ ios: 'link', android: 'link', web: 'link' }} size={16} />}
+      {!landscape && (!item.members || !open) && <FaderValue channel={item.channel} />}
       {item.members && mix.parameter !== 'pan' && <NativeButton title={open ? 'Close' : 'Open'} accessibilityLabel={(open ? 'Close ' : 'Open ') + item.label + ' group'} onPress={toggle} />}
     </View>
     {!open && <FaderHousing vertical={landscape}>
-      <Fader channel={item.channel} label={item.label} vertical={landscape} length={Math.max(80, stripHeight - (item.members ? 56 : 0))} />
+      <Fader channel={item.channel} label={item.label} vertical={landscape} length={Math.max(FADER_INSET * 2, stripHeight - (item.members ? 56 : 0))} />
     </FaderHousing>}
     {item.members && open && <Text style={{ color: theme.muted, fontSize: 12, padding: 8 }}>{mix.parameter === 'pan' ? 'Adjust pan individually' : landscape ? 'Adjust channels beside this group' : 'Adjust channels below'}</Text>}
   </View>;
-  }, [landscape, cardHeight, stripHeight, theme.text, theme.tint, theme.muted, expanded, mix.parameter, session]);
+  }, [landscape, cardHeight, stripHeight, theme.text, theme.tint, theme.muted, theme.dark, expanded, mix.parameter, session]);
   return <Page title={mix.config?.aux.find(aux => aux.channel === mix.aux)?.label || 'Mixer'} scroll={false} compactHeader hideHeader={landscape} toolbar={<MixerToolbar />}>
     <AuxPresence />
     <MixerLoadingBoundary>{!state.server ? <EmptyMixer /> : <FlatList key={landscape ? 'strips' : 'rows'} horizontal={landscape} onLayout={event => setBankHeight(event.nativeEvent.layout.height)} extraData={state.preferences}

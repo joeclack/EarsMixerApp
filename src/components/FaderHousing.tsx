@@ -5,6 +5,13 @@ import { LinearGradient } from 'expo-linear-gradient';
 // The dark channel recess and the lower rim reflection match the icon hardware.
 // These static surfaces are separate from the animated track and grip.
 export default memo(function FaderHousing({ vertical, children }: PropsWithChildren<{ vertical: boolean }>) {
+  if (vertical) return <View style={{ alignSelf: 'center', width: 88, borderRadius: 38, paddingHorizontal: 2, paddingVertical: 10,
+    backgroundColor: '#E1DDC9', borderWidth: 2, borderColor: '#B42B43' }}>
+    <LinearGradient pointerEvents="none" colors={['#EEE9D7', '#D4CEB6', '#E4DECA']} locations={[0, 0.5, 1]}
+      start={{ x: 0, y: 0 }} end={{ x: 1, y: 0.1 }} style={[StyleSheet.absoluteFill, { borderRadius: 36 }]} />
+    <View pointerEvents="none" style={{ position: 'absolute', inset: 2, borderRadius: 34, borderWidth: 1, borderColor: '#FFF9E3' }} />
+    {children}
+  </View>;
   return <View style={{ alignSelf: vertical ? 'center' : 'stretch', width: vertical ? 64 : undefined,
     borderRadius: 999, backgroundColor: '#061014', overflow: 'hidden',
     paddingHorizontal: vertical ? 0 : 16, paddingVertical: vertical ? 12 : 4 }}>

@@ -2,7 +2,7 @@
 
 Native iOS and Android companion for [EarsMixer](https://github.com/joeclack/EarsMixer). Control your own DiGiCo monitor mix over the local network, with layouts and preferences saved on your phone.
 
-Current app version: **0.12.2**. Use the latest [EarsMixer server](https://github.com/joeclack/EarsMixer/releases/latest), currently **1.7.0**, for discovery, shared templates and connected-user presence. This repository contains the mobile client; the server repository contains the console connection, browser mixer, admin dashboard and Windows service. Musicians use optional device-local nicknames, without accounts or passwords. The server's admin password is separate.
+Current app version: **0.13.0**. Use the latest [EarsMixer server](https://github.com/joeclack/EarsMixer/releases/latest), currently **1.7.0**, for discovery, shared templates and connected-user presence. This repository contains the mobile client; the server repository contains the console connection, browser mixer, admin dashboard and Windows service. Musicians use optional device-local nicknames, without accounts or passwords. The server's admin password is separate.
 
 ## Using the app
 
@@ -16,6 +16,8 @@ In portrait, the toolbar shows the selected AUX name with a small **Monitor mix*
 - **Settings:** opens a separate page with a back button to the mixer.
 
 Portrait uses compact horizontal faders. Landscape uses narrow vertical strips with space for the Dynamic Island, with the header and toolbar hidden to give the faders the full height. Rotate back to portrait to access the toolbar.
+
+Landscape strips have a small illuminated display with the channel name and current dB level (or pan position in Pan mode). Red outlines, cream fader faces, printed red scales and inward-pointing 0 dB arrows echo the physical desk. The arrows follow the same level scale as the handle, rather than marking the geometric centre. Swipe horizontally to reach more strips.
 
 Drag a handle to change its value; tapping or scrolling over the track does not jump the level. Touch movement is optimistic and immediate. Changes from the desk, saved-level recall and bulk level changes animate into position, with larger moves easing out. Keyboard and accessibility adjustments are also supported.
 

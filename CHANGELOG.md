@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.13.0 — Landscape console strips
+
+- Add illuminated LCD-style displays above landscape faders, showing each channel's name and current level (or pan in Pan mode), including grouped channels.
+- Frame each landscape strip with red console-style outlines and a cream fader face with red scale markings. Position inward-pointing arrows at the actual 0 dB point.
+- Widen landscape strips for readable displays and retain horizontal scrolling, safe-area spacing, handle-only gestures and per-channel live subscriptions.
+
 ## 0.12.2 — Immediate fader artwork
 
 - Replace the oversized handle image with small 1×/2×/3× assets and preload them independently of device storage and desk requests.
