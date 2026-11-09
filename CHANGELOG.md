@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.17.6 — Landscape notch spacing
+
+- Apply landscape mixer edge padding only on the camera-cutout side, swapping it when the phone rotates. Remove padding on the opposite edge, using orientation when iOS reports symmetric safe areas.
+
 ## 0.17.5 — Create in the toolbar
 
 - Move the group Create action to the top-right native toolbar (web header), retaining its blue text, validation and saving state. Remove the bottom form button.
