@@ -42,7 +42,7 @@ function Notice({ message, haptics, onDismiss }: { message: string; haptics: boo
     bottom: insets.bottom + 20, alignItems: 'center', zIndex: 100 }}>
     <Animated.View testID="action-confirmation" accessible accessibilityLiveRegion="polite" accessibilityLabel={message}
       style={[{ maxWidth: 420, width: '100%' }, animated]}>
-      <HardwarePanel radius={18} style={{ paddingHorizontal: 16, paddingVertical: 14, flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+      <HardwarePanel radius={18} uniformBorder style={{ paddingHorizontal: 16, paddingVertical: 14, flexDirection: 'row', alignItems: 'center', gap: 10 }}>
         <Icon name={{ ios: 'checkmark.circle', android: 'check_circle_outline', web: 'check_circle_outline' }} size={20} />
         <Text numberOfLines={3} style={{ color: theme.text, fontSize: 14, lineHeight: 20, flex: 1 }}>{message}</Text>
       </HardwarePanel>

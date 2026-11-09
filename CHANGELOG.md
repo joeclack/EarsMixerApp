@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.17.9 — Consistent toast border
+
+- Use one border colour around confirmation toasts, removing the contrasting bottom rim and its visible colour split at the corners.
+
 ## 0.17.8 — Extra corner clearance
 
 - Increase landscape corner padding from 12 to 16 points.
