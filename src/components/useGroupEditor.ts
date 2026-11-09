@@ -51,7 +51,7 @@ export function useGroupEditor({ groupId, scope }: GroupEditorProps) {
   };
   const save = () => commit(async () => await session.saveGroupAndWait(null, draft.name, draft.members, scope, draft.allAuxes) !== null, 'Group created');
   const remove = () => commit(() => groupId === null ? Promise.resolve(false) : session.deleteGroupsAndWait([groupId], scope), 'Group deleted');
-  return { creating, valid, busy, name: draft.name, members, available, error: error || state.message, save, remove, allAuxes: draft.allAuxes, canApplyAll,
+  return { mixName: mix.config?.aux.find(aux => aux.channel === scope.aux)?.label || 'Mix ' + scope.aux, creating, valid, busy, name: draft.name, members, available, error: error || state.message, save, remove, allAuxes: draft.allAuxes, canApplyAll,
     canSave: valid && !busy && draft.members.length >= 2, canRemove: !busy && (creating || draft.members.length > 2),
     rename: (name: string) => change({ ...draft, name: name.slice(0, 80) }),
     setAllAuxes: (allAuxes: boolean) => { if (!allAuxes || canApplyAll) change({ ...draft, allAuxes }); },

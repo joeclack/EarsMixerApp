@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.17.1 — Simpler group screens
+
+- Use native iOS swipe-to-delete and put Create new group in the groups list. Remove selection controls.
+- Move the blue, centred Create action to the bottom of the form, show the current monitor mix name, and remove explanatory footers.
+- Keep the connection toolbar button on the mixer page only.
+
 ## 0.17.0 — Reorder groups as units
 
 - Show each group as one linked row with its name and channel count in Edit channels. Move the whole group with native iOS drag handles or Up/Down controls on Android/web, and open its editor to change membership or internal order.

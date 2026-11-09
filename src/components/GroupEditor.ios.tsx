@@ -1,6 +1,6 @@
 import { Host } from '@expo/ui';
 import { List, Text, TextField, Toggle, Button, HStack, VStack, Spacer, useNativeState } from '@expo/ui/swift-ui';
-import { accessibilityLabel, buttonStyle, disabled, environment, font, foregroundStyle, lineLimit, listRowBackground, listRowSeparatorTint, scrollContentBackground, autocorrectionDisabled, textInputAutocapitalization } from '@expo/ui/swift-ui/modifiers';
+import { tint, accessibilityLabel, buttonStyle, disabled, environment, font, foregroundStyle, lineLimit, listRowBackground, listRowSeparatorTint, scrollContentBackground, autocorrectionDisabled, textInputAutocapitalization } from '@expo/ui/swift-ui/modifiers';
 import Section from './HardwareSection.ios';
 import { hardwarePalette } from './hardwarePalette';
 import { useTheme } from '../theme';
@@ -16,16 +16,15 @@ export default function GroupEditor(props: GroupEditorProps) {
         <Text modifiers={[foregroundStyle(theme.danger)]}>{editor.unavailableMessage}</Text>
         <Button label="Channel groups" onPress={closeGroupEditor} />
       </Section> : <>
-        {editor.creating && <Section><Button label={editor.busy ? 'Saving…' : 'Save'} systemImage="checkmark" onPress={editor.save} modifiers={[disabled(!editor.canSave)]} /></Section>}
         {!!editor.error && <Section><Text modifiers={[foregroundStyle(theme.danger)]}>{editor.error}</Text></Section>}
-        <Section title="Applies to" footer={!editor.allAuxes && !editor.canApplyAll ? 'Some channels belong to groups in other mixes. Edit those groups before enabling All monitor mixes.' : editor.allAuxes ? 'Same group, name and channel order across all AUXes on this device for this mixer. Each AUX keeps its own levels and balance.' : 'Only this monitor mix.'}>
+        <Section title="Applies to" footer={!editor.allAuxes ? editor.mixName : undefined}>
           <Toggle label="All monitor mixes" isOn={editor.allAuxes} onIsOnChange={editor.setAllAuxes} modifiers={[disabled(!editor.allAuxes && !editor.canApplyAll)]} />
         </Section>
-        <Section title="Group name" footer="Leave blank to use the channel names.">
+        <Section title="Group name">
           <TextField placeholder="Group name" text={name} maxLength={80} onTextChange={editor.rename}
             modifiers={[accessibilityLabel('Group name'), autocorrectionDisabled(true), textInputAutocapitalization('words')]} />
         </Section>
-        <Section title={'Channels (' + editor.members.length + ')'} footer={editor.creating ? 'Choose at least two channels. Drag the handles to reorder, then tap Save.' : 'Changes save automatically. Drag the handles to reorder. Keep at least two channels in the group.'}>
+        <Section title={'Channels (' + editor.members.length + ')'}>
           <List.ForEach data={editor.members} keyExtractor={channel => String(channel.channel)} onMove={editor.move}>
             {({ item: channel }) => <HStack spacing={12} modifiers={rowStyle}>
               <VStack alignment="leading" spacing={4}>
@@ -39,13 +38,16 @@ export default function GroupEditor(props: GroupEditorProps) {
           </List.ForEach>
           {!editor.members.length && <Text modifiers={[foregroundStyle(theme.muted)]}>Add channels below.</Text>}
         </Section>
-        <Section title="Add channels" footer="Channels in other groups are not available here.">
+        <Section title="Add channels">
           <List.ForEach data={editor.available} keyExtractor={channel => String(channel.channel)}>{({ item: channel }) =>
             <Button label={channel.label} systemImage="plus.circle" onPress={() => editor.add(channel.channel)} modifiers={[...rowStyle, accessibilityLabel('Add ' + channel.label)]} />
           }</List.ForEach>
           {!editor.available.length && <Text modifiers={[foregroundStyle(theme.muted)]}>No other channels available to add.</Text>}
         </Section>
-        {!editor.creating && <Section footer={editor.allAuxes ? 'Deletes this group from all monitor mixes on this device. Channels and levels stay unchanged.' : 'Deleting the group keeps its channels and levels unchanged.'}>
+        {editor.creating && <Section><Button onPress={editor.save} modifiers={[buttonStyle('borderedProminent'), tint('#007AFF'), disabled(!editor.canSave)]}>
+          <HStack><Spacer /><Text>{editor.busy ? 'Creating…' : 'Create'}</Text><Spacer /></HStack>
+        </Button></Section>}
+        {!editor.creating && <Section>
           <Button label={editor.busy ? 'Deleting…' : 'Delete group'} role="destructive" onPress={editor.remove} />
         </Section>}
       </>}

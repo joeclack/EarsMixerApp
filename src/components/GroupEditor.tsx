@@ -1,4 +1,4 @@
-import { Text, TextInput, View } from 'react-native';
+import { Text, TextInput, View, Pressable } from 'react-native';
 import { Host, Switch } from '@expo/ui';
 import { Section, Message } from './ui';
 import NativeButton from './NativeButton';
@@ -12,19 +12,18 @@ export default function GroupEditor(props: GroupEditorProps) {
     <NativeButton title="Channel groups" onPress={closeGroupEditor} />
   </>;
   return <>
-    {editor.creating && <View style={{ marginBottom: 20 }}><NativeButton title={editor.busy ? 'Saving…' : 'Save'} prominent disabled={!editor.canSave} onPress={editor.save} /></View>}
     <Message error>{editor.error}</Message>
-    <Section title="APPLIES TO" footer={!editor.allAuxes && !editor.canApplyAll ? 'Some channels belong to groups in other mixes. Edit those groups before enabling All monitor mixes.' : editor.allAuxes ? 'Same group, name and channel order across all AUXes on this device for this mixer. Each AUX keeps its own levels and balance.' : 'Only this monitor mix.'}>
+    <Section title="APPLIES TO" footer={!editor.allAuxes ? editor.mixName : undefined}>
       <Host matchContents={{ vertical: true }} colorScheme={theme.scheme} seedColor={theme.tint} style={{ padding: 16, minHeight: 56 }}>
         <Switch label="All monitor mixes" value={editor.allAuxes} onValueChange={editor.setAllAuxes} disabled={editor.busy || (!editor.allAuxes && !editor.canApplyAll)} />
       </Host>
     </Section>
-    <Section title="GROUP NAME" footer="Leave blank to use the channel names.">
+    <Section title="GROUP NAME">
       <TextInput accessibilityLabel="Group name" placeholder="Group name" placeholderTextColor={theme.muted} value={editor.name}
         onChangeText={editor.rename} editable={!editor.busy} maxLength={80} autoCorrect={false} autoCapitalize="words" autoComplete="off"
         style={{ color: theme.text, fontSize: 17, padding: 16, minHeight: 52, position: 'relative' }} />
     </Section>
-    <Section title={'CHANNELS (' + editor.members.length + ')'} footer={editor.creating ? 'Choose at least two channels, put them in order, then tap Save.' : 'Changes save automatically. Use the arrows to reorder. Keep at least two channels in the group.'}>
+    <Section title={'CHANNELS (' + editor.members.length + ')'}>
       {editor.members.map((channel, index) => <View key={channel.channel} style={{ padding: 16, gap: 8 }}>
         <Text style={{ color: theme.text, fontSize: 17 }}>{index + 1}. {channel.label}</Text>
         {channel.unavailable && <Text style={{ color: theme.muted }}>Currently unavailable</Text>}
@@ -36,13 +35,17 @@ export default function GroupEditor(props: GroupEditorProps) {
       </View>)}
       {!editor.members.length && <Text style={{ color: theme.muted, padding: 16 }}>Add channels below.</Text>}
     </Section>
-    <Section title="ADD CHANNELS" footer="Channels in other groups are not available here.">
+    <Section title="ADD CHANNELS">
       {editor.available.map(channel => <View key={channel.channel} style={{ paddingHorizontal: 8, paddingVertical: 4 }}>
         <NativeButton title={channel.label} symbol="plus.circle" accessibilityLabel={'Add ' + channel.label} disabled={editor.busy} onPress={() => editor.add(channel.channel)} />
       </View>)}
       {!editor.available.length && <Text style={{ color: theme.muted, padding: 16 }}>No other channels available to add.</Text>}
     </Section>
-    {!editor.creating && <Section footer={editor.allAuxes ? 'Deletes this group from all monitor mixes on this device. Channels and levels stay unchanged.' : 'Deleting the group keeps its channels and levels unchanged.'}>
+    {editor.creating && <Pressable accessibilityRole="button" disabled={!editor.canSave} accessibilityState={{ disabled: !editor.canSave }} onPress={editor.save}
+      style={{ backgroundColor: '#007AFF', borderRadius: 12, padding: 16, alignItems: 'center', opacity: editor.canSave ? 1 : 0.4 }}>
+      <Text style={{ color: '#FFFFFF', fontSize: 17, fontWeight: '600' }}>{editor.busy ? 'Creating…' : 'Create'}</Text>
+    </Pressable>}
+    {!editor.creating && <Section>
       <NativeButton title={editor.busy ? 'Deleting…' : 'Delete group'} destructive disabled={editor.busy} onPress={editor.remove} />
     </Section>}
   </>;

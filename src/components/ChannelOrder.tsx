@@ -9,7 +9,7 @@ export default function ChannelOrder() {
   const order = useChannelOrder(), theme = useTheme();
   return <ScrollView contentInsetAdjustmentBehavior="automatic" contentContainerStyle={{ padding: 20 }}>
     <Message error>{order.error}</Message>
-    <Section footer="Move channels or whole groups. Show/hide applies to the entire group. Edit a group to change its members and their order. Layout order is shared across monitor mixes.">
+    <Section>
       {order.items.map((item, index) => <View key={item.key} style={{ padding: 16, gap: 8, borderBottomWidth: index < order.items.length - 1 ? 1 : 0, borderBottomColor: theme.line }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
           {item.group && <Icon name={{ ios: 'link', android: 'link', web: 'link' }} size={16} />}
