@@ -1,68 +1,119 @@
 # EarsMixer App
 
-iOS and Android companion for [EarsMixer](https://github.com/joeclack/EarsMixer). Connect your phone to the same network as the EarsMixer server, enter its address or scan the QR code from the server's admin dashboard/tray, then control your monitor mix.
+Native iOS and Android companion for [EarsMixer](https://github.com/joeclack/EarsMixer). Control your own DiGiCo monitor mix over the local network, with layouts and preferences saved on your phone.
 
-## Native interface · 0.7.1
+Current app version: **0.11.0**. Use the latest [EarsMixer server](https://github.com/joeclack/EarsMixer/releases/latest), currently **1.7.0**, for discovery, shared templates and connected-user presence. This repository contains the mobile client; the server repository contains the console connection, browser mixer, admin dashboard and Windows service. Musicians use optional device-local nicknames, without accounts or passwords. The server's admin password is separate.
 
-- Native Mixer screen with a Settings gear in its toolbar. Settings opens as a page with a back button to Mixer.
-- SwiftUI glass buttons, segmented controls, settings forms and drag-to-reorder lists on iOS, with SF Symbols and automatic light/dark appearance.
-- Connection opens as a native bottom sheet with two height stops over the current page. Enter an address, use a recent mixer or scan its connection QR code.
-- The mixer renders native controls and talks directly to the existing server's WebSocket protocol. The app no longer embeds a WebView.
-- Faders only change when their handles are dragged (or through accessibility adjustment actions). Switching mixes, pan/level modes, snapshots, tabs or connections cancels pending writes. Backgrounding the app disconnects live controls.
+## Using the app
 
-This repository contains only the mobile client. The Windows service, web app, accounts and SQLite database live in [EarsMixer](https://github.com/joeclack/EarsMixer). Bonjour discovery requires the server discovery update.
+First-time setup guides you through choosing a nickname, checking your Wi-Fi and mixer connection, optionally choosing a template, using the faders and keeping your layout.
 
-Expo SDK **58** is the current stable SDK used by this release. System Liquid Glass requires **iOS 26+** and an SDK 26+ native build. Earlier supported iOS versions use standard native controls; Reduce Transparency is respected. Browser previews use ordinary web controls and cannot reproduce Apple's system glass.
+In portrait, the toolbar shows the selected AUX name with a small **Monitor mix** label, followed by:
+
+- **Wi-Fi:** connection status and the connection sheet. Disconnected status is red.
+- **Headphones:** choose the AUX you want to control.
+- **…:** choose Level or Pan, open Templates, Edit channels, or Set all levels to off. The Templates item includes the selected template's name.
+- **Settings:** opens a separate page with a back button to the mixer.
+
+Portrait uses compact horizontal faders. Landscape uses narrow vertical strips with space for the Dynamic Island, with the header and toolbar hidden to give the faders the full height. Rotate back to portrait to access the toolbar.
+
+Drag a handle to change its value; tapping or scrolling over the track does not jump the level. Touch movement is optimistic and immediate. Changes from the desk, saved-level recall and bulk level changes animate into position, with larger moves easing out. Keyboard and accessibility adjustments are also supported.
+
+**Set all levels to off** sets every available channel send on the selected AUX to −∞ (−150 dB), including hidden channels, after confirmation. It changes the send levels rather than toggling mute; it leaves pan unchanged.
+
+Other people connected to the same AUX appear as profile circles above the faders. Tap the circles to see their nicknames. Older servers without presence support simply show no circles.
+
+## Connection and discovery
+
+Keep the phone, EarsMixer server and console on a network that allows them to communicate. Open the Wi-Fi button for two connection methods:
+
+- **Auto:** browse nearby mixers and select one to connect.
+- **Manual:** enter the server address, scan its QR code, or choose a recent server.
+
+Startup tries the last saved server first. If there is no successful connection, it looks for nearby servers: one result connects automatically; multiple results open the connection sheet. Choosing Disconnect clears the saved automatic reconnect target for a real server.
+
+Native discovery uses Bonjour/mDNS (`_earsmixer._tcp`, UDP 5353), including the server's actual web port. It requires a standalone/development native build containing the local `earsmixer-discovery` module. Allow **Local Network** access on iOS. Guest Wi-Fi isolation, blocked multicast and VLAN boundaries can prevent discovery; manual addresses and QR codes remain available. Recent addresses can also be checked for availability.
+
+Expo Go and browser previews cannot load the native discovery module. For native development, use `npm run ios` on macOS, `npm run android`, or a signed EAS build.
+
+## Local data, cached values and saved states
+
+The app saves changes automatically:
+
+- Nickname, appearance and the haptic feedback preference stay on the device.
+- Channel order, selected AUX and selected template are stored separately for each server. Hidden channels are stored per AUX. Use **… → Edit channels** to reorder or hide unwanted channels; there are no favourites or compact-mode switches.
+- Channel metadata and last-known Level/Pan values are cached locally. Cached faders stay visible when returning from Settings or reconnecting, while live values refresh in the background. Dragging waits for fresh values. When there are no values to display yet, the app shows its icon and an activity indicator without loading text.
+- The display cache is never automatically written to the desk. Separately, edits on this phone save a level state for each server/AUX. On opening, reconnecting, returning to the app or switching AUX, differing live and saved levels prompt **Keep desk levels** or **Load saved levels**. Only confirming recall applies those saved send levels, including hidden channels; pan is unchanged.
+
+**Settings → Recent states** lists each saved AUX name and its last-edit date/time. **Reset device data** clears this phone's nickname, layouts, hidden channels, preferences, connections, cached values and saved states, then returns to setup. It does not change desk levels or pan. Uninstalling the app removes its local data.
+
+The operating system can suspend networking when the app is backgrounded. EarsMixer preserves its cached display, closes live controls in the background and reconnects when active. Cached values do not mean the phone is still controlling the console.
+
+## Templates
+
+Open **… → Templates** to choose an optional shared layout from the server. Templates appear in a simple list with a Select button and an indication of the current selection. Applying a template changes layout preferences, not console levels. A separate saved-level prompt may appear if the template selects a different AUX.
+
+Administrators manage shared templates in the server dashboard. The limited server-hosted browser mixer does not offer template selection. Older favourites-based templates retain their visible-channel selection when loaded in mobile.
+
+## Appearance and interaction
+
+The interface uses textured graphite or silver surfaces, recessed fader housings, illuminated teal tracks and sculpted rectangular handles with centre markers. Settings and setup share restrained hardware details while native buttons, pickers, switches and sheets retain their system styling. Choose System, Light or Dark in Settings.
+
+The generated fader artwork is used for the launcher icon, native splash and uncached loading state. Launcher and splash changes require a new native build; Expo Go retains its own launcher icon.
+
+Fader haptics follow gesture travel rather than delayed desk feedback. **Settings → Haptic feedback** controls slider and success haptics. Brief confirmations appear after applying a template, loading saved levels or setting all sends to off. Selection and setup transitions respect reduced motion, and confirmations support screen readers.
+
+System Liquid Glass requires **iOS 26+** and an SDK 26+ native build. Earlier supported iOS versions use standard native controls. Browser previews cannot reproduce Apple's system materials.
+
+Channel colour accents and live signal meters are future features, tracked in [#3](https://github.com/joeclack/EarsMixerApp/issues/3) and [#4](https://github.com/joeclack/EarsMixerApp/issues/4). Desk OSC compatibility still needs verification; these features are not included in this version.
+
+## Demo mode
+
+Choose **Try demo** in the connection sheet or Settings to explore **20 channels, four AUX mixes and sample templates** without a server. Faders, pan, hiding and reordering work locally. Demo data uses separate layout storage, makes no HTTP or WebSocket connection, and does not replace the last saved real server. Disconnect to leave demo mode, or connect to a real server.
+
+This is separate from the server repository's `npm run dev` demo, which exposes **20 channels and eight AUXes** over the network so the mobile app can exercise a real server connection.
 
 ## Run on your phone
 
-Use Node.js 24 and npm:
+This project uses Expo SDK **58**. Use Node.js 24 and npm:
 
 ```sh
 npm ci
 npx expo start
 ```
 
-If Windows fails to open the Expo login browser, run npx expo login --no-browser and sign in to the same account used by Expo Go.
+Install Expo Go and scan the development QR code printed by Expo. That code opens the **app project**; the QR scanner inside the app opens your **mixer server**. The development computer and phone must be able to reach each other. Enter a server address such as `192.168.1.100:8082`; `localhost` on a physical phone refers to the phone itself.
 
-Install Expo Go on your phone and scan the development QR code printed by Expo. That code opens the **app project**; the QR scanner inside the app opens your **mixer server**. The development computer and phone must be able to reach each other. Enter the server's network address, such as `192.168.1.100:8082`. On a physical phone, `localhost` refers to the phone itself.
+If Windows cannot open the Expo login browser, run `npx expo login --no-browser` and sign in to the same account used by Expo Go.
+
+The app requests local-network access and camera access for QR scanning, without microphone access. Android cleartext traffic and iOS ATS HTTP access are enabled for local HTTP servers at user-entered addresses. HTTPS certificates are validated normally.
+
+`npm run web` starts a browser preview. Browsers enforce CORS restrictions on server probes; native builds are the supported way to connect to arbitrary local servers. Browser testing against a server needs suitable same-origin proxying. The built-in local demo needs no server.
 
 ## Android preview APK
 
-**[Download an Android preview](https://github.com/joeclack/EarsMixerApp/releases)** from Releases. Install the APK on an ARM64 Android phone or tablet connected to your mixer network.
+**[Download an Android preview](https://github.com/joeclack/EarsMixerApp/releases)** from Releases and install it on an ARM64 Android phone or tablet on your mixer network.
 
-After successful checks on `main`, GitHub Actions builds a standalone preview. Open **Actions → Mobile checks and Android preview**, choose a successful run and download **EarsMixerApp-android-preview** from Artifacts. Extract and install the APK on an ARM64 Android device. It includes the JavaScript bundle and does not need Metro or an Expo account. The preview uses the generated development signing key and is not a Google Play production build.
+After successful checks on `main`, GitHub Actions builds a standalone preview. Under **Actions → Mobile checks and Android preview**, download **EarsMixerApp-android-preview** from a successful run's Artifacts. Extract and install the APK. It includes the JavaScript bundle and does not need Metro or an Expo account. The preview uses a generated development signing key and is not a Google Play production release.
 
-For local native development with an Android SDK installed, run `npm run android`.
+For local development with an Android SDK installed, run `npm run android`.
 
-## iPhone distribution
+## iPhone builds and store distribution
 
-Expo Go runs this project for development without provisioning a standalone iPhone app. Standalone physical-device and TestFlight builds require your Apple Developer signing credentials. With your own Expo/EAS account:
+Expo Go supports development without provisioning a standalone iPhone app. Physical-device and TestFlight builds require Apple Developer signing credentials. Link the project to your own Expo/EAS account and configure signing:
 
 ```sh
 npx eas-cli build:configure
 npx eas-cli build --platform ios --profile preview
 ```
 
-Register physical iPhones for internal distribution as prompted by EAS. Preview, simulator and production profiles are provided. Store submission and production signing are not automated.
+Preview, simulator and production profiles are provided in [eas.json](eas.json). Register physical iPhones for internal distribution when prompted. Production builds can use the production profile; App Store/Google Play submission, store listings and production signing are not automated.
 
-## Nearby mixers
+The **iOS native build and UI** workflow builds a simulator app and runs the Maestro screen flow against the server demo. Artifacts include screenshots and the simulator app. Simulator builds do not require Apple signing; physical-device builds do.
 
-Open **Connect** to browse nearby EarsMixer servers. Select a result to connect; the app checks the resolved address and port before opening a mixer session. Startup reconnects to the last saved server. If unavailable, one discovered server connects automatically; multiple results open the connection sheet. Discovery never changes audio levels. It stops when the sheet closes or the app enters the background.
+## Development checks
 
-This requires the EarsMixer server’s Bonjour discovery update and a **new native app build**. The local `earsmixer-discovery` Expo module uses Apple Bonjour and Android Network Service Discovery. Expo Go and browsers cannot load it; use manual addresses or QR codes there. For native development, run `npm run ios` on macOS or `npm run android`, or create a signed EAS build for a physical iPhone.
-
-Allow **Local Network** access in iOS Settings. Both devices must be on a network that permits multicast (UDP 5353). If no server appears, use **Search again**, enter its address or scan its QR code.
-
-The Mixer toolbar contains the AUX menu and connection status. Compact channels use shorter rows with the level beside the channel name. Haptics are enabled; portrait uses channel rows and landscape uses vertical strips.
-
-## Network permissions
-
-The app requests iOS local-network access and camera access for QR scanning, without microphone access. Android cleartext traffic and iOS ATS HTTP access are enabled because musicians connect to their own HTTP mixer servers at arbitrary network addresses and DNS names. HTTPS certificates are still validated normally.
-
-`npm run web` starts a browser preview. Browsers enforce CORS restrictions on the server probe, so native builds are the supported way to connect to arbitrary local servers. The web preview exercises the fallback screens; testing against a server requires a same-origin development proxy. Use an iOS simulator or physical iPhone to verify Liquid Glass.
-
-## Checks
+Run the checks appropriate to the change:
 
 ```sh
 npm run typecheck
@@ -72,28 +123,4 @@ npm run build:android-bundle
 npm run build:ios-bundle
 ```
 
-The app version comes from package.json, shared by the build configuration and Settings → About.
-
-The iOS native build workflow compiles a simulator app and runs the Maestro screen flow against the real EarsMixer demo server. Its artifacts include screenshots and the simulator app. Simulator builds do not require Apple signing; installing on a physical iPhone still does.
-
-## Device-local preferences
-
-The mobile app uses an optional nickname and stores appearance, channel order, hidden channels, selected AUX and haptic feedback on the device automatically. No account or password is required. Layouts are kept separately for each server. Last-known levels and pan are cached for display while reconnecting. Fresh desk values replace them before dragging is enabled; the display cache is never sent to the desk automatically. A separate level state is saved per server/AUX after edits on this phone. When opening, reconnecting or switching AUX, differing fresh desk levels trigger a restore choice. Only confirming **Load saved levels** applies saved send levels, including hidden channels; pan stays unchanged. Settings → Recent states shows AUX names and last-edit times. Removing the app removes its local layouts.
-
-Landscape uses vertical channel strips; portrait uses horizontal faders. Recent server addresses are checked alongside native Bonjour discovery. Native discovery requires a rebuilt app and the server discovery update; Expo Go can check recent addresses and use QR/manual connections.
-
-The last successful server connection is saved locally. Choosing Disconnect clears that automatic reconnect target.
-
-Use Edit channels to hide unwanted channels or show them again. Visibility is saved per AUX on the device. Legacy favourites-based templates preserve their visible channel selection when loaded.
-
-## Demo mode
-
-Choose **Try demo** in the connection sheet or Settings to explore 20 channels, four AUX mixes and sample templates without a server. Faders, pan, hiding and reordering work locally. The demo has separate layout storage, makes no HTTP or WebSocket connection, and does not replace the last saved real mixer. Use Disconnect to exit, or connect to a real server from the connection sheet.
-
-Other connected users on the selected AUX appear as profile circles above the faders. Tap to see their nicknames. This requires server 1.5.0 (Node package 2.7.0) or later; older servers simply show no presence.
-
-The launcher icon and native splash screen use the generated teal-fader artwork. The same icon appears during startup and when waiting for uncached channel values; cached faders remain visible during live refreshes. Icon changes require a new standalone native build; Expo Go retains its own launcher icon.
-
-Settings and setup share the console finish: matte graphite or silver groups, restrained teal symbols and inset decorative surfaces. Native controls retain their own system styling.
-
-Successful template and saved-level actions show a brief confirmation. Selection and setup transitions respect reduced motion; success haptics follow Settings → Haptic feedback.
+The version in [package.json](package.json) is shared by Expo and **Settings → About**. See [CHANGELOG.md](CHANGELOG.md) for release history.
