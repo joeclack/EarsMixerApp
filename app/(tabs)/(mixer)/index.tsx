@@ -20,7 +20,7 @@ import AuxPresence from '../../../src/components/AuxPresence';
 import MixerLoadingBoundary from '../../../src/components/MixerLoadingBoundary';
 import { useLandscapeEdgePadding } from '../../../src/components/useLandscapeEdgePadding';
 import LandscapeMixerToolbar from '../../../src/components/LandscapeMixerToolbar';
-import FocusedFader from '../../../src/components/FocusedFader';
+import FaderFocusTransition from '../../../src/components/FaderFocusTransition';
 
 export default function Mixer() {
   const { session, state, mix } = useSession();
@@ -124,9 +124,8 @@ export default function Mixer() {
     <View style={{ flex: 1, flexDirection: landscape ? 'row' : 'column', paddingLeft: landscape ? landscapeEdges.paddingLeft : 0 }}>
     {landscape && <LandscapeMixerToolbar top={topPadding} bottom={bottomPadding} />}
     <View style={{ flex: 1 }}>
-    <MixerLoadingBoundary>{!state.server ? <EmptyMixer /> : <>
-    {!!focusedRow && <FocusedFader channel={focusedRow.channel} label={focusedRow.label} onClose={closeFocused} />}
-    <FlatList style={focusedRow ? { display: 'none' } : undefined} key={landscape ? 'strips' : 'rows'} horizontal={landscape} onLayout={event => setBankHeight(event.nativeEvent.layout.height)} extraData={state.preferences}
+    <MixerLoadingBoundary>{!state.server ? <EmptyMixer /> : <FaderFocusTransition row={focusedRow} onClose={closeFocused}>
+    <FlatList key={landscape ? 'strips' : 'rows'} horizontal={landscape} onLayout={event => setBankHeight(event.nativeEvent.layout.height)} extraData={state.preferences}
       data={sections} renderItem={renderSection} keyExtractor={item => String(item.header.channel)} contentInsetAdjustmentBehavior="never"
       contentContainerStyle={{ paddingTop: topPadding, ...(landscape ? { paddingLeft: 8, paddingRight: landscapeEdges.paddingRight } : { paddingLeft: 20, paddingRight: 20 }), paddingBottom: bottomPadding }} keyboardShouldPersistTaps="handled"
       ListEmptyComponent={<View style={{ alignItems: 'center', paddingVertical: 40, gap: 12 }}>
@@ -134,7 +133,7 @@ export default function Mixer() {
         <Text style={{ color: theme.text, fontSize: 19, fontWeight: '600' }}>{hidden.length ? 'All channels hidden' : 'No channels'}</Text>
         <Text style={{ color: theme.muted, textAlign: 'center', lineHeight: 22 }}>{hidden.length ? 'Use Edit to show channels.' : 'Check the server’s desk connection.'}</Text>
         {hidden.length > 0 && <NativeButton title="Edit channels" onPress={() => router.push('/layout')} />}
-      </View>} /></>}</MixerLoadingBoundary>
+      </View>} /></FaderFocusTransition>}</MixerLoadingBoundary>
     </View>
     </View>
   </Page>;

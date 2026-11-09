@@ -185,8 +185,10 @@ const FaderScale = memo(function FaderScale({ width, travel, vertical, parameter
       {spaced.map(mark => {
         const point = inset + travel * (1 - mark.position);
         return <View key={mark.label} style={{ position: 'absolute', top: point, left: 0, right: 0 }}>
-          <View style={{ position: 'absolute', left: 4, width: 18, height: 1, backgroundColor: mark.major ? unityInk : ink }} />
-          <View style={{ position: 'absolute', right: 4, width: 14, height: 1, backgroundColor: mark.major ? unityInk : ink }} />
+          {!(parameter === 'level' && mark.major) && <>
+            <View style={{ position: 'absolute', left: 4, width: 18, height: 1, backgroundColor: mark.major ? unityInk : ink }} />
+            <View style={{ position: 'absolute', right: 4, width: 14, height: 1, backgroundColor: mark.major ? unityInk : ink }} />
+          </>}
           <Text style={{ position: 'absolute', left: 4, top: (mark.major ? -22 : -14) * size, fontSize: 9 * size, lineHeight: 12 * size, fontWeight: mark.major ? '800' : '600', color: theme.dark && mark.major ? '#E6F1F3' : ink }}>{mark.label}</Text>
         </View>;
       })}
