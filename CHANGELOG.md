@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.17.2 — More visible loading fly-out
+
+- Slow the loading exit to 650 ms, let the faders grow visibly before flying beyond the screen, and delay the fade. Apply the same timing to the preview Done action; retain the short fade with Reduce Motion.
+
 ## 0.17.1 — Simpler group screens
 
 - Use native iOS swipe-to-delete and put Create new group in the groups list. Remove selection controls.

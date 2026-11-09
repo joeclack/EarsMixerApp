@@ -43,14 +43,15 @@ export default function FaderLoading({ finishing = false, onFinished }: { finish
   useEffect(() => {
     const id = ++generation.current;
     if (!finishing) { completed.current = false; exit.set(0); }
-    else if (active) exit.set(withTiming(1, { duration: reducedMotion ? 140 : 280,
+    else if (active) exit.set(withTiming(1, { duration: reducedMotion ? 140 : 650,
       easing: Easing.bezier(0.77, 0, 0.175, 1), reduceMotion: ReduceMotion.Never }, finished => {
       if (finished) scheduleOnRN(complete, id);
     }));
     return () => { generation.current++; cancelAnimation(exit); };
   }, [finishing, active, reducedMotion, exit, complete]);
-  const surfaceStyle = useAnimatedStyle(() => ({ opacity: interpolate(exit.get(), [0, 0.3, 1], [1, 1, 0]) }));
-  const fadersStyle = useAnimatedStyle(() => ({ transform: [{ scale: reducedMotion ? 1 : 1 + exit.get() * 11 }] }));
+  // Let the faders visibly approach before they grow beyond the screen and fade.
+  const surfaceStyle = useAnimatedStyle(() => ({ opacity: reducedMotion ? 1 - exit.get() : interpolate(exit.get(), [0, 0.65, 1], [1, 1, 0]) }));
+  const fadersStyle = useAnimatedStyle(() => ({ transform: [{ scale: reducedMotion ? 1 : interpolate(exit.get(), [0, 0.65, 1], [1, 3, 12]) }] }));
   return <Animated.View testID="loading-faders" accessibilityLabel="Loading mixer" accessibilityRole="progressbar" accessibilityState={{ busy: !finishing }}
     style={[{ flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: theme.bg, overflow: 'hidden' }, surfaceStyle]}>
     <Animated.View accessible={false} accessibilityElementsHidden importantForAccessibility="no-hide-descendants" pointerEvents="none"
