@@ -8,7 +8,9 @@ import type { DiscoveryNative } from '../discovery/browser';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useSession } from '../mixer/context';
 import { useTheme } from '../theme';
-import { Icon, Message } from './ui';
+import { Message } from './ui';
+import HardwareEmblem from './HardwareEmblem';
+import SetupProgress from './SetupProgress';
 import NativeButton from './NativeButton';
 
 const steps = [
@@ -41,12 +43,13 @@ export default function SetupWalkthrough() {
     return () => { controller.abort(); setChecking(false); };
   }, [step, session]);
   return <ScreenSurface><SafeAreaView edges={['top', 'bottom', 'left', 'right']} style={{ flex: 1 }}>
-    <View style={{ paddingHorizontal: 28, paddingTop: 16, paddingBottom: 12, maxWidth: 600, width: '100%', alignSelf: 'center' }}>
+    <View style={{ paddingHorizontal: 28, paddingTop: 16, paddingBottom: 12, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 16, maxWidth: 600, width: '100%', alignSelf: 'center' }}>
       <Text accessibilityLiveRegion="polite" style={{ color: theme.muted, fontSize: 14 }}>Step {step + 1} of {steps.length}</Text>
+      <SetupProgress step={step} count={steps.length} />
     </View>
     <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
     <ScrollView contentInsetAdjustmentBehavior="never" automaticallyAdjustContentInsets={false} style={{ flex: 1 }} keyboardShouldPersistTaps="handled" automaticallyAdjustKeyboardInsets contentContainerStyle={{ flexGrow: 1, padding: 28, gap: 24, justifyContent: 'flex-start', maxWidth: 600, width: '100%', alignSelf: 'center' }}>
-      <Icon name={{ ios: current.symbol, android: step === 0 ? 'account_circle' : step === 1 ? 'wifi' : step === 2 ? 'tune' : 'star', web: step === 0 ? 'account_circle' : step === 1 ? 'wifi' : step === 2 ? 'tune' : 'star' }} size={48} />
+      <HardwareEmblem name={{ ios: current.symbol, android: step === 0 ? 'account_circle' : step === 1 ? 'wifi' : step === 2 ? 'layers' : step === 3 ? 'tune' : 'visibility_off', web: step === 0 ? 'account_circle' : step === 1 ? 'wifi' : step === 2 ? 'layers' : step === 3 ? 'tune' : 'visibility_off' }} />
       <Text accessibilityRole="header" style={{ color: theme.text, fontSize: 30, fontWeight: '700' }}>{current.title}</Text>
       {!!current.body && <Text style={{ color: theme.muted, fontSize: 17, lineHeight: 26 }}>{current.body}</Text>}
       {!!current.bullets.length && <View accessibilityRole="list" style={{ gap: 16 }}>

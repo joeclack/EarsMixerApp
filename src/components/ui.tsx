@@ -8,6 +8,7 @@ import { useSession } from '../mixer/context';
 import NativeButton from './NativeButton';
 import ScreenSurface from './ScreenSurface';
 import MixerHeading from './MixerHeading';
+import HardwarePanel from './HardwarePanel';
 
 export function Icon({ name, size = 22, color }: { name: SymbolViewProps['name']; size?: number; color?: ColorValue }) {
   const theme = useTheme();
@@ -41,11 +42,14 @@ export function Page({ title, children, scroll = true, compactHeader = true, too
     {!state.hydrated && <View style={styles.loading}><ActivityIndicator /></View>}
   </ScreenSurface>;
 }
-export function Section({ title, footer, children }: React.PropsWithChildren<{ title?: string; footer?: string }>) {
+export function Section({ title, footer, symbol, children }: React.PropsWithChildren<{ title?: string; footer?: string; symbol?: SymbolViewProps['name'] }>) {
   const theme = useTheme();
   return <View style={{ marginBottom: 26 }}>
-    {!!title && <Text style={[styles.sectionLabel, { color: theme.muted }]}>{title}</Text>}
-    <View style={{ borderRadius: 20, backgroundColor: theme.panel, overflow: 'hidden' }}>{children}</View>
+    {!!title && <View style={{ marginLeft: 16, marginBottom: 8, flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+      {!!symbol && <Icon name={symbol} size={14} />}
+      <Text accessibilityRole="header" style={{ color: theme.muted, fontSize: 13, fontWeight: '600' }}>{title}</Text>
+    </View>}
+    <HardwarePanel>{children}</HardwarePanel>
     {!!footer && <Text style={[styles.footer, { color: theme.muted }]}>{footer}</Text>}
   </View>;
 }

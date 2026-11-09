@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.10.0 — Console details
+
+- Carry graphite/silver console finishes into settings groups, with restrained teal section symbols and single inset surfaces. Keep native iOS forms and controls.
+- Add a recessed icon surround and five small progress indicators to first-time setup; retain the flat nickname field and fixed bottom navigation.
+- Use the same inset finish for the manual connection address and channel editor groups, without adding glass layers to buttons or sheets.
+
 ## 0.9.1 — AUX identity
 
 - Add a discreet Monitor mix label above the selected AUX name in the portrait toolbar, or Demo mix when trying the app locally.
