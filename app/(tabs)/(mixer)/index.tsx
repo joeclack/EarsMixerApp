@@ -22,6 +22,7 @@ import { useLandscapeEdgePadding } from '../../../src/components/useLandscapeEdg
 import LandscapeMixerToolbar from '../../../src/components/LandscapeMixerToolbar';
 import FaderFocusTransition from '../../../src/components/FaderFocusTransition';
 import ExpandableFader from '../../../src/components/ExpandableFader';
+import { useStableMixerLayout } from '../../../src/components/useStableMixerLayout';
 
 export default function Mixer() {
   const { session, state, mix } = useSession();
@@ -31,6 +32,8 @@ export default function Mixer() {
   const landscapeEdges = useLandscapeEdgePadding(insets.left, insets.right);
   const landscape = width > height;
   const [bankHeight, setBankHeight] = useState(height);
+  const layoutReady = useStableMixerLayout([width, height, insets.top, insets.bottom, insets.left, insets.right, bankHeight].join('|'));
+  useEffect(() => { if (!layoutReady) session.mixer.cancelWrites(); }, [layoutReady, session]);
   const [expanded, setExpanded] = useState<number[]>([]);
   const [focused, setFocused] = useState<number | null>(null);
   useEffect(() => { setFocused(null); }, [state.server, mix.aux, mix.parameter, landscape]);
@@ -124,9 +127,9 @@ export default function Mixer() {
     <View style={{ flex: 1, flexDirection: landscape ? 'row' : 'column',
       paddingLeft: landscape ? landscapeEdges.paddingLeft : 0, paddingRight: landscape ? landscapeEdges.paddingRight : 0 }}>
     {landscape && <LandscapeMixerToolbar top={topPadding} bottom={bottomPadding} />}
-    <View style={{ flex: 1, minWidth: 0, overflow: landscape ? 'hidden' : 'visible' }}>
-    <MixerLoadingBoundary>{!state.server ? <EmptyMixer /> : <FaderFocusTransition row={focusedRow} onClose={closeFocused}>
-    <FlatList key={landscape ? 'strips' : 'rows'} horizontal={landscape} onLayout={event => setBankHeight(event.nativeEvent.layout.height)} extraData={state.preferences}
+    <View onLayout={event => setBankHeight(event.nativeEvent.layout.height)} style={{ flex: 1, minWidth: 0, overflow: landscape ? 'hidden' : 'visible' }}>
+    <MixerLoadingBoundary>{!state.server ? <EmptyMixer /> : !layoutReady ? <View style={{ flex: 1 }} /> : <FaderFocusTransition row={focusedRow} onClose={closeFocused}>
+    <FlatList key={landscape ? 'strips' : 'rows'} horizontal={landscape} extraData={state.preferences}
       data={sections} renderItem={renderSection} keyExtractor={item => String(item.header.channel)} contentInsetAdjustmentBehavior="never"
       contentContainerStyle={{ paddingTop: topPadding, ...(landscape ? { paddingLeft: 8, paddingRight: 8 } : { paddingLeft: 20, paddingRight: 20 }), paddingBottom: bottomPadding }} keyboardShouldPersistTaps="handled"
       ListEmptyComponent={<View style={{ alignItems: 'center', paddingVertical: 40, gap: 12 }}>
