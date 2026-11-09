@@ -95,7 +95,7 @@ export default memo(function Fader({ channel, label, vertical = false, length = 
   }, [session, channel, thumb, active, vertical, width]);
   const epoch = mix.epoch;
   const pressHaptic = useCallback(() => {
-    if (session.state.settings.haptics) void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
+    if (session.state.settings.haptics) void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy).catch(() => {});
   }, [session]);
   const enlarge = useMemo(() => Gesture.LongPress().enabled(!vertical && !!onEnlarge).minDuration(300).maxDistance(3).onBegin(() => {
     'worklet';
@@ -107,7 +107,6 @@ export default memo(function Fader({ channel, label, vertical = false, length = 
   }).onStart(() => {
     'worklet';
     if (!reducedMotion) scale.set(withTiming(1.05, { duration: 70 }));
-    scheduleOnRN(pressHaptic);
     if (onEnlarge) scheduleOnRN(onEnlarge);
   }).onFinalize(() => {
     'worklet';
