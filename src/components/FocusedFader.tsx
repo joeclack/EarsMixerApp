@@ -11,7 +11,7 @@ export default function FocusedFader({ channel, label, onClose }: { channel: num
   const [height, setHeight] = useState(0);
   return <View style={{ flex: 1, paddingHorizontal: 20, paddingTop: 12, paddingBottom: insets.bottom + 12, gap: 16 }}>
     <View style={{ width: 88 * 1.6, alignSelf: 'center' }}>
-      <FaderDisplay channel={channel} label={label} large square />
+      <FaderDisplay channel={channel} label={label} large fitContent />
     </View>
     <View onLayout={event => setHeight(event.nativeEvent.layout.height)} style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
       {height > 0 && <FaderHousing vertical size={1.6}>
