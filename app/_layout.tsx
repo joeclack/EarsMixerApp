@@ -1,6 +1,5 @@
-import ScreenSurface from '../src/components/ScreenSurface';
 import ConfirmationToast from '../src/components/ConfirmationToast';
-import FaderLoading from '../src/components/FaderLoading';
+import LoadingTransition from '../src/components/LoadingTransition';
 import React, { useEffect, useRef } from 'react';
 import { Appearance, Platform } from 'react-native';
 import { Stack, ThemeProvider, DarkTheme, DefaultTheme, router, useRootNavigationState, usePathname } from 'expo-router';
@@ -60,8 +59,7 @@ function Navigation() {
     })();
     return () => controller.abort();
   }, [state.hydrated, state.setupComplete, navigation?.key, pathname, session]);
-  if (!state.hydrated) return <ScreenSurface><FaderLoading /></ScreenSurface>;
-  return <ThemeProvider value={theme.dark ? DarkTheme : DefaultTheme}>
+  return <LoadingTransition loading={!state.hydrated}>{state.hydrated && <ThemeProvider value={theme.dark ? DarkTheme : DefaultTheme}>
     <StatusBar style={theme.dark ? 'light' : 'dark'} />
     <Stack screenOptions={{ contentStyle: { backgroundColor: theme.bg }, headerTintColor: theme.tint }}>
       <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
@@ -74,7 +72,7 @@ function Navigation() {
       <Stack.Screen name="groups" options={{ title: 'Channel groups', headerBackTitle: 'Mixer' }} />
       <Stack.Screen name="loading-preview" options={{ presentation: 'fullScreenModal', headerShown: false }} />
     </Stack>
-  </ThemeProvider>;
+  </ThemeProvider>}</LoadingTransition>;
 }
 export default function RootLayout() {
   useEffect(() => { void warmFaderArtwork(); }, []);

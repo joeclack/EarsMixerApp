@@ -2,7 +2,7 @@
 
 Native iOS and Android companion for [EarsMixer](https://github.com/joeclack/EarsMixer). Control your own DiGiCo monitor mix over the local network, with layouts and preferences saved on your phone.
 
-Current app version: **0.14.2**. Use the latest [EarsMixer server](https://github.com/joeclack/EarsMixer/releases/latest), currently **1.7.0**, for discovery, shared templates and connected-user presence. This repository contains the mobile client; the server repository contains the console connection, browser mixer, admin dashboard and Windows service. Musicians use optional device-local nicknames, without accounts or passwords. The server's admin password is separate.
+Current app version: **0.15.0**. Use the latest [EarsMixer server](https://github.com/joeclack/EarsMixer/releases/latest), currently **1.7.0**, for discovery, shared templates and connected-user presence. This repository contains the mobile client; the server repository contains the console connection, browser mixer, admin dashboard and Windows service. Musicians use optional device-local nicknames, without accounts or passwords. The server's admin password is separate.
 
 ## Using the app
 
@@ -71,7 +71,7 @@ Administrators manage shared templates in the server dashboard. The limited serv
 
 Light mode uses a clean daylight background, white settings cards, dark labels and cream fader faces with red scales in both orientations. Dark mode uses textured graphite surfaces and recessed portrait fader housings. Both modes use illuminated teal tracks and sculpted rectangular handles with centre markers. Settings and setup share restrained hardware details while native buttons, pickers, switches and sheets retain their system styling. Choose System, Light or Dark in Settings.
 
-The generated fader artwork remains the launcher icon. Loading screens use three simple animated faders, independent of console data and image assets. New native builds use a plain initial launch background before the animation can render; Expo Go retains its own initial launch screen. In development, open **Settings → Developer tools → Preview loading animation** to view the loader until you tap **Done**.
+The generated fader artwork remains the launcher icon. Loading screens use three simple animated faders, independent of console data and image assets. When ready, the faders zoom towards you and fade out over the ready screen; Reduce Motion uses a short fade without zooming. New native builds use a plain initial launch background before the animation can render; Expo Go retains its own initial launch screen. In development, open **Settings → Developer tools → Preview loading animation** to view the loader; tap **Done** to test the same fly-out before returning to Settings.
 
 Fader haptics follow gesture travel rather than delayed desk feedback. **Settings → Haptic feedback** controls slider and success haptics. Brief confirmations appear after applying a template, loading saved levels or setting all sends to off. Selection and setup transitions respect reduced motion, and confirmations support screen readers.
 

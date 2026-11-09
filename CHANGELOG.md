@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.15.0 — Loading fader fly-out
+
+- Zoom the abstract loading faders towards the viewer and fade them away when loading finishes. Mount ready screens beneath the exit immediately, keeping rendering and data work independent of the animation.
+- Play the same exit when Done is pressed in the development loading preview, then return to settings. Ignore repeated presses during the exit.
+- Use a short opacity-only exit with Reduce Motion, pause motion while backgrounded and cancel stale completions if loading restarts.
+
 ## 0.14.2 — Daylight surfaces and connected groups
 
 - Give light mode a clean background, white settings surfaces and darker secondary labels. Use the landscape cream face, red outlines, scale markings and 0 dB pointers for portrait light-mode faders.
