@@ -2,7 +2,7 @@
 
 Native iOS and Android companion for [EarsMixer](https://github.com/joeclack/EarsMixer). Control your own DiGiCo monitor mix over the local network, with layouts and preferences saved on your phone.
 
-Current app version: **0.15.1**. Use the latest [EarsMixer server](https://github.com/joeclack/EarsMixer/releases/latest), currently **1.7.0**, for discovery, shared templates and connected-user presence. This repository contains the mobile client; the server repository contains the console connection, browser mixer, admin dashboard and Windows service. Musicians use optional device-local nicknames, without accounts or passwords. The server's admin password is separate.
+Current app version: **0.16.0**. Use the latest [EarsMixer server](https://github.com/joeclack/EarsMixer/releases/latest), currently **1.7.0**, for discovery, shared templates and connected-user presence. This repository contains the mobile client; the server repository contains the console connection, browser mixer, admin dashboard and Windows service. Musicians use optional device-local nicknames, without accounts or passwords. The server's admin password is separate.
 
 ## Using the app
 
@@ -53,9 +53,13 @@ The operating system can suspend networking when the app is backgrounded. EarsMi
 
 ## Channel groups
 
-Open **… → Channel groups**, or **Edit channels → Manage channel groups**. Select two or more channels and tap **Group selected**. Each channel can belong to one group per AUX. Group membership is saved on this device separately for each server and AUX; applying a shared template keeps your groups.
+Open **… → Channel groups**, or **Edit channels → Manage channel groups**, to see existing groups. Tap **Create new group**, choose a name and at least two channels, put them in order, then tap **Save**. Leaving without saving discards a new draft. Tap an existing group to rename it, add/remove channels, or reorder its members; these edits save automatically. Drag the native reorder handles on iOS, or use Up/Down on Android and web. A group must retain at least two channels.
 
-The mixer shows a linked-channel marker and one fader titled with all member names, such as **Guitar L / Guitar R**. Touch and hold the group name in portrait or its LCD in landscape to adjust the individual channels inside one connected group frame. Tap **Close** to return to the group fader. Keyboard and screen-reader activation also open groups. In landscape, member strips replace the collapsed fader inside that frame; Close sits beside the first member’s display. There is no extra header row, so groups never shorten the faders. Creating, opening, closing or removing a group does not change levels. Hidden or unavailable members make that group display as individual visible channels until every member is available again.
+Use **Applies to → All monitor mixes** to share a group across every AUX on this device for the connected mixer. Turn it off to keep the group only in the current mix. Shared membership, names and order apply across AUXes; each AUX keeps its own levels and remembered balance. A channel cannot be in overlapping groups, so channels used by groups in other mixes can block enabling the all-mixes option. Groups remain local to this device and mixer; applying a shared template keeps them.
+
+Use **Select** on the groups list to choose and delete several groups together, or **Delete group** in the editor. Deleting a group leaves channel levels unchanged. Deleting a group for all mixes removes it from every AUX on this device.
+
+The mixer shows a linked-channel marker and one fader titled with its custom name, or all member names when unnamed, such as **Guitar L / Guitar R**. Touch and hold the group name in portrait or its LCD in landscape to adjust the individual channels inside one connected group frame. Tap **Close** to return to the group fader. Keyboard and screen-reader activation also open groups. In landscape, member strips replace the collapsed fader inside that frame; Close sits beside the first member’s display. There is no extra header row, so groups never shorten the faders. Creating, opening, closing or removing a group does not change levels. Hidden or unavailable members make that group display as individual visible channels until every member is available again.
 
 The group level represents its loudest member. Moving it applies the same dB change to each member, preserving their balance: 0/−5 dB becomes −10/−15 dB when the group is lowered to −10 dB. The quieter member can reach off first; the group bottom sets all members off. Raising the group again restores its remembered offsets. Channels already individually off remain off until raised individually. If every member was individually off and no balance was previously recorded, open the group to raise a channel first.
 

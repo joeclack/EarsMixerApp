@@ -1,46 +1,54 @@
-import React from 'react';
 import { Host } from '@expo/ui';
-import { Form, Text, Button, HStack, VStack, Spacer, Image } from '@expo/ui/swift-ui';
-import { accessibilityLabel, buttonStyle, disabled, foregroundStyle, scrollContentBackground } from '@expo/ui/swift-ui/modifiers';
+import { List, Text, TextField, Toggle, Button, HStack, VStack, Spacer, useNativeState } from '@expo/ui/swift-ui';
+import { accessibilityLabel, buttonStyle, disabled, environment, font, foregroundStyle, lineLimit, listRowBackground, listRowSeparatorTint, scrollContentBackground, autocorrectionDisabled, textInputAutocapitalization } from '@expo/ui/swift-ui/modifiers';
 import Section from './HardwareSection.ios';
+import { hardwarePalette } from './hardwarePalette';
 import { useTheme } from '../theme';
-import { useGroupEditor } from './useGroupEditor';
+import { closeGroupEditor, useGroupEditor, type GroupEditorProps } from './useGroupEditor';
 
-// A single native scrolling form owns both rows and controls. Separate SwiftUI
-// hosts inside RN scroll rows can draw beyond their measured row during scrolling.
-export default function GroupEditor() {
-  const editor = useGroupEditor(), theme = useTheme();
+export default function GroupEditor(props: GroupEditorProps) {
+  const editor = useGroupEditor(props), theme = useTheme(), palette = hardwarePalette(theme.dark);
+  const name = useNativeState(editor.name);
+  const rowStyle = [listRowBackground(palette.surface), listRowSeparatorTint(palette.edge)];
   return <Host style={{ flex: 1 }} colorScheme={theme.scheme} seedColor={theme.tint}>
-    <Form modifiers={[scrollContentBackground('hidden')]}>
-      <Section footer="One fader keeps the level balance. Hold its name or display to adjust the channels; pan stays individual.">
-        <Button label={'Group selected (' + editor.selected.length + ')'} systemImage="link" onPress={editor.create}
-          modifiers={[disabled(!editor.canCreate)]} />
-        {!!editor.error && <Text modifiers={[foregroundStyle(theme.danger)]}>{editor.error}</Text>}
-      </Section>
-      {!!editor.groups.length && <Section title="Your groups" symbol="link" footer="Ungrouping changes the layout only. Desk levels stay unchanged.">
-        {editor.groups.map(group => <HStack key={group[0]} spacing={12}>
-          <VStack alignment="leading" spacing={4}>
-            <Text modifiers={[foregroundStyle(theme.text)]}>{editor.label(group)}</Text>
-            <Text modifiers={[foregroundStyle(theme.muted)]}>{group.length + ' linked channels'}</Text>
-          </VStack>
-          <Spacer />
-          <Button label="Ungroup" onPress={() => editor.remove(group)} modifiers={[buttonStyle('borderless'), accessibilityLabel('Ungroup ' + editor.label(group))]} />
-        </HStack>)}
-      </Section>}
-      <Section title="Select channels" symbol="slider.horizontal.3" footer="Choose at least two channels. Each channel can belong to one group per AUX. Grouping also shows selected hidden channels.">
-        {editor.available.map(channel => {
-          const selected = editor.selected.includes(channel.channel);
-          return <Button key={channel.channel} onPress={() => editor.toggle(channel.channel)}
-            modifiers={[accessibilityLabel((selected ? 'Deselect ' : 'Select ') + channel.label)]}>
-            <HStack spacing={12}>
-              <Text modifiers={[foregroundStyle(theme.text)]}>{channel.label}</Text>
+    <List modifiers={[scrollContentBackground('hidden'), environment('editMode', 'active'), disabled(editor.busy)]}>
+      {!editor.valid ? <Section>
+        <Text modifiers={[foregroundStyle(theme.danger)]}>{editor.unavailableMessage}</Text>
+        <Button label="Channel groups" onPress={closeGroupEditor} />
+      </Section> : <>
+        {editor.creating && <Section><Button label={editor.busy ? 'Saving…' : 'Save'} systemImage="checkmark" onPress={editor.save} modifiers={[disabled(!editor.canSave)]} /></Section>}
+        {!!editor.error && <Section><Text modifiers={[foregroundStyle(theme.danger)]}>{editor.error}</Text></Section>}
+        <Section title="Applies to" footer={!editor.allAuxes && !editor.canApplyAll ? 'Some channels belong to groups in other mixes. Edit those groups before enabling All monitor mixes.' : editor.allAuxes ? 'Same group, name and channel order across all AUXes on this device for this mixer. Each AUX keeps its own levels and balance.' : 'Only this monitor mix.'}>
+          <Toggle label="All monitor mixes" isOn={editor.allAuxes} onIsOnChange={editor.setAllAuxes} modifiers={[disabled(!editor.allAuxes && !editor.canApplyAll)]} />
+        </Section>
+        <Section title="Group name" footer="Leave blank to use the channel names.">
+          <TextField placeholder="Group name" text={name} maxLength={80} onTextChange={editor.rename}
+            modifiers={[accessibilityLabel('Group name'), autocorrectionDisabled(true), textInputAutocapitalization('words')]} />
+        </Section>
+        <Section title={'Channels (' + editor.members.length + ')'} footer={editor.creating ? 'Choose at least two channels. Drag the handles to reorder, then tap Save.' : 'Changes save automatically. Drag the handles to reorder. Keep at least two channels in the group.'}>
+          <List.ForEach data={editor.members} keyExtractor={channel => String(channel.channel)} onMove={editor.move}>
+            {({ item: channel }) => <HStack spacing={12} modifiers={rowStyle}>
+              <VStack alignment="leading" spacing={4}>
+                <Text modifiers={[lineLimit(2), foregroundStyle(theme.text)]}>{channel.label}</Text>
+                {channel.unavailable && <Text modifiers={[font({ textStyle: 'caption' }), foregroundStyle(theme.muted)]}>Currently unavailable</Text>}
+              </VStack>
               <Spacer />
-              <Image systemName={selected ? 'checkmark.circle.fill' : 'circle'} color={theme.tint} size={22} />
-            </HStack>
-          </Button>;
-        })}
-        {!editor.available.length && <Text modifiers={[foregroundStyle(theme.muted)]}>{editor.channels.length ? 'All channels are grouped.' : 'Connect to a mixer first.'}</Text>}
-      </Section>
-    </Form>
+              <Button label="Remove" role="destructive" onPress={() => editor.removeMember(channel.channel)}
+                modifiers={[buttonStyle('borderless'), disabled(!editor.canRemove), accessibilityLabel('Remove ' + channel.label)]} />
+            </HStack>}
+          </List.ForEach>
+          {!editor.members.length && <Text modifiers={[foregroundStyle(theme.muted)]}>Add channels below.</Text>}
+        </Section>
+        <Section title="Add channels" footer="Channels in other groups are not available here.">
+          <List.ForEach data={editor.available} keyExtractor={channel => String(channel.channel)}>{({ item: channel }) =>
+            <Button label={channel.label} systemImage="plus.circle" onPress={() => editor.add(channel.channel)} modifiers={[...rowStyle, accessibilityLabel('Add ' + channel.label)]} />
+          }</List.ForEach>
+          {!editor.available.length && <Text modifiers={[foregroundStyle(theme.muted)]}>No other channels available to add.</Text>}
+        </Section>
+        {!editor.creating && <Section footer={editor.allAuxes ? 'Deletes this group from all monitor mixes on this device. Channels and levels stay unchanged.' : 'Deleting the group keeps its channels and levels unchanged.'}>
+          <Button label={editor.busy ? 'Deleting…' : 'Delete group'} role="destructive" onPress={editor.remove} />
+        </Section>}
+      </>}
+    </List>
   </Host>;
 }

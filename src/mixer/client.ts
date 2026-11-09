@@ -1,4 +1,4 @@
-import { clamp, dbToPosition, parseConfig, type MixerConfig, type Parameter } from './model';
+import { clamp, dbToPosition, parseConfig, type ChannelGroup, type MixerConfig, type Parameter } from './model';
 import { dragLevel } from './faderPrecision';
 import { captureBalance, groupKey, groupLevels, type GroupBalance } from './groups';
 
@@ -19,12 +19,15 @@ export type MixerControls = Omit<MixState, 'values'>;
 export type DragToken = { epoch: number; aux: number; channel: number; parameter: Parameter; members?: number[]; balance?: GroupBalance };
 export type ValueCache = Record<string, Record<number, number>>;
 export class MixerClient {
-  private groups: Record<string, number[][]> = {};
+  private groups: Record<string, ChannelGroup[]> = {};
+  private globalGroups: ChannelGroup[] = [];
   private balances: Record<string, GroupBalance> = {};
-  configureGroups(groups: Record<string, number[][]>) {
-    this.cancelWrites(); this.groups = groups;
-    const validKeys = new Set(Object.entries(groups).flatMap(([aux, entries]) => entries.map(members => groupKey(Number(aux), members))));
-    this.balances = Object.fromEntries(Object.entries(this.balances).filter(([key]) => validKeys.has(key)));
+  configureGroups(groups: Record<string, ChannelGroup[]>, globalGroups: ChannelGroup[] = []) {
+    this.cancelWrites(); this.groups = groups; this.globalGroups = globalGroups;
+    const validKeys = new Set(Object.entries(groups).flatMap(([aux, entries]) => entries.map(group => groupKey(Number(aux), group.members))));
+    const globalMembers = new Set(globalGroups.map(group => groupKey(1, group.members).split(':')[1]));
+    this.balances = Object.fromEntries(Object.entries(this.balances).filter(([key]) => validKeys.has(key) || globalMembers.has(key.split(':')[1])));
+    this.emit({});
   }
   getGroupBalances() { return this.balances; }
   restoreGroupBalances(raw: unknown) {
@@ -39,7 +42,7 @@ export class MixerClient {
       this.balances[key] = { offsets: Object.fromEntries(members.map(id => [id, value.offsets[id]])), expected: Object.fromEntries(members.map(id => [id, value.expected[id]])) };
     }
   }
-  private members(channel: number) { return channel < 0 ? this.groups[String(this.state.aux)]?.find(group => -group[0] === channel) : undefined; }
+  private members(channel: number) { return channel < 0 ? [...this.globalGroups, ...(this.groups[String(this.state.aux)] || [])].find(group => -group.id === channel)?.members : undefined; }
   canDrag(channel: number): boolean {
     const members = this.members(channel);
     return this.state.status === 'connected' && !!this.state.aux && this.socket?.readyState === 1 &&

@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.16.0 — Named groups, editing and scope
+
+- Replace channel selection on the groups page with a list of existing groups. Open a group to edit it, create a new group with Save, or select multiple groups and delete them together.
+- Rename groups, add/remove channels and change their order. Existing edits save automatically; new groups remain drafts until saved. Add native iOS reorder handles and Up/Down controls on Android/web, plus deletion inside the editor.
+- Let groups apply to the current monitor mix or all AUXes on this device for this mixer. Share names, membership and order while keeping each AUX's live levels and remembered dB offsets separate. Prevent overlapping local/global membership.
+- Migrate existing groups to stable IDs without changing their channel order or remembered balances. Keep names and IDs when members change, guard edits against mixer/AUX changes, and preserve all groups when applying a template.
+- Wait for device storage before completing new-group saves and deletions; retain drafts and restore the layout on write failure.
+
 ## 0.15.1 — Full-height grouped faders and theme finishes
 
 - Remove the landscape group header rail and its empty space on every other strip. Hold a collapsed group's name or LCD to expand it; keep Close beside the first member's display without reducing fader travel. Provide explicit screen-reader and keyboard activation.

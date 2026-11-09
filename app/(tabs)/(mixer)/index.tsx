@@ -25,7 +25,7 @@ export default function Mixer() {
   const landscape = width > height;
   const [bankHeight, setBankHeight] = useState(height);
   const [expanded, setExpanded] = useState<number[]>([]);
-  useEffect(() => { setExpanded([]); }, [state.server, mix.aux, state.preferences.groupsByAux]);
+  useEffect(() => { setExpanded([]); }, [state.server, mix.aux, state.preferences.groupsByAux, state.preferences.globalGroups]);
   useFocusEffect(useCallback(() => {
     if (session.mixer.state.status === 'connected') session.mixer.refresh();
     return () => session.mixer.cancelWrites();
