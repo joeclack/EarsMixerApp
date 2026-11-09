@@ -1,4 +1,4 @@
-import { Pressable, View } from 'react-native';
+import { Pressable, Text, View } from 'react-native';
 import { Icon } from './ui';
 import { useTheme } from '../theme';
 import type { LandscapeFaderActionsProps } from './LandscapeFaderActions';
@@ -14,8 +14,9 @@ export default function LandscapeFaderActions({ parameter, disabled, offDisabled
         <option value="level">Level</option><option value="pan">Pan</option>
       </select>
     </View>
+    <Text style={{ color: theme.muted, fontSize: 11, textAlign: 'center' }}>{parameter === 'level' ? 'Level' : 'Pan'}</Text>
     <Pressable accessibilityRole="button" accessibilityLabel="Set all levels to off" disabled={offDisabled} onPress={onAllOff} style={[circle, { opacity: offDisabled ? 0.4 : 1 }]}>
-      <Icon name={{ web: 'power_settings_new' }} color={theme.danger} />
+      <Icon name={{ web: 'all_inclusive' }} color={theme.danger} />
     </Pressable>
   </View>;
 }

@@ -15,7 +15,7 @@ export default function LandscapeMixerToolbar({ top, bottom }: { top: number; bo
     paddingTop: top, paddingBottom: bottom, alignItems: 'center', justifyContent: 'flex-start', gap: 10 }}>
     <LandscapeAuxPicker auxes={auxes} selected={mix.aux} disabled={!state.server || !auxes.length || mix.status !== 'connected'}
       onChange={selectedAux => session.preferences({ selectedAux })} />
-    {height - top - bottom >= 260 && !!selected && <Text numberOfLines={3} style={{ width: 60, color: theme.muted, fontSize: 11, textAlign: 'center', lineHeight: 15 }}>{selected.label}</Text>}
+    {height - top - bottom >= 320 && !!selected && <Text numberOfLines={3} style={{ width: 60, color: theme.muted, fontSize: 11, textAlign: 'center', lineHeight: 15 }}>{selected.label}</Text>}
     <LandscapeFaderActions parameter={mix.parameter} disabled={!state.server} offDisabled={!state.server || mix.status !== 'connected' || !mix.aux}
       onModeChange={mode => session.mixer.setParameter(mode)} onAllOff={setAllLevelsOff} />
   </View>;
