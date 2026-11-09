@@ -44,7 +44,8 @@ export default memo(function Fader({ channel, label, vertical = false, length = 
       if (success) { session.mixer.drag(drag.current, next); session.mixer.flush(drag.current); }
       session.mixer.cancelDrag(drag.current);
     }
-    drag.current = null; haptics.end(success); active.value = false; thumb.value = session.mixer.position(channel);
+    drag.current = null; haptics.end(success); active.value = false;
+    if (session.mixer.displayValue(channel) !== undefined) thumb.value = session.mixer.position(channel);
   }, [session, channel, haptics, active, thumb]);
   useEffect(() => {
     active.value = false;
@@ -56,9 +57,10 @@ export default memo(function Fader({ channel, label, vertical = false, length = 
     let context = '';
     let previous: number | undefined;
     let epoch: number | undefined;
-    const applyPosition = (next: number, snap: boolean, release: boolean) => {
+    const applyPosition = (next: number | undefined, snap: boolean, release: boolean) => {
       'worklet';
       if (release) active.value = false;
+      if (next === undefined) { cancelAnimation(thumb); return; }
       if (snap) { active.value = false; cancelAnimation(thumb); thumb.value = next; }
       else if (!active.value) {
         // Small streamed desk updates stay responsive. Large automatic changes
@@ -70,14 +72,13 @@ export default memo(function Fader({ channel, label, vertical = false, length = 
     };
     const syncPosition = () => {
       const current = session.mixer.state;
-      // AUX/parameter changes are different controls: show their cached position
-      // immediately. Refreshes and bulk writes only invalidate gestures; they
-      // must not snap an existing fader or its cached-to-live transition.
+      // Missing AUX values are unknown, not off. Hold the current visual position
+      // until a cached or live target exists, then glide to it.
       const nextContext = [current.aux, current.parameter].join('|');
       const release = epoch !== current.epoch;
       epoch = current.epoch;
-      const next = session.mixer.position(channel);
-      const snap = context !== nextContext;
+      const next = session.mixer.displayValue(channel) === undefined ? undefined : session.mixer.position(channel);
+      const snap = !context || context.split('|')[1] !== current.parameter;
       context = nextContext;
       if (!snap && !release && next === previous) return;
       previous = next;

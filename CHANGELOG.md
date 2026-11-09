@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.17.4 — Smooth AUX changes
+
+- Hold displayed fader positions while the next AUX has no values, then glide directly to its cached or live values. Avoid snapping to off on AUX changes or cancelled gestures while values are pending.
+
 ## 0.17.3 — Explicit router configuration
 
 - Replace the deprecated initialRouteName setting with anchor. Explicitly present the groups list and editor as pushed card screens, including when reached from the channel-order modal.
