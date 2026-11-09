@@ -1,6 +1,7 @@
 import ScreenSurface from '../src/components/ScreenSurface';
+import IconLoading from '../src/components/IconLoading';
 import React, { useEffect, useRef } from 'react';
-import { ActivityIndicator, Appearance, Platform, View } from 'react-native';
+import { Appearance, Platform } from 'react-native';
 import { Stack, ThemeProvider, DarkTheme, DefaultTheme, router, useRootNavigationState, usePathname } from 'expo-router';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { StatusBar } from 'expo-status-bar';
@@ -57,7 +58,7 @@ function Navigation() {
     })();
     return () => controller.abort();
   }, [state.hydrated, state.setupComplete, navigation?.key, pathname, session]);
-  if (!state.hydrated) return <ScreenSurface><View style={{ flex: 1, justifyContent: 'center' }}><ActivityIndicator /></View></ScreenSurface>;
+  if (!state.hydrated) return <ScreenSurface><IconLoading /></ScreenSurface>;
   return <ThemeProvider value={theme.dark ? DarkTheme : DefaultTheme}>
     <StatusBar style={theme.dark ? 'light' : 'dark'} />
     <Stack screenOptions={{ contentStyle: { backgroundColor: theme.bg }, headerTintColor: theme.tint }}>

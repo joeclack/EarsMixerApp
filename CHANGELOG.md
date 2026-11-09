@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.8.0 — Branded startup
+
+- Use the app icon on the native splash screen and while device settings are restored.
+- Show the icon and a native activity indicator while connecting or waiting for uncached channel values, with no loading text.
+- Keep cached faders visible during background refreshes; isolate loading visibility from the live channel stream.
+
 ## 0.7.1 — App icon
 
 - Set the generated teal-fader artwork as the Expo/iOS app icon and web favicon.

@@ -24,6 +24,11 @@ const config: ExpoConfig = {
   scheme: 'earsmixer',
   plugins: [
     'expo-router',
+    ['expo-splash-screen', {
+      image: './assets/icon.png', imageWidth: 180, resizeMode: 'contain',
+      backgroundColor: '#101A20',
+      dark: { backgroundColor: '#101A20', image: './assets/icon.png' },
+    }],
     ['expo-camera', { cameraPermission: 'Scan the connection QR code from your EarsMixer server.', microphonePermission: false, recordAudioAndroid: false }],
     ['expo-build-properties', { android: { usesCleartextTraffic: true }, ios: { deploymentTarget: '16.4' } }],
   ],

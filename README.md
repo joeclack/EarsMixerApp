@@ -92,4 +92,4 @@ Choose **Try demo** in the connection sheet or Settings to explore 20 channels, 
 
 Other connected users on the selected AUX appear as profile circles above the faders. Tap to see their nicknames. This requires server 1.5.0 (Node package 2.7.0) or later; older servers simply show no presence.
 
-The launcher icon uses the generated teal-fader artwork. Icon changes require a new standalone native build; Expo Go retains its own launcher icon.
+The launcher icon and native splash screen use the generated teal-fader artwork. The same icon appears during startup and when waiting for uncached channel values; cached faders remain visible during live refreshes. Icon changes require a new standalone native build; Expo Go retains its own launcher icon.
