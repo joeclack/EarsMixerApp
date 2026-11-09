@@ -28,6 +28,7 @@ export default memo(function Fader({ channel, label, vertical = false, length = 
   const reducedMotion = useReducedMotion();
   const localScale = useSharedValue(1);
   const holdCue = useSharedValue(0);
+  const holdAllowed = useSharedValue(false);
   const scale = pressScale || localScale;
   useEffect(() => {
     cancelAnimation(scale); scale.set(1); cancelAnimation(holdCue);
@@ -103,8 +104,21 @@ export default memo(function Fader({ channel, label, vertical = false, length = 
   const pressHaptic = useCallback(() => {
     if (session.state.settings.haptics) void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy).catch(() => {});
   }, [session]);
-  const enlarge = useMemo(() => Gesture.LongPress().enabled(!vertical && !!onEnlarge).minDuration(220).maxDistance(3).onBegin(() => {
+  const touchesHandle = useCallback((x: number, y: number) => {
     'worklet';
+    const left = 4 + travel * thumb.get();
+    const top = (56 - FADER_CAP_WIDTH) / 2;
+    // Include a little edge tolerance so grabbing the cap never opens focus.
+    return x >= left - 4 && x <= left + FADER_CAP_HEIGHT + 4 && y >= top - 4 && y <= top + FADER_CAP_WIDTH + 4;
+  }, [travel, thumb]);
+  const enlarge = useMemo(() => Gesture.LongPress().enabled(!vertical && !!onEnlarge).minDuration(220).maxDistance(3).onTouchesDown((event, manager) => {
+    'worklet';
+    const touch = event.allTouches[0];
+    if (touch && touchesHandle(touch.x, touch.y)) manager.fail();
+  }).onBegin(event => {
+    'worklet';
+    holdAllowed.set(!touchesHandle(event.x, event.y));
+    if (!holdAllowed.get()) return;
     // Wait for a stationary hold. A scroll, drag or early release cancels this
     // timer on the UI thread before a haptic is dispatched to the RN runtime.
     holdCue.set(0);
@@ -117,13 +131,16 @@ export default memo(function Fader({ channel, label, vertical = false, length = 
     ));
   }).onStart(() => {
     'worklet';
+    if (!holdAllowed.get()) return;
     if (!reducedMotion) scale.set(withTiming(1.05, { duration: 70 }));
     if (onEnlarge) scheduleOnRN(onEnlarge);
   }).onFinalize(() => {
     'worklet';
     cancelAnimation(holdCue);
+    if (!holdAllowed.get()) return;
+    holdAllowed.set(false);
     scale.set(reducedMotion ? 1 : active.value ? withTiming(1, { duration: 80 }) : withSpring(1, { duration: 200, dampingRatio: 0.7 }));
-  }), [vertical, onEnlarge, mix.epoch, reducedMotion, scale, active, pressHaptic, holdCue]);
+  }), [vertical, onEnlarge, mix.epoch, reducedMotion, scale, active, pressHaptic, holdCue, holdAllowed, touchesHandle]);
   const gesture = useMemo(() => {
     const pan = Gesture.Pan().enabled(ready && travel > 0).minDistance(3).simultaneousWithExternalGesture(enlarge);
     if (vertical) pan.activeOffsetY([-3, 3]).failOffsetX([-8, 8]);
