@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.12.2 — Immediate fader artwork
+
+- Replace the oversized handle image with small 1×/2×/3× assets and preload them independently of device storage and desk requests.
+- Draw a handle surface immediately while artwork decodes or if it fails. Keep handles fully visible while fresh values load; drag gating remains unchanged.
+- Mount the channel bank as soon as channel metadata is available instead of waiting for the first level response.
+
 ## 0.12.1 — Development refresh recovery
 
 - Remount the mixer provider during Fast Refresh so new UI code cannot reuse an older session/client instance missing methods such as canDrag. Close the previous connection and cancel pending writes before restoring device settings.

@@ -111,7 +111,7 @@ export default memo(function Fader({ channel, label, vertical = false, length = 
   }, [ready, travel, vertical, mix.epoch, thumb, start, active, lastDispatch, begin, update, finish]);
   const thumbStyle = useAnimatedStyle(() => ({ transform: vertical ? [{ translateY: travel * (1 - thumb.value) }] : [{ translateX: travel * thumb.value }] }));
   const fillStyle = useAnimatedStyle(() => vertical ? { height: travel * thumb.value } : { width: travel * thumb.value });
-  return <View onLayout={event => setWidth(vertical ? event.nativeEvent.layout.height : event.nativeEvent.layout.width)} style={{ height: vertical ? length : 56, width: vertical ? 64 : undefined, alignSelf: vertical ? 'center' : undefined, opacity: session.mixer.displayValue(channel) !== undefined ? 1 : 0.35 }}>
+  return <View onLayout={event => setWidth(vertical ? event.nativeEvent.layout.height : event.nativeEvent.layout.width)} style={{ height: vertical ? length : 56, width: vertical ? 64 : undefined, alignSelf: vertical ? 'center' : undefined }}>
     <View pointerEvents="none" style={vertical
       ? { position: 'absolute', top: inset, bottom: inset, left: FADER_TRACK_CENTER - 4, width: 8, borderRadius: 4, backgroundColor: '#010709', justifyContent: 'flex-end' }
       : { position: 'absolute', left: inset, right: inset, top: 24, height: 8, borderRadius: 4, backgroundColor: '#010709' }}>
@@ -135,7 +135,7 @@ export default memo(function Fader({ channel, label, vertical = false, length = 
         width: vertical ? FADER_CAP_WIDTH : FADER_CAP_HEIGHT, height: vertical ? FADER_CAP_HEIGHT : FADER_CAP_WIDTH,
         borderRadius: 8, backgroundColor: '#182125',
         shadowColor: '#000000', shadowOffset: { width: 1, height: 4 }, shadowOpacity: 0.7, shadowRadius: 4, elevation: 8 }, thumbStyle]}>
-      <FaderHandleSurface vertical={vertical} ready={ready} />
+      <FaderHandleSurface vertical={vertical} />
     </Animated.View></GestureDetector>
   </View>;
 });

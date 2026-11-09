@@ -2,7 +2,7 @@
 
 Native iOS and Android companion for [EarsMixer](https://github.com/joeclack/EarsMixer). Control your own DiGiCo monitor mix over the local network, with layouts and preferences saved on your phone.
 
-Current app version: **0.12.1**. Use the latest [EarsMixer server](https://github.com/joeclack/EarsMixer/releases/latest), currently **1.7.0**, for discovery, shared templates and connected-user presence. This repository contains the mobile client; the server repository contains the console connection, browser mixer, admin dashboard and Windows service. Musicians use optional device-local nicknames, without accounts or passwords. The server's admin password is separate.
+Current app version: **0.12.2**. Use the latest [EarsMixer server](https://github.com/joeclack/EarsMixer/releases/latest), currently **1.7.0**, for discovery, shared templates and connected-user presence. This repository contains the mobile client; the server repository contains the console connection, browser mixer, admin dashboard and Windows service. Musicians use optional device-local nicknames, without accounts or passwords. The server's admin password is separate.
 
 ## Using the app
 
@@ -42,7 +42,7 @@ The app saves changes automatically:
 
 - Nickname, appearance and the haptic feedback preference stay on the device.
 - Channel order, selected AUX and selected template are stored separately for each server. Hidden channels are stored per AUX. Use **… → Edit channels** to reorder or hide unwanted channels; there are no favourites or compact-mode switches.
-- Channel metadata and last-known Level/Pan values are cached locally. Cached faders stay visible when returning from Settings or reconnecting, while live values refresh in the background. Dragging waits for fresh values. When there are no values to display yet, the app shows its icon and an activity indicator without loading text.
+- Channel metadata and last-known Level/Pan values are cached locally. The fader bank appears as soon as channel metadata is available, while live values refresh independently. Handle artwork preloads at startup, with a drawn surface visible immediately during image decoding. Dragging waits for fresh values. Until channel metadata is available, the app shows its icon and an activity indicator without loading text.
 - The display cache is never automatically written to the desk. Separately, edits on this phone save a level state for each server/AUX. On opening, reconnecting, returning to the app or switching AUX, differing live and saved levels prompt **Keep desk levels** or **Load saved levels**. Only confirming recall applies those saved send levels, including hidden channels; pan is unchanged.
 
 **Settings → Recent states** lists each saved AUX name and its last-edit date/time. **Reset device data** clears this phone's nickname, layouts, hidden channels, preferences, connections, cached values and saved states, then returns to setup. It does not change desk levels or pan. Uninstalling the app removes its local data.

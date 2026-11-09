@@ -11,6 +11,7 @@ import { requireOptionalNativeModule } from 'expo';
 import { findStartupMixers, reachableMixer } from '../src/discovery/startup';
 import type { DiscoveryNative } from '../src/discovery/browser';
 import { useTheme } from '../src/theme';
+import { warmFaderArtwork } from '../src/components/faderArtwork';
 
 const sheetOptions = {
   headerShown: false, presentation: (Platform.OS === 'web' ? 'modal' : 'formSheet') as 'modal' | 'formSheet',
@@ -74,4 +75,7 @@ function Navigation() {
     </Stack>
   </ThemeProvider>;
 }
-export default function RootLayout() { return <GestureHandlerRootView style={{ flex: 1 }}><MixerProvider><Navigation /><ConfirmationToast /></MixerProvider></GestureHandlerRootView>; }
+export default function RootLayout() {
+  useEffect(() => { void warmFaderArtwork(); }, []);
+  return <GestureHandlerRootView style={{ flex: 1 }}><MixerProvider><Navigation /><ConfirmationToast /></MixerProvider></GestureHandlerRootView>;
+}
