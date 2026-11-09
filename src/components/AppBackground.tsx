@@ -6,9 +6,13 @@ import { useTheme } from '../theme';
 // Static layers sit behind each screen, including its transparent header.
 // The grain repeats at its natural size so it stays fine in either orientation.
 export default memo(function AppBackground() {
-  const { dark } = useTheme();
+  const { dark, bg } = useTheme();
   // Daylight screens use a clean background so white forms have clear edges.
-  if (!dark) return null;
+  // Keep the same native view hierarchy in both themes. Removing this first
+  // child lets iOS form sheets find and reposition the screen's ScrollView.
+  if (!dark) return <View collapsable={false} pointerEvents="none" accessible={false}
+    accessibilityElementsHidden importantForAccessibility="no-hide-descendants"
+    style={[StyleSheet.absoluteFill, { backgroundColor: bg }]} />;
   return <View pointerEvents="none" accessible={false} accessibilityElementsHidden importantForAccessibility="no-hide-descendants"
     style={[StyleSheet.absoluteFill, { overflow: 'hidden' }]}>
     <LinearGradient colors={dark ? ['#1B2931', '#121C23', '#0A1015'] : ['#E1E7E7', '#EEF1F0', '#E0E6E6']}

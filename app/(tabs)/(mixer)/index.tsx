@@ -19,6 +19,11 @@ import MixerToolbar from '../../../src/components/MixerToolbar';
 import AuxPresence from '../../../src/components/AuxPresence';
 import MixerLoadingBoundary from '../../../src/components/MixerLoadingBoundary';
 import { useLandscapeEdgePadding } from '../../../src/components/useLandscapeEdgePadding';
+import LandscapeMixerToolbar from '../../../src/components/LandscapeMixerToolbar';
+import FaderFocusTransition from '../../../src/components/FaderFocusTransition';
+import ExpandableFader from '../../../src/components/ExpandableFader';
+import { useStableMixerLayout } from '../../../src/components/useStableMixerLayout';
+import LandscapeFaderViewport from '../../../src/components/LandscapeFaderViewport';
 
 export default function Mixer() {
   const { session, state, mix } = useSession();
@@ -28,7 +33,11 @@ export default function Mixer() {
   const landscapeEdges = useLandscapeEdgePadding(insets.left, insets.right);
   const landscape = width > height;
   const [bankHeight, setBankHeight] = useState(height);
+  const layoutReady = useStableMixerLayout([width, height, insets.top, insets.bottom, insets.left, insets.right, bankHeight].join('|'));
+  useEffect(() => { session.mixer.cancelWrites(); }, [landscape, session]);
   const [expanded, setExpanded] = useState<number[]>([]);
+  const [focused, setFocused] = useState<number | null>(null);
+  useEffect(() => { setFocused(null); }, [state.server, mix.aux, mix.parameter, landscape]);
   useEffect(() => { setExpanded([]); }, [state.server, mix.aux, state.preferences.groupsByAux, state.preferences.globalGroups]);
   useFocusEffect(useCallback(() => {
     if (session.mixer.state.status === 'connected') session.mixer.refresh();
@@ -37,6 +46,8 @@ export default function Mixer() {
   const hidden = hiddenChannels(mix.config, state.preferences, mix.aux);
   const sections = useMemo(() => mixerSections(mixerRows(mix.config, state.preferences, mix.aux, expanded, mix.parameter === 'pan')),
     [mix.config, mix.aux, mix.parameter, expanded, state.preferences]);
+  const focusedRow = !landscape && focused !== null ? sections.flatMap(section => [section.header, ...section.channels]).find(row => row.channel === focused) : undefined;
+  const closeFocused = () => { session.mixer.cancelWrites(); setFocused(null); };
   const topPadding = landscape ? insets.top + 12 : 20;
   const bottomPadding = insets.bottom + (landscape ? 12 : 20);
   // Every landscape strip starts at its LCD. The group's name and close control
@@ -69,7 +80,10 @@ export default function Mixer() {
         <FaderValue channel={channel.channel} />
       </View>}
       <View style={landscape ? { width: 88, alignSelf: grouped && !open ? 'center' : 'flex-start' } : undefined}>
-        <FaderHousing vertical={landscape}><Fader channel={channel.channel} label={channel.label} vertical={landscape} length={stripHeight} /></FaderHousing>
+        {landscape ? <FaderHousing vertical><Fader channel={channel.channel} label={channel.label} vertical length={stripHeight} /></FaderHousing>
+          : <ExpandableFader channel={channel.channel} label={channel.label} onEnlarge={() => {
+            session.mixer.cancelWrites(); setFocused(channel.channel);
+          }} />}
       </View>
     </View>;
     return <View testID={grouped ? 'group-' + group.channel : undefined} style={{
@@ -111,14 +125,26 @@ export default function Mixer() {
   }, [landscape, cardHeight, stripHeight, theme, mix.parameter, session, expanded]);
   return <Page title={mix.config?.aux.find(aux => aux.channel === mix.aux)?.label || 'Mixer'} scroll={false} compactHeader hideHeader={landscape} toolbar={<MixerToolbar />}>
     <AuxPresence />
-    <MixerLoadingBoundary>{!state.server ? <EmptyMixer /> : <FlatList key={landscape ? 'strips' : 'rows'} horizontal={landscape} onLayout={event => setBankHeight(event.nativeEvent.layout.height)} extraData={state.preferences}
+    <View style={{ flex: 1, flexDirection: landscape ? 'row' : 'column',
+      paddingLeft: landscape ? landscapeEdges.paddingLeft : 0, paddingRight: landscape ? landscapeEdges.paddingRight : 0 }}>
+    {landscape && <LandscapeMixerToolbar top={topPadding} bottom={bottomPadding} />}
+    <View onLayout={event => setBankHeight(event.nativeEvent.layout.height)} style={{ flex: 1, minWidth: 0, overflow: landscape ? 'hidden' : 'visible' }}>
+    <View pointerEvents={layoutReady ? 'auto' : 'none'} accessibilityElementsHidden={!layoutReady}
+      importantForAccessibility={layoutReady ? 'auto' : 'no-hide-descendants'} style={{ flex: 1, opacity: layoutReady ? 1 : 0 }}>
+    <LandscapeFaderViewport enabled={landscape}>
+    <MixerLoadingBoundary>{!state.server ? <EmptyMixer /> : <FaderFocusTransition row={focusedRow} onClose={closeFocused}>
+    <FlatList key={landscape ? 'strips' : 'rows'} horizontal={landscape} extraData={state.preferences}
       data={sections} renderItem={renderSection} keyExtractor={item => String(item.header.channel)} contentInsetAdjustmentBehavior="never"
-      contentContainerStyle={{ paddingTop: topPadding, ...(landscape ? landscapeEdges : { paddingLeft: 20, paddingRight: 20 }), paddingBottom: bottomPadding }} keyboardShouldPersistTaps="handled"
+      contentContainerStyle={{ paddingTop: topPadding, ...(landscape ? { paddingLeft: 16, paddingRight: 16 } : { paddingLeft: 20, paddingRight: 20 }), paddingBottom: bottomPadding }} keyboardShouldPersistTaps="handled"
       ListEmptyComponent={<View style={{ alignItems: 'center', paddingVertical: 40, gap: 12 }}>
         <Icon name={{ ios: 'eye.slash', android: 'visibility_off', web: 'visibility_off' }} size={34} color={theme.muted} />
         <Text style={{ color: theme.text, fontSize: 19, fontWeight: '600' }}>{hidden.length ? 'All channels hidden' : 'No channels'}</Text>
         <Text style={{ color: theme.muted, textAlign: 'center', lineHeight: 22 }}>{hidden.length ? 'Use Edit to show channels.' : 'Check the server’s desk connection.'}</Text>
         {hidden.length > 0 && <NativeButton title="Edit channels" onPress={() => router.push('/layout')} />}
-      </View>} />}</MixerLoadingBoundary>
+      </View>} /></FaderFocusTransition>}</MixerLoadingBoundary>
+    </LandscapeFaderViewport>
+    </View>
+    </View>
+    </View>
   </Page>;
 }
