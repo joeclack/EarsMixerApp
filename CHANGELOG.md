@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.9.0 — Automatic fader transitions
+
+- Ease automatic fader movement out with a fast start and a gentle finish, including setting all sends to off and loading saved levels.
+- Scale transition time to travel distance (32–240 ms) so small live desk updates remain responsive. Keep finger dragging immediate.
+- Preserve animated movement across refreshes and gesture invalidation; show AUX/parameter changes and initial positions immediately.
+
 ## 0.8.0 — Branded startup
 
 - Use the app icon on the native splash screen and while device settings are restored.

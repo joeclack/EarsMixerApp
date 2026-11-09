@@ -52,22 +52,35 @@ export default memo(function Fader({ channel, label, vertical = false, length = 
   useEffect(() => {
     let context = '';
     let previous: number | undefined;
-    const applyPosition = (next: number, snap: boolean) => {
+    let epoch: number | undefined;
+    const applyPosition = (next: number, snap: boolean, release: boolean) => {
       'worklet';
+      if (release) active.value = false;
       if (snap) { active.value = false; cancelAnimation(thumb); thumb.value = next; }
-      else if (!active.value) thumb.value = withTiming(next, { duration: 32, easing: Easing.linear });
+      else if (!active.value) {
+        // Small streamed desk updates stay responsive. Large automatic changes
+        // glide from the currently displayed position, including mid-animation.
+        const distance = Math.abs(next - thumb.value);
+        const duration = Math.max(32, Math.min(240, distance * 400));
+        thumb.value = withTiming(next, { duration, easing: Easing.out(Easing.cubic) });
+      }
     };
     const syncPosition = () => {
       const current = session.mixer.state;
-      const nextContext = [current.aux, current.parameter, current.epoch, current.status, current.values[channel] !== undefined].join('|');
+      // AUX/parameter changes are different controls: show their cached position
+      // immediately. Refreshes and bulk writes only invalidate gestures; they
+      // must not snap an existing fader or its cached-to-live transition.
+      const nextContext = [current.aux, current.parameter].join('|');
+      const release = epoch !== current.epoch;
+      epoch = current.epoch;
       const next = session.mixer.position(channel);
       const snap = context !== nextContext;
       context = nextContext;
-      if (!snap && next === previous) return;
+      if (!snap && !release && next === previous) return;
       previous = next;
       // Queue the newest target straight to the animation thread, without waiting
       // for a React render/effect. Touch gestures retain control while dragging.
-      scheduleOnUI(applyPosition, next, snap);
+      scheduleOnUI(applyPosition, next, snap, release);
     };
     syncPosition();
     return session.mixer.subscribeChannel(channel, syncPosition);
