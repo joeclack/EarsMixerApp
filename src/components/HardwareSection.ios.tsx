@@ -5,9 +5,10 @@ import { font, foregroundStyle, listRowBackground, listRowSeparatorTint } from '
 import { useTheme } from '../theme';
 import { hardwarePalette } from './hardwarePalette';
 
-export default function HardwareSection({ title, symbol, children }: PropsWithChildren<{ title?: string; symbol?: SFSymbol }>) {
+export default function HardwareSection({ title, symbol, footer, children }: PropsWithChildren<{ title?: string; symbol?: SFSymbol; footer?: string }>) {
   const theme = useTheme(), palette = hardwarePalette(theme.dark);
   return <Section modifiers={[listRowBackground(palette.surface), listRowSeparatorTint(palette.edge)]}
+    footer={footer ? <Text modifiers={[foregroundStyle(theme.muted)]}>{footer}</Text> : undefined}
     header={title ? <HStack spacing={8}>
       {!!symbol && <Image systemName={symbol} size={13} color={theme.tint} />}
       <Text modifiers={[font({ textStyle: 'caption', weight: 'semibold' }), foregroundStyle(theme.muted)]}>{title}</Text>

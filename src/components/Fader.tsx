@@ -158,8 +158,9 @@ const FaderScale = memo(function FaderScale({ width, travel, vertical, parameter
   width: number; travel: number; vertical: boolean; parameter: 'level' | 'pan'; color: string;
 }) {
   const inset = FADER_INSET;
+  const theme = useTheme();
   if (vertical) {
-    const red = '#A82B40';
+    const red = theme.consoleMark;
     const marks = parameter === 'level'
       ? [10, 5, 0, -5, -10, -20, -30, -40, -60].map(db => ({ position: dbToPosition(db), label: db > 0 ? '+' + db : String(db), major: db === 0 }))
       : [{ position: 1, label: 'R', major: false }, { position: 0.5, label: 'C', major: true }, { position: 0, label: 'L', major: false }];
@@ -189,7 +190,7 @@ const FaderScale = memo(function FaderScale({ width, travel, vertical, parameter
       </>}
     </View>;
   }
-  const scaleText = '#849BA5', scaleLine = '#26383F';
+  const scaleText = theme.dark ? '#849BA5' : theme.consoleMark, scaleLine = theme.dark ? '#26383F' : '#A82B4066';
   const scale = parameter === 'level'
     ? [-40, -20, -10, 0, 10].map(db => ({ position: dbToPosition(db), label: db === 0 ? '0 dB' : db > 0 ? '+' + db : String(db), major: db === 0 }))
     : [{ position: 0, label: 'L', major: false }, { position: 0.5, label: 'C', major: true }, { position: 1, label: 'R', major: false }];
@@ -205,11 +206,17 @@ const FaderScale = memo(function FaderScale({ width, travel, vertical, parameter
         return <View key={mark.label} style={vertical
           ? { position: 'absolute', top: point - 6, left: 0, width: 33, height: 12, justifyContent: 'center' }
           : { position: 'absolute', left: Math.max(0, Math.min(width - 28, point - 14)), top: 0, width: 28, height: 25, alignItems: 'center' }}>
-          <Text style={{ color: mark.major ? '#E6F1F3' : scaleText, fontSize: 8, fontWeight: mark.major ? '700' : '400', fontVariant: ['tabular-nums'] }}>{mark.label}</Text>
+          <Text style={{ color: mark.major && theme.dark ? '#E6F1F3' : scaleText, fontSize: 8, fontWeight: mark.major ? '700' : '500', fontVariant: ['tabular-nums'] }}>{mark.label}</Text>
           <View style={vertical
             ? { position: 'absolute', left: 23, width: 9, height: 1, backgroundColor: mark.major ? color : scaleText }
-            : { width: 1, height: 8, marginTop: 2, backgroundColor: mark.major ? color : scaleText }} />
+            : { width: 1, height: 8, marginTop: 2, backgroundColor: mark.major && theme.dark ? color : scaleText }} />
         </View>;
       })}
+      {!theme.dark && parameter === 'level' && <>
+        <View style={{ position: 'absolute', left: inset + travel * dbToPosition(0) - 4, top: 16, width: 0, height: 0,
+          borderLeftWidth: 4, borderRightWidth: 4, borderTopWidth: 6, borderLeftColor: 'transparent', borderRightColor: 'transparent', borderTopColor: theme.consoleMark }} />
+        <View style={{ position: 'absolute', left: inset + travel * dbToPosition(0) - 4, top: 34, width: 0, height: 0,
+          borderLeftWidth: 4, borderRightWidth: 4, borderBottomWidth: 6, borderLeftColor: 'transparent', borderRightColor: 'transparent', borderBottomColor: theme.consoleMark }} />
+      </>}
     </View>;
 });

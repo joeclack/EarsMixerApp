@@ -71,7 +71,7 @@ function Navigation() {
       <Stack.Screen name="templates" options={sheetOptions} />
       <Stack.Screen name="scan" options={{ presentation: 'fullScreenModal', headerShown: false }} />
       <Stack.Screen name="layout" options={{ title: 'Channel order', presentation: 'modal' }} />
-      <Stack.Screen name="groups" options={{ title: 'Channel groups' }} />
+      <Stack.Screen name="groups" options={{ title: 'Channel groups', headerBackTitle: 'Mixer' }} />
       <Stack.Screen name="loading-preview" options={{ presentation: 'fullScreenModal', headerShown: false }} />
     </Stack>
   </ThemeProvider>;

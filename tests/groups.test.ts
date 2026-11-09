@@ -4,7 +4,7 @@ import { setTimeout as delay } from 'node:timers/promises';
 import { MixerClient, type Socket } from '../src/mixer/client';
 import { MixerSession } from '../src/mixer/session';
 import { dbToPosition, emptyPreferences, readPreferences, parseConfig } from '../src/mixer/model';
-import { mixerRows } from '../src/mixer/groups';
+import { mixerRows, mixerSections } from '../src/mixer/groups';
 
 const config = { channels: [{ channel: 1, label: 'Guitar L' }, { channel: 2, label: 'Guitar R' }, { channel: 3, label: 'Vocal' }],
   aux: [{ channel: 1, label: 'Drums' }, { channel: 2, label: 'Vocals' }] };
@@ -106,4 +106,22 @@ test('group creation and removal never write audio; membership persists per serv
   next.removeGroup(1); assert.deepEqual(next.state.preferences.groupsByAux['1'], []);
   next.disconnect(false);
   assert.equal(writes.filter(m => m.address && !m.address.endsWith('/?')).length, 0);
+});
+
+test('expanded groups own their member strips in one section, including pan and nonadjacent channel order', () => {
+  const parsed = parseConfig(config)!;
+  const preferences = { ...emptyPreferences(), groupsByAux: { '1': [[1, 3]] } };
+  const closed = mixerSections(mixerRows(parsed, preferences, 1, []));
+  assert.deepEqual(closed.map(section => section.header.channel), [-1, 2]);
+  assert.equal(closed[0].channels.length, 0);
+  for (const pan of [false, true]) {
+    const opened = mixerSections(mixerRows(parsed, preferences, 1, pan ? [] : [-1], pan));
+    assert.deepEqual(opened.map(section => section.header.channel), [-1, 2]);
+    assert.deepEqual(opened[0].channels.map(channel => channel.channel), [1, 3]);
+    assert.equal(opened[1].channels.length, 0);
+    assert(opened[0].channels.every(channel => channel.group === opened[0].header.channel));
+  }
+  const hidden = mixerSections(mixerRows(parsed, { ...preferences, hiddenByAux: { '1': [3] } }, 1, [-1]));
+  assert.deepEqual(hidden.map(section => section.header.channel), [1, 2]);
+  assert(hidden.every(section => !section.channels.length));
 });

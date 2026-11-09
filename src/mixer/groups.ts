@@ -13,6 +13,18 @@ export function groupLevels(balance: GroupBalance, level: number): Record<number
     [id, offset === null || level <= -150 ? -150 : Math.max(-150, Math.min(10, level + offset))]));
 }
 export type MixerRow = Channel & { members?: number[]; group?: number };
+export type MixerSection = { header: MixerRow; channels: MixerRow[] };
+// Keep a group's members inside one list item so its frame remains continuous
+// during scrolling and orientation changes, including individual pan controls.
+export function mixerSections(rows: MixerRow[]): MixerSection[] {
+  const sections: MixerSection[] = [];
+  for (const row of rows) {
+    const parent = sections.at(-1);
+    if (row.group && !row.members && parent?.header.channel === row.group) parent.channels.push(row);
+    else sections.push({ header: row, channels: [] });
+  }
+  return sections;
+}
 export function mixerRows(config: MixerConfig | null, preferences: Preferences, aux: number | null, expanded: number[], pan = false): MixerRow[] {
   const hidden = hiddenChannels(config, preferences, aux);
   const channels = orderedChannels(config, preferences).filter(c => !hidden.includes(c.channel));

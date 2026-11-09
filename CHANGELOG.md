@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.14.2 — Daylight surfaces and connected groups
+
+- Give light mode a clean background, white settings surfaces and darker secondary labels. Use the landscape cream face, red outlines, scale markings and 0 dB pointers for portrait light-mode faders.
+- Render expanded channel groups inside one continuous frame in both orientations. Landscape members replace the collapsed group strip inside that frame, with no empty group column or beside-the-group instructions.
+- Move landscape group names and Open/Close controls into a shared header rail. Align every LCD and use the same fader travel for grouped and individual channels.
+- Use a single native iOS scrolling form for channel-group selection, avoiding separately hosted controls overflowing their rows while scrolling. Keep long names wrapping and label the back button Mixer.
+
 ## 0.14.1 — Stable fader release
 
 - Send drag levels in the same 0.1 dB steps shown on screen to avoid rounding changes when OSC floats return from the desk. Preserve group offsets and continuous pan values.
