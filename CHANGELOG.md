@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.18.0 — Landscape AUX toolbar and tall faders
+
+- Add a fixed left-side landscape AUX selector with a native circular iOS menu and the selected mix name when space allows. Keep the faders full height and use a native browser select on web.
+- Long press a portrait fader bar to open a larger vertical fader with a digital channel/level display, a larger handle and longer travel for finer control. Preserve the mixer toolbar and provide an X to return to the list.
+- Add a light haptic when opening the tall fader and a 180 ms crossfade with subtle scaling when opening or closing. Preserve list scroll position, keep controls responsive during the transition, and use a short fade with Reduce Motion.
+- Remove the scale ticks beneath the 0 dB arrows in vertical faders.
+- Include the group editing and ordering refinements, loading animation timing, smooth AUX transitions, router configuration, landscape corner clearance, light-mode sheet layout and consistent panel borders from the 0.17 feedback cycle.
+
+
 ## 0.17.11 — Consistent light-mode panel borders
 
 - Apply a single border colour to all light-mode hardware panels, including input housings and cards, removing the contrasting bottom rim.
