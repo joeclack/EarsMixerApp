@@ -8,7 +8,7 @@ import { useGroupEditor } from './useGroupEditor';
 export default function GroupEditor() {
   const editor = useGroupEditor(), theme = useTheme();
   return <>
-    <Text style={{ color: theme.muted, lineHeight: 22, marginBottom: 20 }}>Group channels for this monitor mix. One fader keeps their level balance; open the group to adjust each channel. Pan stays individual.</Text>
+    <Text style={{ color: theme.muted, lineHeight: 22, marginBottom: 20 }}>Group channels for this monitor mix. One fader keeps their level balance; hold its name or display to adjust each channel. Pan stays individual.</Text>
     {!!editor.groups.length && <Section title="YOUR GROUPS" footer="Ungrouping changes the layout only. Desk levels stay unchanged.">
       {editor.groups.map(group => <Row key={group[0]} title={editor.label(group)} detail={group.length + ' linked channels'}>
         <NativeButton title="Ungroup" accessibilityLabel={'Ungroup ' + editor.label(group)} onPress={() => editor.remove(group)} />

@@ -11,6 +11,7 @@ import NativeButton from '../../../src/components/NativeButton';
 import Fader, { FaderValue } from '../../../src/components/Fader';
 import FaderHousing from '../../../src/components/FaderHousing';
 import FaderDisplay from '../../../src/components/FaderDisplay';
+import GroupExpandTarget from '../../../src/components/GroupExpandTarget';
 import { FADER_INSET } from '../../../src/components/faderGeometry';
 import MixerToolbar from '../../../src/components/MixerToolbar';
 import AuxPresence from '../../../src/components/AuxPresence';
@@ -34,50 +35,63 @@ export default function Mixer() {
     [mix.config, mix.aux, mix.parameter, expanded, state.preferences]);
   const topPadding = landscape ? insets.top + 12 : 20;
   const bottomPadding = insets.bottom + (landscape ? 12 : 20);
-  // One shared header rail keeps every LCD and fader aligned, grouped or not.
-  const railHeight = sections.some(section => section.header.members) ? 48 : 0;
-  const cardHeight = Math.max(106 + railHeight + FADER_INSET * 2, bankHeight - topPadding - bottomPadding);
-  const stripHeight = Math.max(FADER_INSET * 2, cardHeight - 106 - railHeight);
+  // Every landscape strip starts at its LCD. Group controls use horizontal
+  // space beside the first display instead of reducing anyone's fader travel.
+  const cardHeight = Math.max(108 + FADER_INSET * 2, bankHeight - topPadding - bottomPadding);
+  const stripHeight = Math.max(FADER_INSET * 2, cardHeight - 108);
   const renderSection = useCallback(({ item }: { item: MixerSection }) => {
     const group = item.header;
     const grouped = !!group.members;
     const open = grouped && item.channels.length > 0;
-    const toggle = () => {
+    const canClose = open && mix.parameter !== 'pan';
+    const expand = () => {
       session.mixer.cancelWrites();
-      setExpanded(ids => ids.includes(group.channel) ? ids.filter(id => id !== group.channel) : [...ids, group.channel]);
+      setExpanded(ids => ids.includes(group.channel) ? ids : [...ids, group.channel]);
     };
-    const renderFader = (channel: MixerRow) => <View key={channel.channel} testID={'channel-' + channel.channel}
-      style={landscape ? { width: grouped && !open ? 136 : 88, alignItems: 'center', gap: 8 } : { gap: 8 }}>
-      {landscape ? <FaderDisplay channel={channel.channel} label={channel.label} /> : !channel.members && <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 8 }}>
+    const close = () => {
+      session.mixer.cancelWrites();
+      setExpanded(ids => ids.filter(id => id !== group.channel));
+    };
+    const renderFader = (channel: MixerRow, index: number) => <View key={channel.channel} testID={'channel-' + channel.channel}
+      style={landscape ? { width: grouped && !open ? 136 : canClose && index === 0 ? 152 : 88, alignItems: 'center', gap: 8 } : { gap: 8 }}>
+      {landscape ? grouped && !open ? <GroupExpandTarget label={group.label} onExpand={expand}>
+        <FaderDisplay channel={channel.channel} label={channel.label} />
+      </GroupExpandTarget> : <View style={{ width: '100%', height: 64, flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+        <View style={{ width: 88 }}><FaderDisplay channel={channel.channel} label={channel.label} /></View>
+        {canClose && index === 0 && <NativeButton compact title="Close" accessibilityLabel={'Close ' + group.label + ' group'} onPress={close} />}
+      </View> : !channel.members && <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 8 }}>
         <Text numberOfLines={2} style={{ color: theme.text, fontSize: 15, fontWeight: '600', flex: 1 }}>{channel.label}</Text>
         <FaderValue channel={channel.channel} />
       </View>}
-      <FaderHousing vertical={landscape}><Fader channel={channel.channel} label={channel.label} vertical={landscape} length={stripHeight} /></FaderHousing>
+      <View style={landscape ? { width: 88, alignSelf: grouped && !open ? 'center' : 'flex-start' } : undefined}>
+        <FaderHousing vertical={landscape}><Fader channel={channel.channel} label={channel.label} vertical={landscape} length={stripHeight} /></FaderHousing>
+      </View>
     </View>;
     return <View testID={grouped ? 'group-' + group.channel : undefined} style={{
-      height: landscape ? cardHeight : undefined, width: landscape ? (grouped ? (open ? item.channels.length * 96 - 8 : 136) + 12 : 96) : undefined,
+      height: landscape ? cardHeight : undefined, width: landscape ? (grouped ? (open ? item.channels.length * 96 - 8 + (canClose ? 64 : 0) : 136) + 12 : 96) : undefined,
       marginRight: landscape ? 8 : 0, marginBottom: landscape ? 0 : 16,
       ...(grouped ? { borderWidth: 2, borderColor: theme.groupEdge, borderRadius: 16, backgroundColor: theme.groupSurface,
-        paddingHorizontal: landscape ? 4 : 10, paddingTop: landscape ? 2 : 0, paddingBottom: landscape ? 4 : 12 }
-        : landscape ? { borderWidth: 1, borderColor: theme.consoleRed, borderRadius: 12, borderBottomLeftRadius: 44,
-          borderBottomRightRadius: 44, paddingHorizontal: 3, paddingVertical: 4, backgroundColor: theme.stripSurface } : {}),
+        paddingHorizontal: landscape ? 4 : 10, paddingTop: landscape ? 4 : 0, paddingBottom: landscape ? 4 : 12 }
+        : landscape ? { paddingHorizontal: 4, paddingVertical: 6 } : {}),
     }}>
-      {grouped ? <View style={{ minHeight: landscape ? railHeight : 48, paddingHorizontal: 6, gap: 8,
-        flexDirection: 'row', alignItems: 'center', borderBottomWidth: open && !landscape ? 1 : 0, borderBottomColor: theme.line,
-        marginBottom: landscape ? 0 : 10 }}>
+      {grouped && !landscape && (open ? <View style={{ minHeight: 48, paddingHorizontal: 6, gap: 8,
+        flexDirection: 'row', alignItems: 'center', borderBottomWidth: 1, borderBottomColor: theme.line, marginBottom: 10 }}>
         <Icon name={{ ios: 'link', android: 'link', web: 'link' }} size={14} />
-        <Text numberOfLines={landscape ? 1 : 2} accessibilityRole="header" style={{ flex: 1, minWidth: 0, color: theme.text, fontSize: landscape ? 11 : 15, fontWeight: '700' }}>
-          {landscape && !open ? group.members!.length + ' linked' : group.label}
-        </Text>
-        {!landscape && !open && <FaderValue channel={group.channel} />}
-        {mix.parameter !== 'pan' ? <NativeButton compact title={open ? 'Close' : 'Open'} accessibilityLabel={(open ? 'Close ' : 'Open ') + group.label + ' group'} onPress={toggle} />
+        <Text numberOfLines={2} accessibilityRole="header" style={{ flex: 1, minWidth: 0, color: theme.text, fontSize: 15, fontWeight: '700' }}>{group.label}</Text>
+        {canClose ? <NativeButton compact title="Close" accessibilityLabel={'Close ' + group.label + ' group'} onPress={close} />
           : <Text style={{ color: theme.muted, fontSize: 11 }}>Pan</Text>}
-      </View> : landscape && railHeight > 0 ? <View style={{ height: railHeight }} /> : null}
+      </View> : <GroupExpandTarget label={group.label} onExpand={expand}>
+        <View style={{ minHeight: 48, paddingHorizontal: 6, gap: 8, flexDirection: 'row', alignItems: 'center', marginBottom: 10 }}>
+          <Icon name={{ ios: 'link', android: 'link', web: 'link' }} size={14} />
+          <Text numberOfLines={2} style={{ flex: 1, color: theme.text, fontSize: 15, fontWeight: '700' }}>{group.label}</Text>
+          <FaderValue channel={group.channel} />
+        </View>
+      </GroupExpandTarget>)}
       <View style={{ flexDirection: landscape ? 'row' : 'column', gap: landscape ? 8 : 16 }}>
         {(open ? item.channels : [group]).map(renderFader)}
       </View>
     </View>;
-  }, [landscape, cardHeight, stripHeight, railHeight, theme, mix.parameter, session]);
+  }, [landscape, cardHeight, stripHeight, theme, mix.parameter, session]);
   return <Page title={mix.config?.aux.find(aux => aux.channel === mix.aux)?.label || 'Mixer'} scroll={false} compactHeader hideHeader={landscape} toolbar={<MixerToolbar />}>
     <AuxPresence />
     <MixerLoadingBoundary>{!state.server ? <EmptyMixer /> : <FlatList key={landscape ? 'strips' : 'rows'} horizontal={landscape} onLayout={event => setBankHeight(event.nativeEvent.layout.height)} extraData={state.preferences}

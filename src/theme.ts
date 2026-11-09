@@ -14,7 +14,7 @@ export function useTheme() {
     danger: dark ? '#FF453A' : '#D70015', orange: dark ? '#FF9F0A' : '#B25000',
     groupSurface: dark ? '#12272C' : '#F7FCFC', groupEdge: dark ? '#48D8C4' : '#007D71',
     consoleRed: '#B42B43', consoleMark: '#A82B40', consoleFace: '#E1DDC9',
-    consoleGradient: ['#EEE9D7', '#D4CEB6', '#E4DECA'] as const,
-    consoleRim: '#FFF9E3', stripSurface: dark ? '#111C24' : '#DAE4E8',
+    consoleGradient: ['#BCAD8D', '#F2EBD5', '#D3C7A8'] as const,
+    consoleRim: '#FFF9E3', consoleShadow: '#5A422D66',
   }), [dark]);
 }

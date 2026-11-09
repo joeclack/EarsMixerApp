@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.15.1 — Full-height grouped faders and theme finishes
+
+- Remove the landscape group header rail and its empty space on every other strip. Hold a collapsed group's name or LCD to expand it; keep Close beside the first member's display without reducing fader travel. Provide explicit screen-reader and keyboard activation.
+- Remove the enclosing LCD-and-fader outline from ungrouped landscape strips. Keep one continuous frame around a group and its expanded members.
+- Use the recessed graphite finish and grey/teal scale in dark mode in both orientations. Keep the red/beige finish in light mode, adding stronger directional shading, inset shadows and rim highlights for depth.
+
 ## 0.15.0 — Loading fader fly-out
 
 - Zoom the abstract loading faders towards the viewer and fade them away when loading finishes. Mount ready screens beneath the exit immediately, keeping rendering and data work independent of the animation.

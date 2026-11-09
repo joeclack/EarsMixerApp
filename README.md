@@ -2,7 +2,7 @@
 
 Native iOS and Android companion for [EarsMixer](https://github.com/joeclack/EarsMixer). Control your own DiGiCo monitor mix over the local network, with layouts and preferences saved on your phone.
 
-Current app version: **0.15.0**. Use the latest [EarsMixer server](https://github.com/joeclack/EarsMixer/releases/latest), currently **1.7.0**, for discovery, shared templates and connected-user presence. This repository contains the mobile client; the server repository contains the console connection, browser mixer, admin dashboard and Windows service. Musicians use optional device-local nicknames, without accounts or passwords. The server's admin password is separate.
+Current app version: **0.15.1**. Use the latest [EarsMixer server](https://github.com/joeclack/EarsMixer/releases/latest), currently **1.7.0**, for discovery, shared templates and connected-user presence. This repository contains the mobile client; the server repository contains the console connection, browser mixer, admin dashboard and Windows service. Musicians use optional device-local nicknames, without accounts or passwords. The server's admin password is separate.
 
 ## Using the app
 
@@ -17,7 +17,7 @@ In portrait, the toolbar shows the selected AUX name with a small **Monitor mix*
 
 Portrait uses compact horizontal faders. Landscape uses narrow vertical strips with space for the Dynamic Island, with the header and toolbar hidden to give the faders the full height. Rotate back to portrait to access the toolbar.
 
-Landscape strips have a small illuminated display with the channel name and current dB level (or pan position in Pan mode). Red outlines, cream fader faces, printed red scales and inward-pointing 0 dB arrows echo the physical desk. The arrows follow the same level scale as the handle, rather than marking the geometric centre. Swipe horizontally to reach more strips.
+Landscape strips have a small illuminated display with the channel name and current dB level (or pan position in Pan mode). Light mode uses red-edged cream fader faces and red scales; dark mode uses the same recessed graphite finish as portrait, with grey scale markings and teal 0 dB pointers. Only linked groups have an enclosing frame around their displays and faders. The arrows follow the same level scale as the handle, rather than marking the geometric centre. Swipe horizontally to reach more strips.
 
 Drag a handle to change its value; tapping or scrolling over the track does not jump the level. Touch movement is optimistic and immediate. Changes from the desk, saved-level recall and bulk level changes animate into position, with larger moves easing out. Keyboard and accessibility adjustments are also supported.
 
@@ -55,7 +55,7 @@ The operating system can suspend networking when the app is backgrounded. EarsMi
 
 Open **… → Channel groups**, or **Edit channels → Manage channel groups**. Select two or more channels and tap **Group selected**. Each channel can belong to one group per AUX. Group membership is saved on this device separately for each server and AUX; applying a shared template keeps your groups.
 
-The mixer shows a linked-channel marker and one fader titled with all member names, such as **Guitar L / Guitar R**. Tap **Open** to adjust the individual channels inside one connected group frame and **Close** to return to the group fader. In landscape, member strips replace the collapsed fader inside that frame; group controls sit in a shared header rail so all faders retain equal travel. Creating, opening, closing or removing a group does not change levels. Hidden or unavailable members make that group display as individual visible channels until every member is available again.
+The mixer shows a linked-channel marker and one fader titled with all member names, such as **Guitar L / Guitar R**. Touch and hold the group name in portrait or its LCD in landscape to adjust the individual channels inside one connected group frame. Tap **Close** to return to the group fader. Keyboard and screen-reader activation also open groups. In landscape, member strips replace the collapsed fader inside that frame; Close sits beside the first member’s display. There is no extra header row, so groups never shorten the faders. Creating, opening, closing or removing a group does not change levels. Hidden or unavailable members make that group display as individual visible channels until every member is available again.
 
 The group level represents its loudest member. Moving it applies the same dB change to each member, preserving their balance: 0/−5 dB becomes −10/−15 dB when the group is lowered to −10 dB. The quieter member can reach off first; the group bottom sets all members off. Raising the group again restores its remembered offsets. Channels already individually off remain off until raised individually. If every member was individually off and no balance was previously recorded, open the group to raise a channel first.
 
@@ -69,7 +69,7 @@ Administrators manage shared templates in the server dashboard. The limited serv
 
 ## Appearance and interaction
 
-Light mode uses a clean daylight background, white settings cards, dark labels and cream fader faces with red scales in both orientations. Dark mode uses textured graphite surfaces and recessed portrait fader housings. Both modes use illuminated teal tracks and sculpted rectangular handles with centre markers. Settings and setup share restrained hardware details while native buttons, pickers, switches and sheets retain their system styling. Choose System, Light or Dark in Settings.
+Light mode uses a clean daylight background, white settings cards, dark labels and cream fader faces with red scales in both orientations. Dark mode uses textured graphite surfaces and recessed graphite fader housings in both orientations. Light fader housings use directional shading, inset shadows and rim highlights to give the beige face depth. Both modes use illuminated teal tracks and sculpted rectangular handles with centre markers. Settings and setup share restrained hardware details while native buttons, pickers, switches and sheets retain their system styling. Choose System, Light or Dark in Settings.
 
 The generated fader artwork remains the launcher icon. Loading screens use three simple animated faders, independent of console data and image assets. When ready, the faders zoom towards you and fade out over the ready screen; Reduce Motion uses a short fade without zooming. New native builds use a plain initial launch background before the animation can render; Expo Go retains its own initial launch screen. In development, open **Settings → Developer tools → Preview loading animation** to view the loader; tap **Done** to test the same fly-out before returning to Settings.
 

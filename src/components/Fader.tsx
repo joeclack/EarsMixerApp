@@ -160,7 +160,8 @@ const FaderScale = memo(function FaderScale({ width, travel, vertical, parameter
   const inset = FADER_INSET;
   const theme = useTheme();
   if (vertical) {
-    const red = theme.consoleMark;
+    const ink = theme.dark ? '#849BA5' : theme.consoleMark;
+    const unityInk = theme.dark ? color : ink;
     const marks = parameter === 'level'
       ? [10, 5, 0, -5, -10, -20, -30, -40, -60].map(db => ({ position: dbToPosition(db), label: db > 0 ? '+' + db : String(db), major: db === 0 }))
       : [{ position: 1, label: 'R', major: false }, { position: 0.5, label: 'C', major: true }, { position: 0, label: 'L', major: false }];
@@ -177,16 +178,16 @@ const FaderScale = memo(function FaderScale({ width, travel, vertical, parameter
       {spaced.map(mark => {
         const point = inset + travel * (1 - mark.position);
         return <View key={mark.label} style={{ position: 'absolute', top: point, left: 0, right: 0 }}>
-          <View style={{ position: 'absolute', left: 4, width: 18, height: 1, backgroundColor: red }} />
-          <View style={{ position: 'absolute', right: 4, width: 14, height: 1, backgroundColor: red }} />
-          <Text style={{ position: 'absolute', left: 4, top: mark.major ? -22 : -14, fontSize: 9, lineHeight: 12, fontWeight: mark.major ? '800' : '600', color: red }}>{mark.label}</Text>
+          <View style={{ position: 'absolute', left: 4, width: 18, height: 1, backgroundColor: mark.major ? unityInk : ink }} />
+          <View style={{ position: 'absolute', right: 4, width: 14, height: 1, backgroundColor: mark.major ? unityInk : ink }} />
+          <Text style={{ position: 'absolute', left: 4, top: mark.major ? -22 : -14, fontSize: 9, lineHeight: 12, fontWeight: mark.major ? '800' : '600', color: theme.dark && mark.major ? '#E6F1F3' : ink }}>{mark.label}</Text>
         </View>;
       })}
       {parameter === 'level' && <>
         <View testID="unity-arrow-left" style={{ position: 'absolute', top: unity - 6, left: 5, width: 0, height: 0,
-          borderTopWidth: 6, borderBottomWidth: 6, borderLeftWidth: 11, borderTopColor: 'transparent', borderBottomColor: 'transparent', borderLeftColor: red }} />
+          borderTopWidth: 6, borderBottomWidth: 6, borderLeftWidth: 11, borderTopColor: 'transparent', borderBottomColor: 'transparent', borderLeftColor: unityInk }} />
         <View testID="unity-arrow-right" style={{ position: 'absolute', top: unity - 6, right: 5, width: 0, height: 0,
-          borderTopWidth: 6, borderBottomWidth: 6, borderRightWidth: 11, borderTopColor: 'transparent', borderBottomColor: 'transparent', borderRightColor: red }} />
+          borderTopWidth: 6, borderBottomWidth: 6, borderRightWidth: 11, borderTopColor: 'transparent', borderBottomColor: 'transparent', borderRightColor: unityInk }} />
       </>}
     </View>;
   }

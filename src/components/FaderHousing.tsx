@@ -7,17 +7,22 @@ import { useTheme } from '../theme';
 // These static surfaces are separate from the animated track and grip.
 export default memo(function FaderHousing({ vertical, children }: PropsWithChildren<{ vertical: boolean }>) {
   const theme = useTheme();
-  if (vertical || !theme.dark) return <View style={{ alignSelf: vertical ? 'center' : 'stretch', width: vertical ? 88 : undefined,
+  if (!theme.dark) return <View style={{ alignSelf: vertical ? 'center' : 'stretch', width: vertical ? 88 : undefined,
     borderRadius: vertical ? 38 : 999, paddingHorizontal: vertical ? 2 : 16, paddingVertical: vertical ? 10 : 4,
-    backgroundColor: theme.consoleFace, borderWidth: 2, borderColor: theme.consoleRed }}>
-    <LinearGradient pointerEvents="none" colors={theme.consoleGradient} locations={[0, 0.5, 1]}
-      start={{ x: 0, y: 0 }} end={{ x: 1, y: 0.1 }} style={[StyleSheet.absoluteFill, { borderRadius: 36 }]} />
+    backgroundColor: theme.consoleFace, borderWidth: 2, borderColor: theme.consoleRed,
+    boxShadow: [{ offsetX: 0, offsetY: 2, blurRadius: 3, color: '#5A422D26' }] }}>
+    <LinearGradient pointerEvents="none" colors={theme.consoleGradient} locations={[0, 0.3, 1]}
+      start={vertical ? { x: 0, y: 0.5 } : { x: 0.5, y: 0 }} end={vertical ? { x: 1, y: 0.5 } : { x: 0.5, y: 1 }}
+      style={[StyleSheet.absoluteFill, { borderRadius: vertical ? 36 : 999 }]} />
+    <View pointerEvents="none" style={[StyleSheet.absoluteFill, { borderRadius: vertical ? 36 : 999,
+      boxShadow: [{ inset: true, offsetX: 2, offsetY: 3, blurRadius: 8, spreadDistance: 1, color: theme.consoleShadow },
+        { inset: true, offsetX: -1, offsetY: -2, blurRadius: 2, color: '#FFFFFFAA' }] }]} />
     <View pointerEvents="none" style={{ position: 'absolute', inset: 2, borderRadius: vertical ? 34 : 999, borderWidth: 1, borderColor: theme.consoleRim }} />
     {children}
   </View>;
-  return <View style={{ alignSelf: vertical ? 'center' : 'stretch', width: vertical ? 64 : undefined,
+  return <View style={{ alignSelf: vertical ? 'center' : 'stretch', width: vertical ? 88 : undefined,
     borderRadius: 999, backgroundColor: '#061014', overflow: 'hidden',
-    paddingHorizontal: vertical ? 0 : 16, paddingVertical: vertical ? 12 : 4 }}>
+    borderWidth: vertical ? 2 : 0, borderColor: '#061014', paddingHorizontal: vertical ? 2 : 16, paddingVertical: vertical ? 10 : 4 }}>
     <LinearGradient pointerEvents="none" colors={['#02090C', '#16272E', '#526A74']}
       locations={[0, 0.55, 1]} start={{ x: 0.15, y: 0 }} end={{ x: 0.8, y: 1 }}
       style={[StyleSheet.absoluteFill, { borderRadius: 999 }]} />

@@ -12,7 +12,7 @@ export default function GroupEditor() {
   const editor = useGroupEditor(), theme = useTheme();
   return <Host style={{ flex: 1 }} colorScheme={theme.scheme} seedColor={theme.tint}>
     <Form modifiers={[scrollContentBackground('hidden')]}>
-      <Section footer="One fader keeps the level balance. Open a group to adjust its channels; pan stays individual.">
+      <Section footer="One fader keeps the level balance. Hold its name or display to adjust the channels; pan stays individual.">
         <Button label={'Group selected (' + editor.selected.length + ')'} systemImage="link" onPress={editor.create}
           modifiers={[disabled(!editor.canCreate)]} />
         {!!editor.error && <Text modifiers={[foregroundStyle(theme.danger)]}>{editor.error}</Text>}
