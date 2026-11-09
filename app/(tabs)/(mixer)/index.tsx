@@ -34,7 +34,7 @@ export default function Mixer() {
   const landscape = width > height;
   const [bankHeight, setBankHeight] = useState(height);
   const layoutReady = useStableMixerLayout([width, height, insets.top, insets.bottom, insets.left, insets.right, bankHeight].join('|'));
-  useEffect(() => { if (!layoutReady) session.mixer.cancelWrites(); }, [layoutReady, session]);
+  useEffect(() => { session.mixer.cancelWrites(); }, [landscape, session]);
   const [expanded, setExpanded] = useState<number[]>([]);
   const [focused, setFocused] = useState<number | null>(null);
   useEffect(() => { setFocused(null); }, [state.server, mix.aux, mix.parameter, landscape]);
@@ -129,8 +129,10 @@ export default function Mixer() {
       paddingLeft: landscape ? landscapeEdges.paddingLeft : 0, paddingRight: landscape ? landscapeEdges.paddingRight : 0 }}>
     {landscape && <LandscapeMixerToolbar top={topPadding} bottom={bottomPadding} />}
     <View onLayout={event => setBankHeight(event.nativeEvent.layout.height)} style={{ flex: 1, minWidth: 0, overflow: landscape ? 'hidden' : 'visible' }}>
+    <View pointerEvents={layoutReady ? 'auto' : 'none'} accessibilityElementsHidden={!layoutReady}
+      importantForAccessibility={layoutReady ? 'auto' : 'no-hide-descendants'} style={{ flex: 1, opacity: layoutReady ? 1 : 0 }}>
     <LandscapeFaderViewport enabled={landscape}>
-    <MixerLoadingBoundary>{!state.server ? <EmptyMixer /> : !layoutReady ? <View style={{ flex: 1 }} /> : <FaderFocusTransition row={focusedRow} onClose={closeFocused}>
+    <MixerLoadingBoundary>{!state.server ? <EmptyMixer /> : <FaderFocusTransition row={focusedRow} onClose={closeFocused}>
     <FlatList key={landscape ? 'strips' : 'rows'} horizontal={landscape} extraData={state.preferences}
       data={sections} renderItem={renderSection} keyExtractor={item => String(item.header.channel)} contentInsetAdjustmentBehavior="never"
       contentContainerStyle={{ paddingTop: topPadding, ...(landscape ? { paddingLeft: 16, paddingRight: 16 } : { paddingLeft: 20, paddingRight: 20 }), paddingBottom: bottomPadding }} keyboardShouldPersistTaps="handled"
@@ -141,6 +143,7 @@ export default function Mixer() {
         {hidden.length > 0 && <NativeButton title="Edit channels" onPress={() => router.push('/layout')} />}
       </View>} /></FaderFocusTransition>}</MixerLoadingBoundary>
     </LandscapeFaderViewport>
+    </View>
     </View>
     </View>
   </Page>;
