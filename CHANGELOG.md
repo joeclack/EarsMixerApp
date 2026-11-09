@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.17.7 — Landscape corner clearance
+
+- Add 12 points of spacing on the landscape edge without a notch so rounded phone corners do not clip the channel displays. Retain the larger inset on the notch side.
+
 ## 0.17.6 — Landscape notch spacing
 
 - Apply landscape mixer edge padding only on the camera-cutout side, swapping it when the phone rotates. Remove padding on the opposite edge, using orientation when iOS reports symmetric safe areas.
