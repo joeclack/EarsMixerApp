@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.17.5 — Create in the toolbar
+
+- Move the group Create action to the top-right native toolbar (web header), retaining its blue text, validation and saving state. Remove the bottom form button.
+
 ## 0.17.4 — Smooth AUX changes
 
 - Hold displayed fader positions while the next AUX has no values, then glide directly to its cached or live values. Avoid snapping to off on AUX changes or cancelled gestures while values are pending.

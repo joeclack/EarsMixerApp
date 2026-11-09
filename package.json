@@ -1,6 +1,6 @@
 {
   "name": "earsmixer-app",
-  "version": "0.17.4",
+  "version": "0.17.5",
   "main": "expo-router/entry",
   "dependencies": {
     "@expo/ui": "~58.0.27",

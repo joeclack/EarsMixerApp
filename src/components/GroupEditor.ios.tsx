@@ -1,6 +1,7 @@
+import GroupCreateToolbar from './GroupCreateToolbar';
 import { Host } from '@expo/ui';
 import { List, Text, TextField, Toggle, Button, HStack, VStack, Spacer, useNativeState } from '@expo/ui/swift-ui';
-import { tint, accessibilityLabel, buttonStyle, disabled, environment, font, foregroundStyle, lineLimit, listRowBackground, listRowSeparatorTint, scrollContentBackground, autocorrectionDisabled, textInputAutocapitalization } from '@expo/ui/swift-ui/modifiers';
+import { accessibilityLabel, buttonStyle, disabled, environment, font, foregroundStyle, lineLimit, listRowBackground, listRowSeparatorTint, scrollContentBackground, autocorrectionDisabled, textInputAutocapitalization } from '@expo/ui/swift-ui/modifiers';
 import Section from './HardwareSection.ios';
 import { hardwarePalette } from './hardwarePalette';
 import { useTheme } from '../theme';
@@ -10,7 +11,7 @@ export default function GroupEditor(props: GroupEditorProps) {
   const editor = useGroupEditor(props), theme = useTheme(), palette = hardwarePalette(theme.dark);
   const name = useNativeState(editor.name);
   const rowStyle = [listRowBackground(palette.surface), listRowSeparatorTint(palette.edge)];
-  return <Host style={{ flex: 1 }} colorScheme={theme.scheme} seedColor={theme.tint}>
+  return <><GroupCreateToolbar {...editor} /><Host style={{ flex: 1 }} colorScheme={theme.scheme} seedColor={theme.tint}>
     <List modifiers={[scrollContentBackground('hidden'), environment('editMode', 'active'), disabled(editor.busy)]}>
       {!editor.valid ? <Section>
         <Text modifiers={[foregroundStyle(theme.danger)]}>{editor.unavailableMessage}</Text>
@@ -44,13 +45,10 @@ export default function GroupEditor(props: GroupEditorProps) {
           }</List.ForEach>
           {!editor.available.length && <Text modifiers={[foregroundStyle(theme.muted)]}>No other channels available to add.</Text>}
         </Section>
-        {editor.creating && <Section><Button onPress={editor.save} modifiers={[buttonStyle('borderedProminent'), tint('#007AFF'), disabled(!editor.canSave)]}>
-          <HStack><Spacer /><Text>{editor.busy ? 'Creating…' : 'Create'}</Text><Spacer /></HStack>
-        </Button></Section>}
         {!editor.creating && <Section>
           <Button label={editor.busy ? 'Deleting…' : 'Delete group'} role="destructive" onPress={editor.remove} />
         </Section>}
       </>}
     </List>
-  </Host>;
+  </Host></>;
 }

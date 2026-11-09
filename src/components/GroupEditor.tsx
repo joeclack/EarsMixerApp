@@ -1,4 +1,5 @@
-import { Text, TextInput, View, Pressable } from 'react-native';
+import GroupCreateToolbar from './GroupCreateToolbar';
+import { Text, TextInput, View } from 'react-native';
 import { Host, Switch } from '@expo/ui';
 import { Section, Message } from './ui';
 import NativeButton from './NativeButton';
@@ -12,6 +13,7 @@ export default function GroupEditor(props: GroupEditorProps) {
     <NativeButton title="Channel groups" onPress={closeGroupEditor} />
   </>;
   return <>
+    <GroupCreateToolbar {...editor} />
     <Message error>{editor.error}</Message>
     <Section title="APPLIES TO" footer={!editor.allAuxes ? editor.mixName : undefined}>
       <Host matchContents={{ vertical: true }} colorScheme={theme.scheme} seedColor={theme.tint} style={{ padding: 16, minHeight: 56 }}>
@@ -41,10 +43,6 @@ export default function GroupEditor(props: GroupEditorProps) {
       </View>)}
       {!editor.available.length && <Text style={{ color: theme.muted, padding: 16 }}>No other channels available to add.</Text>}
     </Section>
-    {editor.creating && <Pressable accessibilityRole="button" disabled={!editor.canSave} accessibilityState={{ disabled: !editor.canSave }} onPress={editor.save}
-      style={{ backgroundColor: '#007AFF', borderRadius: 12, padding: 16, alignItems: 'center', opacity: editor.canSave ? 1 : 0.4 }}>
-      <Text style={{ color: '#FFFFFF', fontSize: 17, fontWeight: '600' }}>{editor.busy ? 'Creating…' : 'Create'}</Text>
-    </Pressable>}
     {!editor.creating && <Section>
       <NativeButton title={editor.busy ? 'Deleting…' : 'Delete group'} destructive disabled={editor.busy} onPress={editor.remove} />
     </Section>}
