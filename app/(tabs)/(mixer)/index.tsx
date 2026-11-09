@@ -21,6 +21,7 @@ import MixerLoadingBoundary from '../../../src/components/MixerLoadingBoundary';
 import { useLandscapeEdgePadding } from '../../../src/components/useLandscapeEdgePadding';
 import LandscapeMixerToolbar from '../../../src/components/LandscapeMixerToolbar';
 import FaderFocusTransition from '../../../src/components/FaderFocusTransition';
+import ExpandableFader from '../../../src/components/ExpandableFader';
 
 export default function Mixer() {
   const { session, state, mix } = useSession();
@@ -75,11 +76,11 @@ export default function Mixer() {
         <FaderValue channel={channel.channel} />
       </View>}
       <View style={landscape ? { width: 88, alignSelf: grouped && !open ? 'center' : 'flex-start' } : undefined}>
-        <FaderHousing vertical={landscape}><Fader channel={channel.channel} label={channel.label} vertical={landscape} length={stripHeight}
-          onEnlarge={landscape ? undefined : () => {
+        {landscape ? <FaderHousing vertical><Fader channel={channel.channel} label={channel.label} vertical length={stripHeight} /></FaderHousing>
+          : <ExpandableFader channel={channel.channel} label={channel.label} onEnlarge={() => {
             session.mixer.cancelWrites(); setFocused(channel.channel);
             if (session.state.settings.haptics) void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
-          }} /></FaderHousing>
+          }} />}
       </View>
     </View>;
     return <View testID={grouped ? 'group-' + group.channel : undefined} style={{

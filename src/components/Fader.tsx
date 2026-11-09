@@ -1,6 +1,6 @@
 import React, { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { View, Text } from 'react-native';
-import Animated, { useSharedValue, useAnimatedStyle, cancelAnimation, Easing, withTiming } from 'react-native-reanimated';
+import Animated, { useSharedValue, useAnimatedStyle, cancelAnimation, Easing, withTiming, withSequence, withSpring, useReducedMotion, type SharedValue } from 'react-native-reanimated';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import { scheduleOnRN, scheduleOnUI } from 'react-native-worklets';
 import FaderHandleSurface from './FaderHandleSurface';
@@ -14,7 +14,7 @@ import { clamp, levelText, dbToPosition } from '../mixer/model';
 import type { DragToken } from '../mixer/client';
 import { releasePosition } from '../mixer/faderPrecision';
 
-export default memo(function Fader({ channel, label, vertical = false, length = 200, size = 1, onEnlarge }: { channel: number; label: string; vertical?: boolean; length?: number; size?: number; onEnlarge?: () => void }) {
+export default memo(function Fader({ channel, label, vertical = false, length = 200, size = 1, onEnlarge, pressScale }: { channel: number; label: string; vertical?: boolean; length?: number; size?: number; onEnlarge?: () => void; pressScale?: SharedValue<number> }) {
   const { session, mix } = useFaderSession(channel);
   const [width, setWidth] = useState(0);
   const ready = session.mixer.canDrag(channel);
@@ -25,6 +25,10 @@ export default memo(function Fader({ channel, label, vertical = false, length = 
   const lastDispatch = useSharedValue(0);
   const sampled = useSharedValue(position);
   const origin = useSharedValue(0);
+  const reducedMotion = useReducedMotion();
+  const localScale = useSharedValue(1);
+  const scale = pressScale || localScale;
+  useEffect(() => { cancelAnimation(scale); scale.set(1); }, [mix.epoch, vertical, scale]);
   const drag = useRef<DragToken | null>(null);
   const haptics = useRef(new DragHaptics(() => { if (session.state.settings.haptics) void Haptics.selectionAsync().catch(() => {}); })).current;
   const inset = FADER_INSET * size;
@@ -90,10 +94,20 @@ export default memo(function Fader({ channel, label, vertical = false, length = 
     return session.mixer.subscribeChannel(channel, syncPosition);
   }, [session, channel, thumb, active, vertical, width]);
   const epoch = mix.epoch;
-  const enlarge = useMemo(() => Gesture.LongPress().enabled(!vertical && !!onEnlarge).minDuration(450).maxDistance(3).onStart(() => {
+  const enlarge = useMemo(() => Gesture.LongPress().enabled(!vertical && !!onEnlarge).minDuration(450).maxDistance(3).onBegin(() => {
     'worklet';
+    if (!reducedMotion) scale.set(withSequence(
+      withTiming(0.985, { duration: 60 }),
+      withTiming(1.035, { duration: 390, easing: Easing.bezier(0.23, 1, 0.32, 1) }),
+    ));
+  }).onStart(() => {
+    'worklet';
+    if (!reducedMotion) scale.set(withTiming(1.05, { duration: 70 }));
     if (onEnlarge) scheduleOnRN(onEnlarge);
-  }), [vertical, onEnlarge, mix.epoch]);
+  }).onFinalize(() => {
+    'worklet';
+    scale.set(reducedMotion ? 1 : active.value ? withTiming(1, { duration: 80 }) : withSpring(1, { duration: 200, dampingRatio: 0.7 }));
+  }), [vertical, onEnlarge, mix.epoch, reducedMotion, scale, active]);
   const gesture = useMemo(() => {
     const pan = Gesture.Pan().enabled(ready && travel > 0).minDistance(3).simultaneousWithExternalGesture(enlarge);
     if (vertical) pan.activeOffsetY([-3, 3]).failOffsetX([-8, 8]);
@@ -101,6 +115,7 @@ export default memo(function Fader({ channel, label, vertical = false, length = 
     return pan.onStart(event => {
       'worklet';
       cancelAnimation(thumb);
+      scale.set(reducedMotion ? 1 : withTiming(1, { duration: 80 }));
       active.value = true; start.value = thumb.value; lastDispatch.value = 0;
       sampled.value = thumb.value;
       origin.value = vertical ? -event.translationY : event.translationX;
@@ -120,7 +135,7 @@ export default memo(function Fader({ channel, label, vertical = false, length = 
       thumb.value = final;
       scheduleOnRN(finish, final, success);
     });
-  }, [ready, travel, vertical, mix.epoch, thumb, start, active, lastDispatch, sampled, origin, begin, update, finish, enlarge]);
+  }, [ready, travel, vertical, mix.epoch, thumb, start, active, lastDispatch, sampled, origin, begin, update, finish, enlarge, scale, reducedMotion]);
   const thumbStyle = useAnimatedStyle(() => ({ transform: vertical ? [{ translateY: travel * (1 - thumb.value) }] : [{ translateX: travel * thumb.value }] }));
   const fillStyle = useAnimatedStyle(() => vertical ? { height: travel * thumb.value } : { width: travel * thumb.value });
   return <GestureDetector gesture={enlarge}><View onLayout={event => setWidth(vertical ? event.nativeEvent.layout.height : event.nativeEvent.layout.width)} style={{ height: vertical ? length : 56, width: vertical ? 80 * size : undefined, alignSelf: vertical ? 'center' : undefined }}>
