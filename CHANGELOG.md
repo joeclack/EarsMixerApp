@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.11.0 — Interaction feedback
+
+- Briefly confirm successful template application, saved-level restoration and setting all sends to off, with a gentle entrance/exit and optional success haptic.
+- Fade custom segmented selections and setup step content; keep native controls and fader touch response unchanged. Respect reduced motion and the haptic preference.
+- Announce confirmations to screen readers, allow longer reading time, and clear notices on background/disconnect. Keep success notices separate from live channel subscriptions.
+
 ## 0.10.0 — Console details
 
 - Carry graphite/silver console finishes into settings groups, with restrained teal section symbols and single inset surfaces. Keep native iOS forms and controls.

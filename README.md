@@ -95,3 +95,5 @@ Other connected users on the selected AUX appear as profile circles above the fa
 The launcher icon and native splash screen use the generated teal-fader artwork. The same icon appears during startup and when waiting for uncached channel values; cached faders remain visible during live refreshes. Icon changes require a new standalone native build; Expo Go retains its own launcher icon.
 
 Settings and setup share the console finish: matte graphite or silver groups, restrained teal symbols and inset decorative surfaces. Native controls retain their own system styling.
+
+Successful template and saved-level actions show a brief confirmation. Selection and setup transitions respect reduced motion; success haptics follow Settings → Haptic feedback.

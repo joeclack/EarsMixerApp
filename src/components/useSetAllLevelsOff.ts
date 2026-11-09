@@ -6,7 +6,7 @@ export function useSetAllLevelsOff() {
     const server = state.server, aux = mix.aux;
     const name = mix.config?.aux.find(item => item.channel === aux)?.label || 'this AUX';
     const apply = () => {
-      if (session.state.server === server && session.mixer.setAllLevelsOff(aux)) return;
+      if (session.state.server === server && session.mixer.setAllLevelsOff(aux)) { session.notifySuccess('All levels set to off'); return; }
       if (Platform.OS === 'web') window.alert('The mixer connection changed. Try again.');
       else Alert.alert('Could not set levels to off', 'The mixer connection changed. Try again.');
     };

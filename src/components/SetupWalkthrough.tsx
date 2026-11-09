@@ -1,4 +1,5 @@
 import ScreenSurface from './ScreenSurface';
+import Animated, { FadeIn, ReduceMotion } from 'react-native-reanimated';
 import { useEffect, useState } from 'react';
 import { Keyboard, KeyboardAvoidingView, Platform, ScrollView, Text, TextInput, View } from 'react-native';
 import { router } from 'expo-router';
@@ -49,6 +50,7 @@ export default function SetupWalkthrough() {
     </View>
     <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
     <ScrollView contentInsetAdjustmentBehavior="never" automaticallyAdjustContentInsets={false} style={{ flex: 1 }} keyboardShouldPersistTaps="handled" automaticallyAdjustKeyboardInsets contentContainerStyle={{ flexGrow: 1, padding: 28, gap: 24, justifyContent: 'flex-start', maxWidth: 600, width: '100%', alignSelf: 'center' }}>
+      <Animated.View key={step} entering={FadeIn.duration(160).reduceMotion(ReduceMotion.System)} style={{ gap: 24 }}>
       <HardwareEmblem name={{ ios: current.symbol, android: step === 0 ? 'account_circle' : step === 1 ? 'wifi' : step === 2 ? 'layers' : step === 3 ? 'tune' : 'visibility_off', web: step === 0 ? 'account_circle' : step === 1 ? 'wifi' : step === 2 ? 'layers' : step === 3 ? 'tune' : 'visibility_off' }} />
       <Text accessibilityRole="header" style={{ color: theme.text, fontSize: 30, fontWeight: '700' }}>{current.title}</Text>
       {!!current.body && <Text style={{ color: theme.muted, fontSize: 17, lineHeight: 26 }}>{current.body}</Text>}
@@ -69,6 +71,7 @@ export default function SetupWalkthrough() {
         <NativeButton title={state.server ? 'Change mixer' : 'Connect'} bordered onPress={() => router.push('/connect')} />
       </View>}
       <Message error>{state.message}</Message>
+      </Animated.View>
     </ScrollView>
       <View style={{ minHeight: 100, paddingHorizontal: 28, paddingVertical: 20, maxWidth: 600, width: '100%', alignSelf: 'center', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 16 }}>
         {step > 0 ? <NativeButton title="Back" disabled={finishing} onPress={() => setStep(value => value - 1)} /> : <View />}

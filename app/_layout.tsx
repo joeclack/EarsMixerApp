@@ -1,4 +1,5 @@
 import ScreenSurface from '../src/components/ScreenSurface';
+import ConfirmationToast from '../src/components/ConfirmationToast';
 import IconLoading from '../src/components/IconLoading';
 import React, { useEffect, useRef } from 'react';
 import { Appearance, Platform } from 'react-native';
@@ -72,4 +73,4 @@ function Navigation() {
     </Stack>
   </ThemeProvider>;
 }
-export default function RootLayout() { return <GestureHandlerRootView style={{ flex: 1 }}><MixerProvider><Navigation /></MixerProvider></GestureHandlerRootView>; }
+export default function RootLayout() { return <GestureHandlerRootView style={{ flex: 1 }}><MixerProvider><Navigation /><ConfirmationToast /></MixerProvider></GestureHandlerRootView>; }

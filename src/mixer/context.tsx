@@ -56,3 +56,11 @@ export function useFaderSession(channel: number) {
   useSyncExternalStore(subscribe, snapshot, snapshot);
   return { session, mix: session.mixer.state };
 }
+
+// Success notices are occasional UI events, independent of live channel values.
+export function useConfirmationState() {
+  const session = useContext(Context);
+  if (!session) throw new Error('Missing mixer provider');
+  const confirmation = useSyncExternalStore(session.subscribe, () => session.state.confirmation, () => session.state.confirmation);
+  return { session, confirmation };
+}

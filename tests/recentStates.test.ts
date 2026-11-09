@@ -30,6 +30,7 @@ test('AUX states survive relaunch, compare fresh levels, restore all saved chann
     assert.deepEqual(prompt.saved.levels, { 1: -10, 2: -20 });
     f.session.setChannelHidden(2, true);
     f.session.resolveLevelRestore(prompt, true);
+    assert.equal(f.session.state.confirmation?.message, 'Saved levels loaded');
     const writes = f.sent.filter(m => m.address && !m.address.endsWith('/?'));
     assert.deepEqual(writes.map(m => m.args[0]), [-10, -20]);
     assert(writes.every(m => m.address.includes('/Aux_Send/1/send_level')));
@@ -41,6 +42,7 @@ test('AUX states survive relaunch, compare fresh levels, restore all saved chann
     f.session.preferences({ selectedAux: 2 }); f.levels(2, -30, -40);
     const before = f.sent.length;
     f.session.resolveLevelRestore(oldPrompt, true);
+    assert.equal(f.session.state.confirmation, null);
     assert.equal(f.sent.length, before); // Old confirmation cannot write to a different AUX.
     assert.equal(f.session.state.restorePrompt, null);
     await f.session.connect('other.local'); f.open(); f.levels(1, -7, -8);
@@ -55,6 +57,7 @@ test('AUX states survive relaunch, compare fresh levels, restore all saved chann
       assert(next.session.state.restorePrompt!.saved.editedAt > 0);
       const before = next.sent.length;
       next.session.resolveLevelRestore(next.session.state.restorePrompt!, false);
+      assert.equal(next.session.state.confirmation, null);
       assert.equal(next.sent.length, before);
       assert.deepEqual(next.session.state.recentStates[key].levels, { 1: -10, 2: -20 });
       const token = next.session.mixer.beginDrag(1)!;
@@ -88,4 +91,23 @@ test('comparison works in pan mode without changing pan, and stale confirmations
 test('invalid stored levels are rejected', () => {
   const raw = JSON.stringify({ x: { server: 'http://desk.local/', aux: 1, name: 'Drums', editedAt: 123, levels: { 1: -20, 2: 99, 3: 'bad' } } });
   assert.deepEqual(readLevelStates(raw)['http://desk.local/#1'].levels, { 1: -20 });
+});
+
+test('failed restore never reports success and stale dismissal preserves a newer notice', async () => {
+  const f = fixture();
+  try {
+    await f.session.connect('desk.local'); f.open(); f.levels(1, -10, -20);
+    f.session.preferences({ selectedAux: 2 }); f.levels(2, -30, -40);
+    f.session.preferences({ selectedAux: 1 }); f.levels(1, -5, -6);
+    const prompt = f.session.state.restorePrompt!; assert(prompt);
+    f.socket.readyState = 0;
+    f.session.resolveLevelRestore(prompt, true);
+    assert.equal(f.session.state.confirmation, null);
+    assert.match(f.session.state.message, /Could not restore/);
+    f.session.notifySuccess('First'); const id = f.session.state.confirmation!.id;
+    f.session.notifySuccess('Second'); f.session.dismissConfirmation(id);
+    assert.equal(f.session.state.confirmation!.message, 'Second');
+    f.session.setLifecycle('background');
+    assert.equal(f.session.state.confirmation, null);
+  } finally { f.session.disconnect(); }
 });

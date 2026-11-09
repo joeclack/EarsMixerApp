@@ -7,16 +7,22 @@ import { emptyPreferences, readPreferences, type Preferences, parseConfig, hidde
 type Storage = { getItem(key: string): Promise<string | null>; setItem(key: string, value: string): Promise<void>; getAllKeys?(): Promise<readonly string[]>; multiRemove?(keys: string[]): Promise<void> };
 export type Settings = { appearance: 'system' | 'light' | 'dark'; nickname: string; haptics: boolean };
 export type SessionState = {
+  confirmation: { id: number; message: string } | null;
   recentStates: Record<string, SavedLevelState>; restorePrompt: { key: string; generation: number; saved: SavedLevelState } | null;
   selectedTemplate: MixerTemplate | null; hydrated: boolean; demo: boolean; setupComplete: boolean; lastServer: string | null; server: string | null; recent: SavedMixer[]; settings: Settings;
   preferences: Preferences; connecting: boolean; message: string;
 };
 export class MixerSession {
   readonly mixer: MixerClient;
-  state: SessionState = { recentStates: {}, restorePrompt: null, selectedTemplate: null, hydrated: false, demo: false, setupComplete: false, lastServer: null, server: null, recent: [], settings: { appearance: 'system', nickname: '', haptics: true },
+  state: SessionState = { confirmation: null, recentStates: {}, restorePrompt: null, selectedTemplate: null, hydrated: false, demo: false, setupComplete: false, lastServer: null, server: null, recent: [], settings: { appearance: 'system', nickname: '', haptics: true },
     preferences: emptyPreferences(), connecting: false, message: '' };
   private listeners = new Set<() => void>();
   private attempt = 0;
+  private confirmationSequence = 0;
+  notifySuccess(message: string) { this.patch({ confirmation: { id: ++this.confirmationSequence, message } }); }
+  dismissConfirmation(id: number) {
+    if (this.state.confirmation?.id === id) this.patch({ confirmation: null });
+  }
   private suspended = false;
   private statesLoaded: Promise<void> | null = null;
   private compared = '';
@@ -65,7 +71,8 @@ export class MixerSession {
     if (this.state.restorePrompt !== prompt) return;
     this.patch({ restorePrompt: null });
     if (restore && this.state.server === prompt.saved.server && this.mixer.state.aux === prompt.saved.aux && this.mixer.levelGeneration === prompt.generation) {
-      if (!this.mixer.restoreLevels(prompt.saved.aux, prompt.saved.levels)) this.patch({ message: 'Could not restore all levels. Check the mixer connection.' });
+      if (this.mixer.restoreLevels(prompt.saved.aux, prompt.saved.levels)) this.notifySuccess('Saved levels loaded');
+      else this.patch({ message: 'Could not restore all levels. Check the mixer connection.' });
     }
   }
   private queue = Promise.resolve();
@@ -133,6 +140,7 @@ export class MixerSession {
     this.patch({ selectedTemplate: typeof data.name === 'string' && data.name.trim() && data.name.length <= 80 ? { id, name: data.name.trim() } : null });
     this.preferences(preferences);
     await this.queue;
+    if (server === this.state.server && attempt === this.attempt) this.notifySuccess('Layout applied: ' + (this.state.selectedTemplate?.name || 'Template'));
   }
   async restartSetup() {
     this.mixer.cancelWrites();
@@ -192,7 +200,7 @@ export class MixerSession {
     this.persistValues();
     if (forgetConnection && !this.state.demo) { this.patch({ lastServer: null }); void this.persist('earsmixer.native.last-server.v1', null); }
     ++this.attempt; this.mixer.disconnect();
-    this.patch({ restorePrompt: null, selectedTemplate: null, server: null, demo: false, connecting: false, preferences: emptyPreferences(), message: '' });
+    this.patch({ confirmation: null, restorePrompt: null, selectedTemplate: null, server: null, demo: false, connecting: false, preferences: emptyPreferences(), message: '' });
   }
   setChannelHidden(channel: number, hidden: boolean) {
     const aux = this.mixer.state.aux;
@@ -222,6 +230,7 @@ export class MixerSession {
       preferences: emptyPreferences(), connecting: false, message: '' });
   }
   setLifecycle(state: string) {
+    if ((state === 'inactive' || state === 'background') && this.state.confirmation) this.dismissConfirmation(this.state.confirmation.id);
     if (state === 'inactive') { this.persistValues(); this.mixer.cancelWrites(); return; }
     if (state === 'background') {
       this.persistValues();
