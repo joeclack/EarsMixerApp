@@ -1,4 +1,5 @@
-import { clamp, dbToPosition, parseConfig, positionToDb, type MixerConfig, type Parameter } from './model';
+import { clamp, dbToPosition, parseConfig, type MixerConfig, type Parameter } from './model';
+import { dragLevel } from './faderPrecision';
 import { captureBalance, groupKey, groupLevels, type GroupBalance } from './groups';
 
 export interface Socket {
@@ -272,7 +273,7 @@ export class MixerClient {
   }
   drag(token: DragToken, position: number) {
     if (!this.valid(token) || !Number.isFinite(position)) return;
-    const value = token.parameter === 'level' ? positionToDb(clamp(position)) : clamp(position);
+    const value = token.parameter === 'level' ? dragLevel(clamp(position)) : clamp(position);
     // Update the model immediately, but publish at the network cadence so
     // every pointer event does not re-render the entire channel bank.
     const levels = token.balance ? groupLevels(token.balance, value) : { [token.channel]: value };

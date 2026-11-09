@@ -1,7 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { MixerSession } from '../src/mixer/session';
-import { positionToDb } from '../src/mixer/model';
 
 test('demo provides 20 channels, local faders, AUXes and templates without network access', async () => {
   const storage = new Map<string, string>();
@@ -19,7 +18,7 @@ test('demo provides 20 channels, local faders, AUXes and templates without netwo
     const token = session.mixer.beginDrag(1)!;
     session.mixer.drag(token, 0.8); session.mixer.flush(token);
     await new Promise(resolve => setTimeout(resolve, 0));
-    assert.equal(session.mixer.state.values[1], positionToDb(0.8));
+    assert.equal(session.mixer.state.values[1], 5.2);
     session.setChannelHidden(1, true);
     assert.deepEqual(session.state.preferences.hiddenByAux['1'], [1]);
     const templates = await session.templates();

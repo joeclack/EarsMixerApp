@@ -12,6 +12,7 @@ import { useFaderSession } from '../mixer/context';
 import { useTheme } from '../theme';
 import { clamp, levelText, dbToPosition } from '../mixer/model';
 import type { DragToken } from '../mixer/client';
+import { releasePosition } from '../mixer/faderPrecision';
 
 export default memo(function Fader({ channel, label, vertical = false, length = 200 }: { channel: number; label: string; vertical?: boolean; length?: number }) {
   const { session, mix } = useFaderSession(channel);
@@ -22,6 +23,8 @@ export default memo(function Fader({ channel, label, vertical = false, length = 
   const start = useSharedValue(position);
   const active = useSharedValue(false);
   const lastDispatch = useSharedValue(0);
+  const sampled = useSharedValue(position);
+  const origin = useSharedValue(0);
   const drag = useRef<DragToken | null>(null);
   const haptics = useRef(new DragHaptics(() => { if (session.state.settings.haptics) void Haptics.selectionAsync().catch(() => {}); })).current;
   const inset = FADER_INSET;
@@ -90,25 +93,29 @@ export default memo(function Fader({ channel, label, vertical = false, length = 
     const pan = Gesture.Pan().enabled(ready && travel > 0).minDistance(3);
     if (vertical) pan.activeOffsetY([-3, 3]).failOffsetX([-8, 8]);
     else pan.activeOffsetX([-3, 3]).failOffsetY([-8, 8]);
-    return pan.onStart(() => {
+    return pan.onStart(event => {
       'worklet';
       cancelAnimation(thumb);
       active.value = true; start.value = thumb.value; lastDispatch.value = 0;
+      sampled.value = thumb.value;
+      origin.value = vertical ? -event.translationY : event.translationX;
       scheduleOnRN(begin, start.value, epoch);
     }).onUpdate(event => {
       'worklet';
-      const movement = vertical ? -event.translationY : event.translationX;
+      const movement = (vertical ? -event.translationY : event.translationX) - origin.value;
       const next = Math.max(0, Math.min(1, start.value + movement / travel));
       thumb.value = next;
       const now = Date.now();
       if (now - lastDispatch.value >= 30) {
-        lastDispatch.value = now; scheduleOnRN(update, next);
+        lastDispatch.value = now; sampled.value = next; scheduleOnRN(update, next);
       }
     }).onFinalize((_event, success) => {
       'worklet';
-      scheduleOnRN(finish, thumb.value, success);
+      const final = success ? releasePosition(thumb.value, sampled.value, travel) : thumb.value;
+      thumb.value = final;
+      scheduleOnRN(finish, final, success);
     });
-  }, [ready, travel, vertical, mix.epoch, thumb, start, active, lastDispatch, begin, update, finish]);
+  }, [ready, travel, vertical, mix.epoch, thumb, start, active, lastDispatch, sampled, origin, begin, update, finish]);
   const thumbStyle = useAnimatedStyle(() => ({ transform: vertical ? [{ translateY: travel * (1 - thumb.value) }] : [{ translateX: travel * thumb.value }] }));
   const fillStyle = useAnimatedStyle(() => vertical ? { height: travel * thumb.value } : { width: travel * thumb.value });
   return <View onLayout={event => setWidth(vertical ? event.nativeEvent.layout.height : event.nativeEvent.layout.width)} style={{ height: vertical ? length : 56, width: vertical ? 80 : undefined, alignSelf: vertical ? 'center' : undefined }}>

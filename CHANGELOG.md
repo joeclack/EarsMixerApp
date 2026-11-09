@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.14.1 — Stable fader release
+
+- Send drag levels in the same 0.1 dB steps shown on screen to avoid rounding changes when OSC floats return from the desk. Preserve group offsets and continuous pan values.
+- Ignore up to two points of unsampled lift movement on release, while retaining larger final moves and explicit off/top endpoints. Subtract the gesture activation distance to avoid an initial handle jump.
+
 ## 0.14.0 — Animated fader loading
 
 - Replace the icon and spinner on startup and mixer loading screens with three abstract faders moving independently. Use transform-only animations, pause in the background, and show static faders with Reduce Motion enabled.
