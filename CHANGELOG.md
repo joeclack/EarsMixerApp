@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.17.8 — Extra corner clearance
+
+- Increase landscape corner padding from 12 to 16 points.
+
 ## 0.17.7 — Landscape corner clearance
 
 - Add 12 points of spacing on the landscape edge without a notch so rounded phone corners do not clip the channel displays. Retain the larger inset on the notch side.
