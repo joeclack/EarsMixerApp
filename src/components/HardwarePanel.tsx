@@ -13,7 +13,7 @@ export default memo(function HardwarePanel({ children, style, radius = 20, unifo
     <LinearGradient pointerEvents="none" colors={palette.gradient} start={{ x: 0, y: 0 }} end={{ x: 0.7, y: 1 }} style={StyleSheet.absoluteFill} />
     {children}
     <View pointerEvents="none" accessible={false} style={[StyleSheet.absoluteFill, {
-      borderRadius: radius, borderWidth: 1, borderColor: palette.edge, borderBottomColor: uniformBorder ? palette.edge : palette.rim,
+      borderRadius: radius, borderWidth: 1, borderColor: palette.edge, borderBottomColor: !dark || uniformBorder ? palette.edge : palette.rim,
       boxShadow: [{ inset: true, offsetX: 0, offsetY: 2, blurRadius: 6, spreadDistance: 1, color: palette.shadow }],
     }]} />
   </View>;

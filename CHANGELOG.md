@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.17.11 — Consistent light-mode panel borders
+
+- Apply a single border colour to all light-mode hardware panels, including input housings and cards, removing the contrasting bottom rim.
+
 ## 0.17.10 — Light-mode connection sheet
 
 - Retain a native background layer in light mode so iOS form sheets do not reposition the content ScrollView differently from dark mode. Give the connection ScrollView an explicit flexible viewport.
