@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.17.10 — Light-mode connection sheet
+
+- Retain a native background layer in light mode so iOS form sheets do not reposition the content ScrollView differently from dark mode. Give the connection ScrollView an explicit flexible viewport.
+
 ## 0.17.9 — Consistent toast border
 
 - Use one border colour around confirmation toasts, removing the contrasting bottom rim and its visible colour split at the corners.
