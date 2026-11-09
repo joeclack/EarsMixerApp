@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.12.1 — Development refresh recovery
+
+- Remount the mixer provider during Fast Refresh so new UI code cannot reuse an older session/client instance missing methods such as canDrag. Close the previous connection and cancel pending writes before restoring device settings.
+
 ## 0.12.0 — Channel groups
 
 - Create and remove device-local channel groups per server/AUX in Edit channels → Manage channel groups, or the mixer options menu.

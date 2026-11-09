@@ -2,7 +2,7 @@
 
 Native iOS and Android companion for [EarsMixer](https://github.com/joeclack/EarsMixer). Control your own DiGiCo monitor mix over the local network, with layouts and preferences saved on your phone.
 
-Current app version: **0.12.0**. Use the latest [EarsMixer server](https://github.com/joeclack/EarsMixer/releases/latest), currently **1.7.0**, for discovery, shared templates and connected-user presence. This repository contains the mobile client; the server repository contains the console connection, browser mixer, admin dashboard and Windows service. Musicians use optional device-local nicknames, without accounts or passwords. The server's admin password is separate.
+Current app version: **0.12.1**. Use the latest [EarsMixer server](https://github.com/joeclack/EarsMixer/releases/latest), currently **1.7.0**, for discovery, shared templates and connected-user presence. This repository contains the mobile client; the server repository contains the console connection, browser mixer, admin dashboard and Windows service. Musicians use optional device-local nicknames, without accounts or passwords. The server's admin password is separate.
 
 ## Using the app
 
