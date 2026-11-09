@@ -1,30 +1,38 @@
-import React from 'react';
-import { ScrollView, Text, View, Pressable, Switch } from 'react-native';
-import { useSession } from '../mixer/context';
-import { orderedChannels, hiddenChannels } from '../mixer/model';
+import { ScrollView, Text, View, Pressable } from 'react-native';
+import { Host, Switch } from '@expo/ui';
 import { useTheme } from '../theme';
-import { Icon, Section, Row } from './ui';
+import { Icon, Section, Message } from './ui';
+import NativeButton from './NativeButton';
+import { useChannelOrder } from './useChannelOrder';
+
 export default function ChannelOrder() {
-  const { session, state, mix } = useSession(), theme = useTheme();
-  const hidden = hiddenChannels(mix.config, state.preferences, mix.aux);
-  const channels = orderedChannels(mix.config, state.preferences);
-  function move(from: number, to: number) {
-    if (to < 0 || to >= channels.length) return;
-    const ids = channels.map(c => c.channel); const [id] = ids.splice(from, 1); ids.splice(to, 0, id);
-    session.preferences({ channelOrder: ids });
-  }
+  const order = useChannelOrder(), theme = useTheme();
   return <ScrollView contentInsetAdjustmentBehavior="automatic" contentContainerStyle={{ padding: 20 }}>
-    <Section>
-      {channels.map((channel, index) => <Row key={channel.channel} title={channel.label}>
-        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-          <Switch accessibilityLabel={'Show ' + channel.label} value={!hidden.includes(channel.channel)} onValueChange={visible => session.setChannelHidden(channel.channel, !visible)} />
-          {[-1, 1].map(direction => <Pressable key={direction} accessibilityRole="button" accessibilityLabel={'Move ' + channel.label + (direction < 0 ? ' up' : ' down')}
-            disabled={index + direction < 0 || index + direction >= channels.length} onPress={() => move(index, index + direction)} style={{ minHeight: 44, minWidth: 44, justifyContent: 'center', alignItems: 'center' }}>
-            <Icon name={{ android: direction < 0 ? 'arrow_upward' : 'arrow_downward', web: direction < 0 ? 'arrow_upward' : 'arrow_downward' }} />
-          </Pressable>)}
+    <Message error>{order.error}</Message>
+    <Section footer="Move channels or whole groups. Show/hide applies to the entire group. Edit a group to change its members and their order. Layout order is shared across monitor mixes.">
+      {order.items.map((item, index) => <View key={item.key} style={{ padding: 16, gap: 8, borderBottomWidth: index < order.items.length - 1 ? 1 : 0, borderBottomColor: theme.line }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+          {item.group && <Icon name={{ ios: 'link', android: 'link', web: 'link' }} size={16} />}
+          <Text numberOfLines={2} style={{ flex: 1, color: theme.text, fontSize: 17 }}>{item.label}</Text>
         </View>
-      </Row>)}
-      {!channels.length && <Text style={{ padding: 20, color: theme.muted }}>Connect to a mixer to reorder channels.</Text>}
+        {!!item.detail && <Text style={{ color: theme.muted, fontSize: 13 }}>{item.detail}</Text>}
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+          <Host matchContents colorScheme={theme.scheme} seedColor={theme.tint}>
+            <Switch accessibilityLabel={'Show ' + item.label} value={item.visible} onValueChange={visible => order.show(item.key, visible)} />
+          </Host>
+          {item.group && <NativeButton compact title="Edit" accessibilityLabel={'Edit ' + item.label + ' group'} onPress={() => order.edit(item.group!.id)} />}
+          <View style={{ flex: 1 }} />
+          {[-1, 1].map(direction => {
+            const disabled = index + direction < 0 || index + direction >= order.items.length;
+            return <Pressable key={direction} accessibilityRole="button" accessibilityLabel={'Move ' + item.label + (direction < 0 ? ' up' : ' down')}
+              accessibilityState={{ disabled }} disabled={disabled} onPress={() => order.move([index], direction < 0 ? index - 1 : index + 2)}
+              style={({ pressed }) => ({ minHeight: 44, minWidth: 44, opacity: disabled ? 0.3 : pressed ? 0.6 : 1, justifyContent: 'center', alignItems: 'center' })}>
+              <Icon name={{ ios: direction < 0 ? 'arrow.up' : 'arrow.down', android: direction < 0 ? 'arrow_upward' : 'arrow_downward', web: direction < 0 ? 'arrow_upward' : 'arrow_downward' }} />
+            </Pressable>;
+          })}
+        </View>
+      </View>)}
+      {!order.items.length && <Text style={{ padding: 20, color: theme.muted }}>Connect to a mixer and choose a monitor mix to reorder channels.</Text>}
     </Section>
   </ScrollView>;
 }

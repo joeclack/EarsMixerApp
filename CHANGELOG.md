@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.17.0 — Reorder groups as units
+
+- Show each group as one linked row with its name and channel count in Edit channels. Move the whole group with native iOS drag handles or Up/Down controls on Android/web, and open its editor to change membership or internal order.
+- Place new groups at their earliest selected channel, append added members inside the group, and preserve the group's position when editing its member order. Removed members follow the group; deleted groups leave their channels together in member order.
+- Show/hide entire groups from their layout row, retain unavailable saved channel IDs, and reject stale reorder actions after a mixer, AUX or layout change. Keep the existing shared layout order across monitor mixes and independent AUX levels/balances.
+
 ## 0.16.2 — Group spacing and close icon
 
 - Rotate the landscape group name to −90 degrees and add a consistent six-point gap between expanded channels and the name rail.

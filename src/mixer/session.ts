@@ -4,6 +4,8 @@ import { requestTemplates, templatePreferences, type MixerTemplate } from './tem
 import { DEMO_URL, createDemoSocket, demoTemplates, demoTemplate } from './demo';
 import { MixerClient, type Socket } from './client';
 import { emptyPreferences, readPreferences, type GroupScope, type Preferences, parseConfig, hiddenChannels, groupsForAux } from './model';
+import { contiguousGroupOrder, layoutChannelOrder, layoutItems, replaceLayoutGroup } from './layout';
+import { moveGroupMembers } from './groups';
 type Storage = { getItem(key: string): Promise<string | null>; setItem(key: string, value: string): Promise<void>; getAllKeys?(): Promise<readonly string[]>; multiRemove?(keys: string[]): Promise<void> };
 export type Settings = { appearance: 'system' | 'light' | 'dark'; nickname: string; haptics: boolean };
 export type SessionState = {
@@ -214,12 +216,31 @@ export class MixerSession {
     this.patch({ confirmation: null, restorePrompt: null, selectedTemplate: null, server: null, demo: false, connecting: false, preferences: emptyPreferences(), message: '' });
   }
   setChannelHidden(channel: number, hidden: boolean) {
+    this.setChannelsHidden([channel], hidden);
+  }
+  private setChannelsHidden(members: number[], hidden: boolean) {
     const aux = this.mixer.state.aux;
     if (aux === null) return;
     const previous = hiddenChannels(this.mixer.state.config, this.state.preferences, aux);
-    const channels = hidden ? [...new Set([...previous, channel])] : previous.filter(id => id !== channel);
+    const channels = hidden ? [...new Set([...previous, ...members])] : previous.filter(id => !members.includes(id));
     this.mixer.cancelWrites();
     this.preferences({ hiddenByAux: { ...this.state.preferences.hiddenByAux, [aux]: channels } });
+  }
+  setLayoutItemHidden(key: number, hidden: boolean, scope: GroupScope) {
+    if (this.state.server !== scope.server || this.mixer.state.aux !== scope.aux) return;
+    const item = layoutItems(this.mixer.state.config, this.state.preferences, scope.aux).find(item => item.key === key);
+    if (item) this.setChannelsHidden(item.members, hidden);
+  }
+  moveLayoutItems(keys: number[], indices: number[], destination: number, scope: GroupScope) {
+    if (this.state.server !== scope.server || this.mixer.state.aux !== scope.aux) return;
+    const items = layoutItems(this.mixer.state.config, this.state.preferences, scope.aux);
+    if (keys.length !== items.length || !items.every((item, index) => item.key === keys[index])) return;
+    const moved = moveGroupMembers(items.map((_item, index) => index), indices, destination);
+    if (moved.every((index, position) => index === position)) return;
+    const ids = moved.flatMap(index => items[index].members);
+    const retained = layoutChannelOrder(this.mixer.state.config, this.state.preferences, scope.aux).filter(id => !ids.includes(id));
+    this.mixer.cancelWrites();
+    this.preferences({ channelOrder: [...ids, ...retained] });
   }
   preferences(update: Partial<Preferences>) {
     const preferences = readPreferences({ ...this.state.preferences, ...update });
@@ -259,7 +280,9 @@ export class MixerSession {
     const hiddenByAux = { ...preferences.hiddenByAux };
     const affected = applyAll ? new Set([aux, ...(config?.aux.map(entry => entry.channel) || []), ...Object.keys(preferences.hiddenByAux).map(Number), ...Object.keys(preferences.favouritesByAux).map(Number)]) : new Set([aux]);
     for (const affectedAux of affected) hiddenByAux[affectedAux] = hiddenChannels(config, preferences, affectedAux).filter(member => !added.includes(member));
-    const update = { globalGroups: applyAll ? wasGlobal ? global.map(group => group.id === id ? next : group) : [...global, next] : global.filter(group => group.id !== id),
+    const membershipChanged = !previous || previous.members.length !== members.length || previous.members.some((member, index) => member !== members[index]);
+    const update = { ...(membershipChanged ? { channelOrder: replaceLayoutGroup(contiguousGroupOrder(config, preferences, aux), previous?.members || [], members) } : {}),
+      globalGroups: applyAll ? wasGlobal ? global.map(group => group.id === id ? next : group) : [...global, next] : global.filter(group => group.id !== id),
       groupsByAux: { ...preferences.groupsByAux, [aux]: applyAll ? local.filter(group => group.id !== id) : previous && !wasGlobal ? local.map(group => group.id === id ? next : group) : [...local, next] }, hiddenByAux };
     if (!readPreferences({ ...this.state.preferences, ...update })) return null;
     this.preferences(update);
@@ -271,7 +294,8 @@ export class MixerSession {
     if (!this.state.server || !aux || !ids.length || (scope && (scope.server !== this.state.server || scope.aux !== aux))) return false;
     const groups = groupsForAux(this.state.preferences, aux);
     if (!ids.every(id => groups.some(group => group.id === id))) return false;
-    this.preferences({ globalGroups: this.state.preferences.globalGroups.filter(group => !ids.includes(group.id)),
+    this.preferences({ channelOrder: contiguousGroupOrder(this.mixer.state.config, this.state.preferences, aux),
+      globalGroups: this.state.preferences.globalGroups.filter(group => !ids.includes(group.id)),
       groupsByAux: { ...this.state.preferences.groupsByAux,
       [aux]: (this.state.preferences.groupsByAux[String(aux)] || []).filter(group => !ids.includes(group.id)) } });
     return true;
