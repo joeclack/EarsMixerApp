@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.16.2 — Group spacing and close icon
+
+- Rotate the landscape group name to −90 degrees and add a consistent six-point gap between expanded channels and the name rail.
+- Use an explicit icon-only X button on iOS, retaining the spoken Close label and a 44-point touch target.
+
 ## 0.16.1 — Connected group controls
 
 - Give every expanded landscape member the same width with no gaps between channels. Place the rotated group name in a side rail at the start of the group, with a close icon above it.

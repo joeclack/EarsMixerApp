@@ -71,7 +71,7 @@ export default function Mixer() {
       </View>
     </View>;
     return <View testID={grouped ? 'group-' + group.channel : undefined} style={{
-      height: landscape ? cardHeight : undefined, width: landscape ? (grouped ? (open ? item.channels.length * 88 + 44 : 136) + 12 : 96) : undefined,
+      height: landscape ? cardHeight : undefined, width: landscape ? (grouped ? (open ? item.channels.length * (88 + 6) + 44 : 136) + 12 : 96) : undefined,
       marginRight: landscape ? 8 : 0, marginBottom: landscape ? 0 : 16,
       ...(grouped ? { borderWidth: 2, borderColor: theme.groupEdge, borderRadius: 16, backgroundColor: theme.groupSurface,
         paddingHorizontal: landscape ? 4 : 10, paddingTop: landscape ? 4 : 0, paddingBottom: landscape ? 4 : 12 }
@@ -91,7 +91,7 @@ export default function Mixer() {
           <Icon name={{ ios: 'chevron.down', android: 'expand_more', web: 'expand_more' }} size={16} />
         </View>
       </GroupExpandTarget>)}
-      <View style={{ flexDirection: landscape ? 'row' : 'column', gap: landscape ? 0 : 16 }}>
+      <View style={{ flexDirection: landscape ? 'row' : 'column', gap: landscape ? 6 : 16 }}>
         {landscape && open && <View style={{ width: 44, height: cardHeight - 12, alignItems: 'center' }}>
           <View style={{ width: 44, height: 44, alignItems: 'center', justifyContent: 'center' }}>
             {canClose && <CloseButton label={'Close ' + group.label + ' group'} onPress={close} />}
@@ -99,7 +99,7 @@ export default function Mixer() {
           <View style={{ width: 44, flex: 1, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
             <Text numberOfLines={1} accessibilityRole="header" accessibilityLabel={group.label} style={{
               width: Math.max(0, cardHeight - 64), height: 32, flexShrink: 0, textAlign: 'center', lineHeight: 32,
-              color: theme.text, fontSize: 15, fontWeight: '700', transform: [{ rotate: '90deg' }],
+              color: theme.text, fontSize: 15, fontWeight: '700', transform: [{ rotate: '-90deg' }],
             }}>{group.label}</Text>
           </View>
         </View>}
