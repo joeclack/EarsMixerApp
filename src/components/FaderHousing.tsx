@@ -7,17 +7,18 @@ import { useTheme } from '../theme';
 // These static surfaces are separate from the animated track and grip.
 export default memo(function FaderHousing({ vertical, children, size = 1 }: PropsWithChildren<{ vertical: boolean; size?: number }>) {
   const theme = useTheme();
+  const radius = vertical ? 44 * size : 999;
   if (!theme.dark) return <View style={{ alignSelf: vertical ? 'center' : 'stretch', width: vertical ? 88 * size : undefined,
-    borderRadius: vertical ? 38 : 999, paddingHorizontal: vertical ? 2 : 16, paddingVertical: vertical ? 10 : 4,
+    borderRadius: radius, paddingHorizontal: vertical ? 2 : 16, paddingVertical: vertical ? 10 : 4,
     backgroundColor: theme.consoleFace, borderWidth: 2, borderColor: theme.consoleRed,
     boxShadow: [{ offsetX: 0, offsetY: 2, blurRadius: 3, color: '#5A422D26' }] }}>
     <LinearGradient pointerEvents="none" colors={theme.consoleGradient} locations={[0, 0.3, 1]}
       start={vertical ? { x: 0, y: 0.5 } : { x: 0.5, y: 0 }} end={vertical ? { x: 1, y: 0.5 } : { x: 0.5, y: 1 }}
-      style={[StyleSheet.absoluteFill, { borderRadius: vertical ? 36 : 999 }]} />
-    <View pointerEvents="none" style={[StyleSheet.absoluteFill, { borderRadius: vertical ? 36 : 999,
+      style={[StyleSheet.absoluteFill, { borderRadius: vertical ? radius - 2 : radius }]} />
+    <View pointerEvents="none" style={[StyleSheet.absoluteFill, { borderRadius: vertical ? radius - 2 : radius,
       boxShadow: [{ inset: true, offsetX: 2, offsetY: 3, blurRadius: 8, spreadDistance: 1, color: theme.consoleShadow },
         { inset: true, offsetX: -1, offsetY: -2, blurRadius: 2, color: '#FFFFFFAA' }] }]} />
-    <View pointerEvents="none" style={{ position: 'absolute', inset: 2, borderRadius: vertical ? 34 : 999, borderWidth: 1, borderColor: theme.consoleRim }} />
+    <View pointerEvents="none" style={{ position: 'absolute', inset: 2, borderRadius: vertical ? radius - 4 : radius, borderWidth: 1, borderColor: theme.consoleRim }} />
     {children}
   </View>;
   return <View style={{ alignSelf: vertical ? 'center' : 'stretch', width: vertical ? 88 * size : undefined,

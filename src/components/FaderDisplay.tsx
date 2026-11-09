@@ -6,10 +6,10 @@ import { levelText } from '../mixer/model';
 import { Icon } from './ui';
 
 // Each LCD subscribes only to its own channel, independently of the strip bank.
-export default memo(function FaderDisplay({ channel, label, expandable = false, large = false }: { channel: number; label: string; expandable?: boolean; large?: boolean }) {
+export default memo(function FaderDisplay({ channel, label, expandable = false, large = false, square = false }: { channel: number; label: string; expandable?: boolean; large?: boolean; square?: boolean }) {
   const { session, mix } = useFaderSession(channel);
   const value = levelText(session.mixer.displayValue(channel), mix.parameter);
-  return <View style={{ width: '100%', height: large ? 96 : 64, borderRadius: 8, padding: 4, backgroundColor: '#071921', borderWidth: 1, borderColor: '#497886' }}>
+  return <View style={{ width: '100%', height: square ? undefined : large ? 96 : 64, aspectRatio: square ? 1 : undefined, borderRadius: 8, padding: 4, backgroundColor: '#071921', borderWidth: 1, borderColor: '#497886' }}>
     <LinearGradient pointerEvents="none" colors={['#24566A', '#071B29']} style={{ position: 'absolute', inset: 1, borderRadius: 7 }} />
     <View style={{ flex: 1, borderRadius: 3, paddingHorizontal: 3, paddingVertical: 3, flexDirection: 'row', alignItems: 'center', gap: 3,
       backgroundColor: '#81E9E5', borderWidth: 1, borderColor: '#ADFFEF',
