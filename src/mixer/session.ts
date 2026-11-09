@@ -3,7 +3,9 @@ import { normalizeMixerAddress, probeMixer, readSavedMixers, rememberMixer, type
 import { requestTemplates, templatePreferences, type MixerTemplate } from './templates';
 import { DEMO_URL, createDemoSocket, demoTemplates, demoTemplate } from './demo';
 import { MixerClient, type Socket } from './client';
-import { emptyPreferences, readPreferences, type Preferences, parseConfig, hiddenChannels } from './model';
+import { emptyPreferences, readPreferences, type GroupScope, type Preferences, parseConfig, hiddenChannels, groupsForAux } from './model';
+import { contiguousGroupOrder, layoutChannelOrder, layoutItems, replaceLayoutGroup } from './layout';
+import { moveGroupMembers } from './groups';
 type Storage = { getItem(key: string): Promise<string | null>; setItem(key: string, value: string): Promise<void>; getAllKeys?(): Promise<readonly string[]>; multiRemove?(keys: string[]): Promise<void> };
 export type Settings = { appearance: 'system' | 'light' | 'dark'; nickname: string; haptics: boolean };
 export type SessionState = {
@@ -76,12 +78,16 @@ export class MixerSession {
     }
   }
   private queue = Promise.resolve();
+  private profileWrite: Promise<boolean> = Promise.resolve(true);
   private valueTimer: ReturnType<typeof setTimeout> | null = null;
   private persistValues() {
     if (this.valueTimer) clearTimeout(this.valueTimer);
     this.valueTimer = null;
     void this.persist('earsmixer.native.level-states.v1', this.state.recentStates);
-    if (this.state.server) void this.persist("earsmixer.native.values:" + this.state.server, this.mixer.getValueCache());
+    if (this.state.server) {
+      void this.persist("earsmixer.native.values:" + this.state.server, this.mixer.getValueCache());
+      void this.persist('earsmixer.native.group-balances:' + this.state.server, this.mixer.getGroupBalances());
+    }
   }
   constructor(private storage: Storage, factory: (url: string) => Socket, private fetcher: typeof fetch = fetch) {
     this.mixer = new MixerClient(url => url === DEMO_URL.replace(/^http/, 'ws') ? createDemoSocket() : factory(url));
@@ -122,8 +128,11 @@ export class MixerSession {
   }
   private persist(key: string, value: unknown) {
     const json = JSON.stringify(value);
-    this.queue = this.queue.then(() => this.storage.setItem(key, json)).catch(() => this.patch({ message: 'Could not save to this device.' }));
-    return this.queue;
+    const write = this.queue.then(() => this.storage.setItem(key, json)).then(() => true, () => {
+      this.patch({ message: 'Could not save to this device.' }); return false;
+    });
+    this.queue = write.then(() => {});
+    return write;
   }
   async templates(signal?: AbortSignal): Promise<MixerTemplate[]> {
     if (!this.state.server) throw new Error('Connect to a mixer first.');
@@ -138,7 +147,7 @@ export class MixerSession {
     const preferences = templatePreferences(data.config, this.state.preferences.compact);
     this.mixer.cancelWrites();
     this.patch({ selectedTemplate: typeof data.name === 'string' && data.name.trim() && data.name.length <= 80 ? { id, name: data.name.trim() } : null });
-    this.preferences(preferences);
+    this.preferences({ ...preferences, groupsByAux: this.state.preferences.groupsByAux, globalGroups: this.state.preferences.globalGroups });
     await this.queue;
     if (server === this.state.server && attempt === this.attempt) this.notifySuccess('Layout applied: ' + (this.state.selectedTemplate?.name || 'Template'));
   }
@@ -176,11 +185,15 @@ export class MixerSession {
       try { channels = parseConfig(JSON.parse(await this.storage.getItem('earsmixer.native.channels:' + server) || 'null')); } catch {}
       let values: unknown = {};
       try { values = JSON.parse(await this.storage.getItem("earsmixer.native.values:" + server) || "{}"); } catch {}
+      let balances: unknown = {};
+      try { balances = JSON.parse(await this.storage.getItem('earsmixer.native.group-balances:' + server) || '{}'); } catch {}
       if (attempt !== this.attempt) return;
       // Keep existing local guest layouts when upgrading. Never import account credentials.
       const preferences = readPreferences(raw.preferences) || readPreferences(raw.guest) || emptyPreferences();
       const selectedTemplate = typeof raw.template?.id === 'string' && /^[a-f0-9]{64}$/.test(raw.template.id) && typeof raw.template.name === 'string' && raw.template.name.length <= 80 ? { id: raw.template.id, name: raw.template.name } : null;
       this.mixer.disconnect();
+      this.mixer.configureGroups(preferences.groupsByAux, preferences.globalGroups);
+      this.mixer.restoreGroupBalances(balances);
       this.patch({ selectedTemplate, server, demo: server === DEMO_URL, preferences, recent: server === DEMO_URL ? this.state.recent : rememberMixer(this.state.recent, server) });
       this.mixer.restoreValues(values);
       if (channels) this.mixer.restoreConfig(channels, preferences.selectedAux);
@@ -203,19 +216,113 @@ export class MixerSession {
     this.patch({ confirmation: null, restorePrompt: null, selectedTemplate: null, server: null, demo: false, connecting: false, preferences: emptyPreferences(), message: '' });
   }
   setChannelHidden(channel: number, hidden: boolean) {
+    this.setChannelsHidden([channel], hidden);
+  }
+  private setChannelsHidden(members: number[], hidden: boolean) {
     const aux = this.mixer.state.aux;
     if (aux === null) return;
     const previous = hiddenChannels(this.mixer.state.config, this.state.preferences, aux);
-    const channels = hidden ? [...new Set([...previous, channel])] : previous.filter(id => id !== channel);
+    const channels = hidden ? [...new Set([...previous, ...members])] : previous.filter(id => !members.includes(id));
     this.mixer.cancelWrites();
     this.preferences({ hiddenByAux: { ...this.state.preferences.hiddenByAux, [aux]: channels } });
+  }
+  setLayoutItemHidden(key: number, hidden: boolean, scope: GroupScope) {
+    if (this.state.server !== scope.server || this.mixer.state.aux !== scope.aux) return;
+    const item = layoutItems(this.mixer.state.config, this.state.preferences, scope.aux).find(item => item.key === key);
+    if (item) this.setChannelsHidden(item.members, hidden);
+  }
+  moveLayoutItems(keys: number[], indices: number[], destination: number, scope: GroupScope) {
+    if (this.state.server !== scope.server || this.mixer.state.aux !== scope.aux) return;
+    const items = layoutItems(this.mixer.state.config, this.state.preferences, scope.aux);
+    if (keys.length !== items.length || !items.every((item, index) => item.key === keys[index])) return;
+    const moved = moveGroupMembers(items.map((_item, index) => index), indices, destination);
+    if (moved.every((index, position) => index === position)) return;
+    const ids = moved.flatMap(index => items[index].members);
+    const retained = layoutChannelOrder(this.mixer.state.config, this.state.preferences, scope.aux).filter(id => !ids.includes(id));
+    this.mixer.cancelWrites();
+    this.preferences({ channelOrder: [...ids, ...retained] });
   }
   preferences(update: Partial<Preferences>) {
     const preferences = readPreferences({ ...this.state.preferences, ...update });
     if (!preferences) return;
+    if ('groupsByAux' in update || 'globalGroups' in update) this.mixer.configureGroups(preferences.groupsByAux, preferences.globalGroups);
     this.patch({ preferences });
     if ('selectedAux' in update) this.mixer.selectAux(preferences.selectedAux);
-    if (this.state.server) void this.persist('earsmixer.native.profile:' + this.state.server, { preferences, template: this.state.selectedTemplate });
+    if (this.state.server) {
+      const write = this.persist('earsmixer.native.profile:' + this.state.server, { preferences, template: this.state.selectedTemplate });
+      this.profileWrite = write;
+      void write.then(saved => {
+        if (saved && this.profileWrite === write && this.state.message === 'Could not save to this device.') this.patch({ message: '' });
+      });
+    }
+  }
+  saveGroup(id: number | null, name: string, members: number[], scope?: GroupScope, allAuxes?: boolean): number | null {
+    const { aux, config } = this.mixer.state;
+    if (!this.state.server || !aux || (scope && (scope.server !== this.state.server || scope.aux !== aux)) ||
+      typeof name !== 'string' || name.length > 80 || !Array.isArray(members) || members.length < 2 || members.length > 1000 ||
+      !members.every(member => Number.isSafeInteger(member) && member > 0) || new Set(members).size !== members.length) return null;
+    const preferences = this.state.preferences;
+    const local = preferences.groupsByAux[String(aux)] || [];
+    const global = preferences.globalGroups;
+    const wasGlobal = id !== null && global.some(group => group.id === id);
+    const previous = id === null ? undefined : groupsForAux(preferences, aux).find(group => group.id === id);
+    if (id !== null && !previous) return null;
+    if (!members.every(member => previous?.members.includes(member) || config?.channels.some(c => c.channel === member))) return null;
+    const applyAll = allAuxes ?? wasGlobal;
+    const otherLocal = Object.entries(preferences.groupsByAux).flatMap(([key, entries]) =>
+      (applyAll || Number(key) === aux) ? entries.filter(group => !(Number(key) === aux && !wasGlobal && group.id === id)) : []);
+    if ([...global.filter(group => group.id !== id), ...otherLocal].some(group => group.members.some(member => members.includes(member)))) return null;
+    let nextId = id ?? Math.max(1, Math.floor(Math.random() * Number.MAX_SAFE_INTEGER));
+    const allGroups = [...global, ...Object.values(preferences.groupsByAux).flat()];
+    if (id === null) while (allGroups.some(group => group.id === nextId)) nextId = nextId === Number.MAX_SAFE_INTEGER ? 1 : nextId + 1;
+    const next = { id: nextId, name: name.trim(), members: [...members] };
+    const added = applyAll && !wasGlobal ? members : members.filter(member => !previous?.members.includes(member));
+    const hiddenByAux = { ...preferences.hiddenByAux };
+    const affected = applyAll ? new Set([aux, ...(config?.aux.map(entry => entry.channel) || []), ...Object.keys(preferences.hiddenByAux).map(Number), ...Object.keys(preferences.favouritesByAux).map(Number)]) : new Set([aux]);
+    for (const affectedAux of affected) hiddenByAux[affectedAux] = hiddenChannels(config, preferences, affectedAux).filter(member => !added.includes(member));
+    const membershipChanged = !previous || previous.members.length !== members.length || previous.members.some((member, index) => member !== members[index]);
+    const update = { ...(membershipChanged ? { channelOrder: replaceLayoutGroup(contiguousGroupOrder(config, preferences, aux), previous?.members || [], members) } : {}),
+      globalGroups: applyAll ? wasGlobal ? global.map(group => group.id === id ? next : group) : [...global, next] : global.filter(group => group.id !== id),
+      groupsByAux: { ...preferences.groupsByAux, [aux]: applyAll ? local.filter(group => group.id !== id) : previous && !wasGlobal ? local.map(group => group.id === id ? next : group) : [...local, next] }, hiddenByAux };
+    if (!readPreferences({ ...this.state.preferences, ...update })) return null;
+    this.preferences(update);
+    return nextId;
+  }
+  createGroup(members: number[], name = '') { return this.saveGroup(null, name, members) !== null; }
+  deleteGroups(ids: number[], scope?: GroupScope): boolean {
+    const aux = this.mixer.state.aux;
+    if (!this.state.server || !aux || !ids.length || (scope && (scope.server !== this.state.server || scope.aux !== aux))) return false;
+    const groups = groupsForAux(this.state.preferences, aux);
+    if (!ids.every(id => groups.some(group => group.id === id))) return false;
+    this.preferences({ channelOrder: contiguousGroupOrder(this.mixer.state.config, this.state.preferences, aux),
+      globalGroups: this.state.preferences.globalGroups.filter(group => !ids.includes(group.id)),
+      groupsByAux: { ...this.state.preferences.groupsByAux,
+      [aux]: (this.state.preferences.groupsByAux[String(aux)] || []).filter(group => !ids.includes(group.id)) } });
+    return true;
+  }
+  removeGroup(id: number) { return this.deleteGroups([id]); }
+  private async commitGroupChange<T>(scope: GroupScope, change: () => T, failure: T): Promise<T> {
+    const before = this.state.preferences, balances = this.mixer.getGroupBalances();
+    const result = change();
+    if (result === failure) return failure;
+    const after = this.state.preferences;
+    if (!await this.profileWrite) {
+      // Retain drafts and restore the layout if the device rejected the write.
+      // Never overwrite newer edits or another mixer's profile during recovery.
+      if (this.state.server === scope.server && this.state.preferences === after) {
+        this.mixer.configureGroups(before.groupsByAux, before.globalGroups);
+        this.mixer.restoreGroupBalances(balances);
+        this.patch({ preferences: before });
+      }
+      return failure;
+    }
+    return this.state.server === scope.server && this.mixer.state.aux === scope.aux ? result : failure;
+  }
+  saveGroupAndWait(id: number | null, name: string, members: number[], scope: GroupScope, allAuxes: boolean) {
+    return this.commitGroupChange(scope, () => this.saveGroup(id, name, members, scope, allAuxes), null);
+  }
+  deleteGroupsAndWait(ids: number[], scope: GroupScope) {
+    return this.commitGroupChange(scope, () => this.deleteGroups(ids, scope), false);
   }
   async resetDeviceData() {
     if (!this.storage.getAllKeys || !this.storage.multiRemove) throw new Error('Device storage cannot be reset.');

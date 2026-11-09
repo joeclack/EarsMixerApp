@@ -1,3 +1,6 @@
+// @refresh reset
+// Session/client class instances cannot be reused across Fast Refresh revisions.
+// Remount the provider so its existing effect closes old sockets and queued writes.
 import React, { createContext, useCallback, useContext, useEffect, useState, useSyncExternalStore } from 'react';
 import { Alert, AppState, Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';

@@ -12,16 +12,19 @@ import { useFaderSession } from '../mixer/context';
 import { useTheme } from '../theme';
 import { clamp, levelText, dbToPosition } from '../mixer/model';
 import type { DragToken } from '../mixer/client';
+import { releasePosition } from '../mixer/faderPrecision';
 
 export default memo(function Fader({ channel, label, vertical = false, length = 200 }: { channel: number; label: string; vertical?: boolean; length?: number }) {
   const { session, mix } = useFaderSession(channel);
   const [width, setWidth] = useState(0);
-  const ready = mix.status === 'connected' && mix.values[channel] !== undefined;
+  const ready = session.mixer.canDrag(channel);
   const position = session.mixer.position(channel);
   const thumb = useSharedValue(position);
   const start = useSharedValue(position);
   const active = useSharedValue(false);
   const lastDispatch = useSharedValue(0);
+  const sampled = useSharedValue(position);
+  const origin = useSharedValue(0);
   const drag = useRef<DragToken | null>(null);
   const haptics = useRef(new DragHaptics(() => { if (session.state.settings.haptics) void Haptics.selectionAsync().catch(() => {}); })).current;
   const inset = FADER_INSET;
@@ -41,7 +44,8 @@ export default memo(function Fader({ channel, label, vertical = false, length = 
       if (success) { session.mixer.drag(drag.current, next); session.mixer.flush(drag.current); }
       session.mixer.cancelDrag(drag.current);
     }
-    drag.current = null; haptics.end(success); active.value = false; thumb.value = session.mixer.position(channel);
+    drag.current = null; haptics.end(success); active.value = false;
+    if (session.mixer.displayValue(channel) !== undefined) thumb.value = session.mixer.position(channel);
   }, [session, channel, haptics, active, thumb]);
   useEffect(() => {
     active.value = false;
@@ -53,9 +57,10 @@ export default memo(function Fader({ channel, label, vertical = false, length = 
     let context = '';
     let previous: number | undefined;
     let epoch: number | undefined;
-    const applyPosition = (next: number, snap: boolean, release: boolean) => {
+    const applyPosition = (next: number | undefined, snap: boolean, release: boolean) => {
       'worklet';
       if (release) active.value = false;
+      if (next === undefined) { cancelAnimation(thumb); return; }
       if (snap) { active.value = false; cancelAnimation(thumb); thumb.value = next; }
       else if (!active.value) {
         // Small streamed desk updates stay responsive. Large automatic changes
@@ -67,14 +72,13 @@ export default memo(function Fader({ channel, label, vertical = false, length = 
     };
     const syncPosition = () => {
       const current = session.mixer.state;
-      // AUX/parameter changes are different controls: show their cached position
-      // immediately. Refreshes and bulk writes only invalidate gestures; they
-      // must not snap an existing fader or its cached-to-live transition.
+      // Missing AUX values are unknown, not off. Hold the current visual position
+      // until a cached or live target exists, then glide to it.
       const nextContext = [current.aux, current.parameter].join('|');
       const release = epoch !== current.epoch;
       epoch = current.epoch;
-      const next = session.mixer.position(channel);
-      const snap = context !== nextContext;
+      const next = session.mixer.displayValue(channel) === undefined ? undefined : session.mixer.position(channel);
+      const snap = !context || context.split('|')[1] !== current.parameter;
       context = nextContext;
       if (!snap && !release && next === previous) return;
       previous = next;
@@ -90,28 +94,32 @@ export default memo(function Fader({ channel, label, vertical = false, length = 
     const pan = Gesture.Pan().enabled(ready && travel > 0).minDistance(3);
     if (vertical) pan.activeOffsetY([-3, 3]).failOffsetX([-8, 8]);
     else pan.activeOffsetX([-3, 3]).failOffsetY([-8, 8]);
-    return pan.onStart(() => {
+    return pan.onStart(event => {
       'worklet';
       cancelAnimation(thumb);
       active.value = true; start.value = thumb.value; lastDispatch.value = 0;
+      sampled.value = thumb.value;
+      origin.value = vertical ? -event.translationY : event.translationX;
       scheduleOnRN(begin, start.value, epoch);
     }).onUpdate(event => {
       'worklet';
-      const movement = vertical ? -event.translationY : event.translationX;
+      const movement = (vertical ? -event.translationY : event.translationX) - origin.value;
       const next = Math.max(0, Math.min(1, start.value + movement / travel));
       thumb.value = next;
       const now = Date.now();
       if (now - lastDispatch.value >= 30) {
-        lastDispatch.value = now; scheduleOnRN(update, next);
+        lastDispatch.value = now; sampled.value = next; scheduleOnRN(update, next);
       }
     }).onFinalize((_event, success) => {
       'worklet';
-      scheduleOnRN(finish, thumb.value, success);
+      const final = success ? releasePosition(thumb.value, sampled.value, travel) : thumb.value;
+      thumb.value = final;
+      scheduleOnRN(finish, final, success);
     });
-  }, [ready, travel, vertical, mix.epoch, thumb, start, active, lastDispatch, begin, update, finish]);
+  }, [ready, travel, vertical, mix.epoch, thumb, start, active, lastDispatch, sampled, origin, begin, update, finish]);
   const thumbStyle = useAnimatedStyle(() => ({ transform: vertical ? [{ translateY: travel * (1 - thumb.value) }] : [{ translateX: travel * thumb.value }] }));
   const fillStyle = useAnimatedStyle(() => vertical ? { height: travel * thumb.value } : { width: travel * thumb.value });
-  return <View onLayout={event => setWidth(vertical ? event.nativeEvent.layout.height : event.nativeEvent.layout.width)} style={{ height: vertical ? length : 56, width: vertical ? 64 : undefined, alignSelf: vertical ? 'center' : undefined, opacity: session.mixer.displayValue(channel) !== undefined ? 1 : 0.35 }}>
+  return <View onLayout={event => setWidth(vertical ? event.nativeEvent.layout.height : event.nativeEvent.layout.width)} style={{ height: vertical ? length : 56, width: vertical ? 80 : undefined, alignSelf: vertical ? 'center' : undefined }}>
     <View pointerEvents="none" style={vertical
       ? { position: 'absolute', top: inset, bottom: inset, left: FADER_TRACK_CENTER - 4, width: 8, borderRadius: 4, backgroundColor: '#010709', justifyContent: 'flex-end' }
       : { position: 'absolute', left: inset, right: inset, top: 24, height: 8, borderRadius: 4, backgroundColor: '#010709' }}>
@@ -135,7 +143,7 @@ export default memo(function Fader({ channel, label, vertical = false, length = 
         width: vertical ? FADER_CAP_WIDTH : FADER_CAP_HEIGHT, height: vertical ? FADER_CAP_HEIGHT : FADER_CAP_WIDTH,
         borderRadius: 8, backgroundColor: '#182125',
         shadowColor: '#000000', shadowOffset: { width: 1, height: 4 }, shadowOpacity: 0.7, shadowRadius: 4, elevation: 8 }, thumbStyle]}>
-      <FaderHandleSurface vertical={vertical} ready={ready} />
+      <FaderHandleSurface vertical={vertical} />
     </Animated.View></GestureDetector>
   </View>;
 });
@@ -151,7 +159,40 @@ const FaderScale = memo(function FaderScale({ width, travel, vertical, parameter
   width: number; travel: number; vertical: boolean; parameter: 'level' | 'pan'; color: string;
 }) {
   const inset = FADER_INSET;
-  const scaleText = '#849BA5', scaleLine = '#26383F';
+  const theme = useTheme();
+  if (vertical) {
+    const ink = theme.dark ? '#849BA5' : theme.consoleMark;
+    const unityInk = theme.dark ? color : ink;
+    const marks = parameter === 'level'
+      ? [10, 5, 0, -5, -10, -20, -30, -40, -60].map(db => ({ position: dbToPosition(db), label: db > 0 ? '+' + db : String(db), major: db === 0 }))
+      : [{ position: 1, label: 'R', major: false }, { position: 0.5, label: 'C', major: true }, { position: 0, label: 'L', major: false }];
+    const spaced: typeof marks = [];
+    for (const mark of marks) {
+      const previous = spaced.at(-1);
+      const tooClose = previous && travel * (previous.position - mark.position) < 15;
+      if (tooClose && !mark.major) continue;
+      if (tooClose) spaced.pop();
+      spaced.push(mark);
+    }
+    const unity = inset + travel * (1 - dbToPosition(0));
+    return <View pointerEvents="none" style={{ position: 'absolute', inset: 0 }}>
+      {spaced.map(mark => {
+        const point = inset + travel * (1 - mark.position);
+        return <View key={mark.label} style={{ position: 'absolute', top: point, left: 0, right: 0 }}>
+          <View style={{ position: 'absolute', left: 4, width: 18, height: 1, backgroundColor: mark.major ? unityInk : ink }} />
+          <View style={{ position: 'absolute', right: 4, width: 14, height: 1, backgroundColor: mark.major ? unityInk : ink }} />
+          <Text style={{ position: 'absolute', left: 4, top: mark.major ? -22 : -14, fontSize: 9, lineHeight: 12, fontWeight: mark.major ? '800' : '600', color: theme.dark && mark.major ? '#E6F1F3' : ink }}>{mark.label}</Text>
+        </View>;
+      })}
+      {parameter === 'level' && <>
+        <View testID="unity-arrow-left" style={{ position: 'absolute', top: unity - 6, left: 5, width: 0, height: 0,
+          borderTopWidth: 6, borderBottomWidth: 6, borderLeftWidth: 11, borderTopColor: 'transparent', borderBottomColor: 'transparent', borderLeftColor: unityInk }} />
+        <View testID="unity-arrow-right" style={{ position: 'absolute', top: unity - 6, right: 5, width: 0, height: 0,
+          borderTopWidth: 6, borderBottomWidth: 6, borderRightWidth: 11, borderTopColor: 'transparent', borderBottomColor: 'transparent', borderRightColor: unityInk }} />
+      </>}
+    </View>;
+  }
+  const scaleText = theme.dark ? '#849BA5' : theme.consoleMark, scaleLine = theme.dark ? '#26383F' : '#A82B4066';
   const scale = parameter === 'level'
     ? [-40, -20, -10, 0, 10].map(db => ({ position: dbToPosition(db), label: db === 0 ? '0 dB' : db > 0 ? '+' + db : String(db), major: db === 0 }))
     : [{ position: 0, label: 'L', major: false }, { position: 0.5, label: 'C', major: true }, { position: 1, label: 'R', major: false }];
@@ -167,11 +208,17 @@ const FaderScale = memo(function FaderScale({ width, travel, vertical, parameter
         return <View key={mark.label} style={vertical
           ? { position: 'absolute', top: point - 6, left: 0, width: 33, height: 12, justifyContent: 'center' }
           : { position: 'absolute', left: Math.max(0, Math.min(width - 28, point - 14)), top: 0, width: 28, height: 25, alignItems: 'center' }}>
-          <Text style={{ color: mark.major ? '#E6F1F3' : scaleText, fontSize: 8, fontWeight: mark.major ? '700' : '400', fontVariant: ['tabular-nums'] }}>{mark.label}</Text>
+          <Text style={{ color: mark.major && theme.dark ? '#E6F1F3' : scaleText, fontSize: 8, fontWeight: mark.major ? '700' : '500', fontVariant: ['tabular-nums'] }}>{mark.label}</Text>
           <View style={vertical
             ? { position: 'absolute', left: 23, width: 9, height: 1, backgroundColor: mark.major ? color : scaleText }
-            : { width: 1, height: 8, marginTop: 2, backgroundColor: mark.major ? color : scaleText }} />
+            : { width: 1, height: 8, marginTop: 2, backgroundColor: mark.major && theme.dark ? color : scaleText }} />
         </View>;
       })}
+      {!theme.dark && parameter === 'level' && <>
+        <View style={{ position: 'absolute', left: inset + travel * dbToPosition(0) - 4, top: 16, width: 0, height: 0,
+          borderLeftWidth: 4, borderRightWidth: 4, borderTopWidth: 6, borderLeftColor: 'transparent', borderRightColor: 'transparent', borderTopColor: theme.consoleMark }} />
+        <View style={{ position: 'absolute', left: inset + travel * dbToPosition(0) - 4, top: 34, width: 0, height: 0,
+          borderLeftWidth: 4, borderRightWidth: 4, borderBottomWidth: 6, borderLeftColor: 'transparent', borderRightColor: 'transparent', borderBottomColor: theme.consoleMark }} />
+      </>}
     </View>;
 });

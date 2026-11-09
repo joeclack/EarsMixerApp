@@ -1,11 +1,12 @@
 {
   "name": "earsmixer-app",
-  "version": "0.11.0",
+  "version": "0.17.9",
   "main": "expo-router/entry",
   "dependencies": {
     "@expo/ui": "~58.0.27",
     "@react-native-async-storage/async-storage": "2.2.0",
     "expo": "~58.0.23",
+    "expo-asset": "~58.0.20",
     "expo-build-properties": "~58.0.12",
     "expo-camera": "~58.0.14",
     "expo-constants": "~58.0.15",
@@ -14,6 +15,7 @@
     "expo-linear-gradient": "~58.0.3",
     "expo-linking": "~58.0.16",
     "expo-router": "~58.0.30",
+    "expo-screen-orientation": "~58.0.4",
     "expo-splash-screen": "~58.0.13",
     "expo-status-bar": "~58.0.4",
     "expo-symbols": "~58.0.4",

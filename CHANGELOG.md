@@ -1,5 +1,133 @@
 # Changelog
 
+## 0.17.9 — Consistent toast border
+
+- Use one border colour around confirmation toasts, removing the contrasting bottom rim and its visible colour split at the corners.
+
+## 0.17.8 — Extra corner clearance
+
+- Increase landscape corner padding from 12 to 16 points.
+
+## 0.17.7 — Landscape corner clearance
+
+- Add 12 points of spacing on the landscape edge without a notch so rounded phone corners do not clip the channel displays. Retain the larger inset on the notch side.
+
+## 0.17.6 — Landscape notch spacing
+
+- Apply landscape mixer edge padding only on the camera-cutout side, swapping it when the phone rotates. Remove padding on the opposite edge, using orientation when iOS reports symmetric safe areas.
+
+## 0.17.5 — Create in the toolbar
+
+- Move the group Create action to the top-right native toolbar (web header), retaining its blue text, validation and saving state. Remove the bottom form button.
+
+## 0.17.4 — Smooth AUX changes
+
+- Hold displayed fader positions while the next AUX has no values, then glide directly to its cached or live values. Avoid snapping to off on AUX changes or cancelled gestures while values are pending.
+
+## 0.17.3 — Explicit router configuration
+
+- Replace the deprecated initialRouteName setting with anchor. Explicitly present the groups list and editor as pushed card screens, including when reached from the channel-order modal.
+
+## 0.17.2 — More visible loading fly-out
+
+- Slow the loading exit to 650 ms, let the faders grow visibly before flying beyond the screen, and delay the fade. Apply the same timing to the preview Done action; retain the short fade with Reduce Motion.
+
+## 0.17.1 — Simpler group screens
+
+- Use native iOS swipe-to-delete and put Create new group in the groups list. Remove selection controls.
+- Move the blue, centred Create action to the bottom of the form, show the current monitor mix name, and remove explanatory footers.
+- Keep the connection toolbar button on the mixer page only.
+
+## 0.17.0 — Reorder groups as units
+
+- Show each group as one linked row with its name and channel count in Edit channels. Move the whole group with native iOS drag handles or Up/Down controls on Android/web, and open its editor to change membership or internal order.
+- Place new groups at their earliest selected channel, append added members inside the group, and preserve the group's position when editing its member order. Removed members follow the group; deleted groups leave their channels together in member order.
+- Show/hide entire groups from their layout row, retain unavailable saved channel IDs, and reject stale reorder actions after a mixer, AUX or layout change. Keep the existing shared layout order across monitor mixes and independent AUX levels/balances.
+
+## 0.16.2 — Group spacing and close icon
+
+- Rotate the landscape group name to −90 degrees and add a consistent six-point gap between expanded channels and the name rail.
+- Use an explicit icon-only X button on iOS, retaining the spoken Close label and a 44-point touch target.
+
+## 0.16.1 — Connected group controls
+
+- Give every expanded landscape member the same width with no gaps between channels. Place the rotated group name in a side rail at the start of the group, with a close icon above it.
+- Open groups with a single tap on the title or digital display instead of a long press. Add a display chevron and open/close haptics that respect the device setting.
+
+## 0.16.0 — Named groups, editing and scope
+
+- Replace channel selection on the groups page with a list of existing groups. Open a group to edit it, create a new group with Save, or select multiple groups and delete them together.
+- Rename groups, add/remove channels and change their order. Existing edits save automatically; new groups remain drafts until saved. Add native iOS reorder handles and Up/Down controls on Android/web, plus deletion inside the editor.
+- Let groups apply to the current monitor mix or all AUXes on this device for this mixer. Share names, membership and order while keeping each AUX's live levels and remembered dB offsets separate. Prevent overlapping local/global membership.
+- Migrate existing groups to stable IDs without changing their channel order or remembered balances. Keep names and IDs when members change, guard edits against mixer/AUX changes, and preserve all groups when applying a template.
+- Wait for device storage before completing new-group saves and deletions; retain drafts and restore the layout on write failure.
+
+## 0.15.1 — Full-height grouped faders and theme finishes
+
+- Remove the landscape group header rail and its empty space on every other strip. Hold a collapsed group's name or LCD to expand it; keep Close beside the first member's display without reducing fader travel. Provide explicit screen-reader and keyboard activation.
+- Remove the enclosing LCD-and-fader outline from ungrouped landscape strips. Keep one continuous frame around a group and its expanded members.
+- Use the recessed graphite finish and grey/teal scale in dark mode in both orientations. Keep the red/beige finish in light mode, adding stronger directional shading, inset shadows and rim highlights for depth.
+
+## 0.15.0 — Loading fader fly-out
+
+- Zoom the abstract loading faders towards the viewer and fade them away when loading finishes. Mount ready screens beneath the exit immediately, keeping rendering and data work independent of the animation.
+- Play the same exit when Done is pressed in the development loading preview, then return to settings. Ignore repeated presses during the exit.
+- Use a short opacity-only exit with Reduce Motion, pause motion while backgrounded and cancel stale completions if loading restarts.
+
+## 0.14.2 — Daylight surfaces and connected groups
+
+- Give light mode a clean background, white settings surfaces and darker secondary labels. Use the landscape cream face, red outlines, scale markings and 0 dB pointers for portrait light-mode faders.
+- Render expanded channel groups inside one continuous frame in both orientations. Landscape members replace the collapsed group strip inside that frame, with no empty group column or beside-the-group instructions.
+- Move landscape group names and Open/Close controls into a shared header rail. Align every LCD and use the same fader travel for grouped and individual channels.
+- Use a single native iOS scrolling form for channel-group selection, avoiding separately hosted controls overflowing their rows while scrolling. Keep long names wrapping and label the back button Mixer.
+
+## 0.14.1 — Stable fader release
+
+- Send drag levels in the same 0.1 dB steps shown on screen to avoid rounding changes when OSC floats return from the desk. Preserve group offsets and continuous pan values.
+- Ignore up to two points of unsampled lift movement on release, while retaining larger final moves and explicit off/top endpoints. Subtract the gesture activation distance to avoid an initial handle jump.
+
+## 0.14.0 — Animated fader loading
+
+- Replace the icon and spinner on startup and mixer loading screens with three abstract faders moving independently. Use transform-only animations, pause in the background, and show static faders with Reduce Motion enabled.
+- Remove the configured icon from the static native splash so new builds transition from a plain launch background into the animated app loader. Expo Go retains its own initial launch screen.
+- Add Settings → Developer tools → Preview loading animation in development builds, with a Done button to return. The preview does not change connections or saved settings and is unavailable in production.
+
+## 0.13.1 — Setup name AutoFill
+
+- Mark the optional setup nickname field as a person's name so iOS and other supported keyboards can suggest a saved name for tap-to-fill. Capitalise words and disable spelling corrections for names.
+
+## 0.13.0 — Landscape console strips
+
+- Add illuminated LCD-style displays above landscape faders, showing each channel's name and current level (or pan in Pan mode), including grouped channels.
+- Frame each landscape strip with red console-style outlines and a cream fader face with red scale markings. Position inward-pointing arrows at the actual 0 dB point.
+- Widen landscape strips for readable displays and retain horizontal scrolling, safe-area spacing, handle-only gestures and per-channel live subscriptions.
+
+## 0.12.2 — Immediate fader artwork
+
+- Replace the oversized handle image with small 1×/2×/3× assets and preload them independently of device storage and desk requests.
+- Draw a handle surface immediately while artwork decodes or if it fails. Keep handles fully visible while fresh values load; drag gating remains unchanged.
+- Mount the channel bank as soon as channel metadata is available instead of waiting for the first level response.
+
+## 0.12.1 — Development refresh recovery
+
+- Remount the mixer provider during Fast Refresh so new UI code cannot reuse an older session/client instance missing methods such as canDrag. Close the previous connection and cancel pending writes before restoring device settings.
+
+## 0.12.0 — Channel groups
+
+- Create and remove device-local channel groups per server/AUX in Edit channels → Manage channel groups, or the mixer options menu.
+- Show linked channels as one fader titled with their channel names. Open a group for individual adjustments and close it to control their relative dB balance.
+- Use the loudest member as the group level; preserve offsets through all-off and lifting again. Individually off members stay off until raised individually. Fresh desk edits establish the next group balance.
+- Keep pan individual, wait for fresh values from every member, and cancel pending group writes on navigation, AUX/mode changes and backgrounding. Preserve groups when applying shared layout templates.
+- Save membership and remembered balances on the device; no server protocol change is required.
+
+## 0.11.2 — Native web AUX selection
+
+- Use the browser's native select for AUX selection in the web mixer, with the current mix selected and controls disabled while disconnected.
+
+## 0.11.1 — Web connection input
+
+- Keep the manual mixer address input above its decorative panel gradient so typed text and the placeholder remain visible in Expo web.
+
 ## 0.11.0 — Interaction feedback
 
 - Briefly confirm successful template application, saved-level restoration and setting all sends to off, with a gentle entrance/exit and optional success haptic.

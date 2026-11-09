@@ -1,6 +1,5 @@
-import ScreenSurface from '../src/components/ScreenSurface';
 import ConfirmationToast from '../src/components/ConfirmationToast';
-import IconLoading from '../src/components/IconLoading';
+import LoadingTransition from '../src/components/LoadingTransition';
 import React, { useEffect, useRef } from 'react';
 import { Appearance, Platform } from 'react-native';
 import { Stack, ThemeProvider, DarkTheme, DefaultTheme, router, useRootNavigationState, usePathname } from 'expo-router';
@@ -11,13 +10,14 @@ import { requireOptionalNativeModule } from 'expo';
 import { findStartupMixers, reachableMixer } from '../src/discovery/startup';
 import type { DiscoveryNative } from '../src/discovery/browser';
 import { useTheme } from '../src/theme';
+import { warmFaderArtwork } from '../src/components/faderArtwork';
 
 const sheetOptions = {
   headerShown: false, presentation: (Platform.OS === 'web' ? 'modal' : 'formSheet') as 'modal' | 'formSheet',
   sheetAllowedDetents: [0.6, 0.9], sheetGrabberVisible: true,
 };
 
-export const unstable_settings = { initialRouteName: '(tabs)' };
+export const unstable_settings = { anchor: '(tabs)' };
 function Navigation() {
   const { session, state } = useSessionState();
   const theme = useTheme();
@@ -59,8 +59,7 @@ function Navigation() {
     })();
     return () => controller.abort();
   }, [state.hydrated, state.setupComplete, navigation?.key, pathname, session]);
-  if (!state.hydrated) return <ScreenSurface><IconLoading /></ScreenSurface>;
-  return <ThemeProvider value={theme.dark ? DarkTheme : DefaultTheme}>
+  return <LoadingTransition loading={!state.hydrated}>{state.hydrated && <ThemeProvider value={theme.dark ? DarkTheme : DefaultTheme}>
     <StatusBar style={theme.dark ? 'light' : 'dark'} />
     <Stack screenOptions={{ contentStyle: { backgroundColor: theme.bg }, headerTintColor: theme.tint }}>
       <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
@@ -70,7 +69,13 @@ function Navigation() {
       <Stack.Screen name="templates" options={sheetOptions} />
       <Stack.Screen name="scan" options={{ presentation: 'fullScreenModal', headerShown: false }} />
       <Stack.Screen name="layout" options={{ title: 'Channel order', presentation: 'modal' }} />
+      <Stack.Screen name="groups" options={{ title: 'Channel groups', headerBackTitle: 'Mixer', presentation: 'card' }} />
+      <Stack.Screen name="group" options={{ title: 'Edit group', headerBackTitle: 'Groups', presentation: 'card' }} />
+      <Stack.Screen name="loading-preview" options={{ presentation: 'fullScreenModal', headerShown: false }} />
     </Stack>
-  </ThemeProvider>;
+  </ThemeProvider>}</LoadingTransition>;
 }
-export default function RootLayout() { return <GestureHandlerRootView style={{ flex: 1 }}><MixerProvider><Navigation /><ConfirmationToast /></MixerProvider></GestureHandlerRootView>; }
+export default function RootLayout() {
+  useEffect(() => { void warmFaderArtwork(); }, []);
+  return <GestureHandlerRootView style={{ flex: 1 }}><MixerProvider><Navigation /><ConfirmationToast /></MixerProvider></GestureHandlerRootView>;
+}

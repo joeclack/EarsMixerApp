@@ -16,7 +16,7 @@ export function Icon({ name, size = 22, color }: { name: SymbolViewProps['name']
 }
 export function Page({ title, children, scroll = true, compactHeader = true, toolbar, hideHeader = false }: React.PropsWithChildren<{ title: string; scroll?: boolean; compactHeader?: boolean; toolbar?: React.ReactNode; hideHeader?: boolean }>) {
   const theme = useTheme();
-  const { state, mix } = useSession();
+  const { state } = useSession();
   const headerHeight = useHeaderHeight();
   const headerTransparent = true;
   const options = {
@@ -26,17 +26,11 @@ export function Page({ title, children, scroll = true, compactHeader = true, too
       ...(Platform.OS === 'web' && { headerLeft: () => <MixerHeading /> }) }),
     headerShadowVisible: false, headerLargeTitleShadowVisible: false, headerTintColor: theme.tint,
     headerStyle: { backgroundColor: 'transparent' },
-    ...(!toolbar && Platform.OS !== 'ios' && { headerRight: () => <Pressable accessibilityRole="button" accessibilityLabel="Connect to mixer" onPress={() => router.push('/connect')} style={styles.headerButton}>
-      <Icon name={{ ios: mix.status === 'connected' ? 'wifi' : 'wifi.slash', android: 'wifi', web: 'wifi' }} color={mix.status === 'connected' ? theme.green : theme.danger} />
-    </Pressable> }),
+
   };
   return <ScreenSurface>
     <Stack.Screen options={options} />
     {!hideHeader && toolbar}
-    {!hideHeader && !toolbar && Platform.OS === 'ios' && <Stack.Toolbar placement="right">
-      <Stack.Toolbar.Button icon={mix.status === 'connected' ? 'wifi' : 'wifi.slash'} tintColor={mix.status === 'connected' ? theme.green : theme.danger}
-        accessibilityLabel="Connect to mixer" onPress={() => router.push('/connect')} />
-    </Stack.Toolbar>}
     {scroll ? <ScrollView contentInsetAdjustmentBehavior="automatic" keyboardShouldPersistTaps="handled" automaticallyAdjustKeyboardInsets
       contentContainerStyle={[styles.page, !hideHeader && Platform.OS !== 'ios' && { paddingTop: headerHeight + 20 }]}>{children}</ScrollView> : <View style={{ flex: 1, paddingTop: !hideHeader && headerTransparent ? headerHeight : 0 }}>{children}</View>}
     {!state.hydrated && <View style={styles.loading}><ActivityIndicator /></View>}

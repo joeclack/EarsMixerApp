@@ -14,13 +14,13 @@ export default function MixerToolbar() {
       onPress={() => router.push('/connect')} style={styles.headerButton}>
       <Icon name={{ web: mix.status === 'connected' ? 'wifi' : 'wifi_off' }} color={mix.status === 'connected' ? theme.green : theme.danger} />
     </Pressable>
-    {state.server && !!mix.config?.aux.length && <details style={{ position: 'relative', color: theme.tint }}>
-      <summary aria-label="Choose AUX" style={{ cursor: 'pointer', padding: 10, listStyle: 'none' }}><Icon name={{ web: 'headphones' }} /></summary>
-      <div style={{ position: 'absolute', right: 0, top: '100%', minWidth: 180, padding: 12, background: theme.panel, borderRadius: 12, zIndex: 100, display: 'grid', gap: 8 }}>
-        {mix.config.aux.map(aux => <button key={aux.channel} disabled={mix.status !== 'connected'} aria-pressed={mix.aux === aux.channel}
-          onClick={event => { session.preferences({ selectedAux: aux.channel }); event.currentTarget.closest('details')?.removeAttribute('open'); }}>{aux.label}</button>)}
-      </div>
-    </details>}
+    {state.server && !!mix.config?.aux.length && <select aria-label="Choose AUX" value={mix.aux ?? ''} disabled={mix.status !== 'connected'}
+      onChange={event => session.preferences({ selectedAux: Number(event.currentTarget.value) })}
+      style={{ colorScheme: theme.scheme, color: theme.text, backgroundColor: theme.panel, border: '1px solid ' + theme.line,
+        borderRadius: 8, padding: '8px', minHeight: 44, maxWidth: 130, font: 'inherit' }}>
+      <option value="" disabled>Choose mix</option>
+      {mix.config.aux.map(aux => <option key={aux.channel} value={aux.channel}>{aux.label}</option>)}
+    </select>}
     {state.server && <details style={{ position: 'relative', color: theme.tint }}>
       <summary aria-label="Mixer options" style={{ cursor: 'pointer', padding: 12, fontSize: 22, listStyle: 'none' }}>…</summary>
       <div style={{ position: 'absolute', right: 0, top: '100%', minWidth: 220, padding: 12, background: theme.panel, border: '1px solid ' + theme.line, borderRadius: 12, zIndex: 100, display: 'grid', gap: 12 }}>
@@ -29,6 +29,7 @@ export default function MixerToolbar() {
           onClick={event => { session.mixer.setParameter(mode); event.currentTarget.closest('details')?.removeAttribute('open'); }}>{mode === 'level' ? 'Level' : 'Pan'}</button>)}
         <button onClick={event => { event.currentTarget.closest('details')?.removeAttribute('open'); router.push('/templates'); }}>{state.selectedTemplate ? state.selectedTemplate.name + ': Templates' : 'Templates'}</button>
         <button onClick={event => { event.currentTarget.closest('details')?.removeAttribute('open'); router.push('/layout'); }}>Edit channels</button>
+        <button onClick={event => { event.currentTarget.closest('details')?.removeAttribute('open'); router.push('/groups'); }}>Channel groups</button>
         <button disabled={mix.status !== 'connected' || !mix.aux} onClick={event => { event.currentTarget.closest('details')?.removeAttribute('open'); setAllLevelsOff(); }} style={{ color: theme.danger }}>Set all levels to off</button>
       </div>
     </details>}

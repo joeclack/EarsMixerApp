@@ -53,7 +53,7 @@ test('handle movement is throttled and released at its final value', async t => 
   assert.equal(writes().length, 0);
   client.flush(token);
   assert.equal(writes().length, 1); assert.equal(writes()[0].address, address());
-  assert.equal(writes()[0].args[0], positionToDb(0.7));
+  assert.equal(writes()[0].args[0], 2.3);
   await delay(50); assert.equal(writes().length, 1);
 });
 for (const change of ['aux', 'parameter', 'snapshot', 'disconnect', 'navigation'] as const) {
@@ -102,17 +102,27 @@ test('optimistic dragging updates immediately and ignores delayed desk values un
   const unsubscribe = client.subscribe(() => updates++);
   const token = client.beginDrag(1)!;
   client.drag(token, 0.8); client.drag(token, 0.85);
-  assert.equal(client.state.values[1], positionToDb(0.85));
+  assert.equal(client.state.values[1], 6.5);
   assert.equal(updates, 0);
   client.flush(token);
   assert.equal(writes().length, 1);
-  assert.equal(writes()[0].args[0], positionToDb(0.85));
+  assert.equal(writes()[0].args[0], 6.5);
   level(-50);
-  assert.equal(client.state.values[1], positionToDb(0.85));
+  assert.equal(client.state.values[1], 6.5);
   client.cancelDrag(token);
   level(-15);
   assert.equal(client.state.values[1], -15);
   unsubscribe();
+});
+
+test('released tenths remain stable after float32 feedback while real desk adjustments stay live', t => {
+  const { client, level, writes } = setup(t); level(-12);
+  const token = client.beginDrag(1)!;
+  client.drag(token, dbToPosition(-12.34)); client.flush(token); client.cancelDrag(token);
+  assert.equal(writes().at(-1).args[0], -12.3);
+  level(Math.fround(-12.3));
+  assert.equal(Number(client.state.values[1].toFixed(1)), -12.3);
+  level(-12.4); assert.equal(client.state.values[1], -12.4);
 });
 
 test('set all levels off writes minus infinity for every channel in the current AUX and leaves pan alone', async t => {

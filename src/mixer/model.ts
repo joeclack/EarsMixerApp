@@ -2,17 +2,40 @@ export type Channel = { channel: number; label: string; order: number };
 export type Aux = { channel: number; label: string; colour: string; stereo: boolean };
 export type MixerConfig = { channels: Channel[]; aux: Aux[]; snapshot: string };
 export type Parameter = 'level' | 'pan';
+export type ChannelGroup = { id: number; name: string; members: number[] };
+export type GroupScope = { server: string; aux: number };
 export type Preferences = {
   selectedAux: number | null; channelOrder: number[];
   favouritesByAux: Record<string, { channels: number[]; enabled: boolean }>;
   hiddenByAux: Record<string, number[]>;
+  groupsByAux: Record<string, ChannelGroup[]>;
+  globalGroups: ChannelGroup[];
   view: 'list' | 'grid'; compact: boolean;
 };
 export type User = { id: string; username: string; displayName: string };
 export type Account = { user: User | null; preferences: Preferences | null; revision: number };
-export const emptyPreferences = (): Preferences => ({ selectedAux: null, channelOrder: [], favouritesByAux: {}, hiddenByAux: {}, view: 'list', compact: true });
+export const emptyPreferences = (): Preferences => ({ selectedAux: null, channelOrder: [], favouritesByAux: {}, hiddenByAux: {}, groupsByAux: {}, globalGroups: [], view: 'list', compact: true });
 const record = (v: unknown): v is Record<string, any> => !!v && typeof v === 'object' && !Array.isArray(v);
 const positive = (v: unknown): v is number => Number.isSafeInteger(v) && Number(v) > 0;
+function readGroups(entries: unknown): ChannelGroup[] | null {
+  if (!Array.isArray(entries) || entries.length > 500) return null;
+  const seen = new Set<number>(), ids = new Set<number>();
+  const result: ChannelGroup[] = [];
+  for (const entry of entries) {
+    // Preserve the virtual ID of legacy groups when upgrading their arrays.
+    const group = Array.isArray(entry) ? { id: entry[0], name: '', members: entry } : entry;
+    if (!record(group) || !positive(group.id) || ids.has(group.id) || typeof group.name !== 'string' || group.name.length > 80 ||
+      !Array.isArray(group.members) || group.members.length < 2 || group.members.length > 1000 || !group.members.every(positive)) return null;
+    ids.add(group.id);
+    for (const id of group.members) { if (seen.has(id)) return null; seen.add(id); }
+    if (seen.size > 1000) return null;
+    result.push({ id: group.id, name: group.name.trim(), members: [...group.members] });
+  }
+  return result;
+}
+export function groupsForAux(preferences: Preferences, aux: number | null): ChannelGroup[] {
+  return [...preferences.globalGroups, ...(preferences.groupsByAux[String(aux)] || [])];
+}
 export function readPreferences(v: unknown): Preferences | null {
   if (!record(v) || !(v.selectedAux === null || positive(v.selectedAux)) ||
       !Array.isArray(v.channelOrder) || v.channelOrder.length > 1000 || !v.channelOrder.every(positive) ||
@@ -32,7 +55,19 @@ export function readPreferences(v: unknown): Preferences | null {
       !Array.isArray(entry.channels) || entry.channels.length > 1000 || !entry.channels.every(positive)) return null;
     favouritesByAux[id] = { channels: [...new Set(entry.channels)], enabled: entry.enabled };
   }
-  return { selectedAux: v.selectedAux, channelOrder: [...new Set(v.channelOrder)], favouritesByAux, hiddenByAux, view: v.view, compact: true };
+  const groupsByAux: Preferences['groupsByAux'] = {};
+  const globalGroups = readGroups(v.globalGroups ?? []);
+  if (!globalGroups) return null;
+  if (v.groupsByAux !== undefined) {
+    if (!record(v.groupsByAux) || Object.keys(v.groupsByAux).length > 256) return null;
+    for (const [aux, groups] of Object.entries(v.groupsByAux)) {
+      if (!/^[1-9]\d*$/.test(aux) || !positive(Number(aux))) return null;
+      const migrated = readGroups(groups);
+      if (!migrated || !readGroups([...globalGroups, ...migrated])) return null;
+      groupsByAux[aux] = migrated;
+    }
+  }
+  return { selectedAux: v.selectedAux, channelOrder: [...new Set(v.channelOrder)], favouritesByAux, hiddenByAux, groupsByAux, globalGroups, view: v.view, compact: true };
 }
 export function parseConfig(value: unknown): MixerConfig | null {
   if (!record(value) || !Array.isArray(value.channels) || !Array.isArray(value.aux)) return null;

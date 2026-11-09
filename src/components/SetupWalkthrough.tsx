@@ -61,7 +61,7 @@ export default function SetupWalkthrough() {
         </View>)}
       </View>}
       {step === 0 && <TextInput accessibilityLabel="Nickname" placeholder="Nickname (optional)" placeholderTextColor={theme.muted} value={state.settings.nickname}
-        onChangeText={nickname => session.setSettings({ nickname })} maxLength={80} autoComplete="nickname" returnKeyType="next"
+        onChangeText={nickname => session.setSettings({ nickname })} maxLength={80} autoComplete="name" autoCapitalize="words" autoCorrect={false} returnKeyType="next"
         onSubmitEditing={() => { Keyboard.dismiss(); setStep(1); }}
         style={{ fontSize: 20, color: theme.text, paddingVertical: 16, borderBottomWidth: 1, borderBottomColor: theme.line }} />}
       {step === 1 && <View style={{ gap: 16, alignItems: 'flex-start' }}>

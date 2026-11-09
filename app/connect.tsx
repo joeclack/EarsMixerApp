@@ -76,7 +76,8 @@ export default function Connect() {
         <Icon name={{ ios: 'network', android: 'wifi', web: 'wifi' }} color={theme.muted} />
         <TextInput testID="mixer-address" accessibilityLabel="Mixer address" value={address} onChangeText={setAddress} placeholder="192.168.1.100:8082" placeholderTextColor={theme.muted}
           autoCapitalize="none" autoCorrect={false} keyboardType="url" returnKeyType="go" editable={!busy} onSubmitEditing={() => { if (!busy) void connect(); }}
-          style={{ flex: 1, color: theme.text, fontSize: 17, minHeight: 56, paddingVertical: 16 }} />
+          // Keep the web input above the panel's positioned decorative gradient.
+          style={{ position: 'relative', flex: 1, color: theme.text, fontSize: 17, minHeight: 56, paddingVertical: 16 }} />
       </HardwarePanel>
       <View style={{ flexDirection: 'row', gap: 10, flexWrap: 'wrap', marginTop: 5, marginBottom: 24 }}>
         <NativeButton title={busy ? 'Connecting…' : 'Connect'} symbol="wifi" prominent disabled={busy || !address.trim()} onPress={() => void connect()} />

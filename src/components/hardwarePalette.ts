@@ -5,8 +5,8 @@ const graphite = {
   rim: '#536B75', slot: '#061014', indicator: '#48D8C4',
 };
 const silver = {
-  surface: '#E7EDEF', edge: '#B7C6CC', shadow: '#24414E26',
-  gradient: ['#DFE7EA', '#F2F5F5'] as const,
+  surface: '#FFFFFF', edge: '#BCCCD5', shadow: '#24414E12',
+  gradient: ['#FFFFFF', '#FAFCFD'] as const,
   rim: '#FFFFFF', slot: '#BBCBD0', indicator: '#007D71',
 };
 export const hardwarePalette = (dark: boolean) => dark ? graphite : silver;
