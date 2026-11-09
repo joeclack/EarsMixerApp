@@ -20,6 +20,7 @@ import AuxPresence from '../../../src/components/AuxPresence';
 import MixerLoadingBoundary from '../../../src/components/MixerLoadingBoundary';
 import { useLandscapeEdgePadding } from '../../../src/components/useLandscapeEdgePadding';
 import LandscapeMixerToolbar from '../../../src/components/LandscapeMixerToolbar';
+import FocusedFader from '../../../src/components/FocusedFader';
 
 export default function Mixer() {
   const { session, state, mix } = useSession();
@@ -30,6 +31,8 @@ export default function Mixer() {
   const landscape = width > height;
   const [bankHeight, setBankHeight] = useState(height);
   const [expanded, setExpanded] = useState<number[]>([]);
+  const [focused, setFocused] = useState<number | null>(null);
+  useEffect(() => { setFocused(null); }, [state.server, mix.aux, mix.parameter, landscape]);
   useEffect(() => { setExpanded([]); }, [state.server, mix.aux, state.preferences.groupsByAux, state.preferences.globalGroups]);
   useFocusEffect(useCallback(() => {
     if (session.mixer.state.status === 'connected') session.mixer.refresh();
@@ -38,6 +41,8 @@ export default function Mixer() {
   const hidden = hiddenChannels(mix.config, state.preferences, mix.aux);
   const sections = useMemo(() => mixerSections(mixerRows(mix.config, state.preferences, mix.aux, expanded, mix.parameter === 'pan')),
     [mix.config, mix.aux, mix.parameter, expanded, state.preferences]);
+  const focusedRow = !landscape && focused !== null ? sections.flatMap(section => [section.header, ...section.channels]).find(row => row.channel === focused) : undefined;
+  const closeFocused = () => { session.mixer.cancelWrites(); setFocused(null); };
   const topPadding = landscape ? insets.top + 12 : 20;
   const bottomPadding = insets.bottom + (landscape ? 12 : 20);
   // Every landscape strip starts at its LCD. The group's name and close control
@@ -70,7 +75,11 @@ export default function Mixer() {
         <FaderValue channel={channel.channel} />
       </View>}
       <View style={landscape ? { width: 88, alignSelf: grouped && !open ? 'center' : 'flex-start' } : undefined}>
-        <FaderHousing vertical={landscape}><Fader channel={channel.channel} label={channel.label} vertical={landscape} length={stripHeight} /></FaderHousing>
+        <FaderHousing vertical={landscape}><Fader channel={channel.channel} label={channel.label} vertical={landscape} length={stripHeight}
+          onEnlarge={landscape ? undefined : () => {
+            session.mixer.cancelWrites(); setFocused(channel.channel);
+            if (session.state.settings.haptics) void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
+          }} /></FaderHousing>
       </View>
     </View>;
     return <View testID={grouped ? 'group-' + group.channel : undefined} style={{
@@ -115,7 +124,9 @@ export default function Mixer() {
     <View style={{ flex: 1, flexDirection: landscape ? 'row' : 'column', paddingLeft: landscape ? landscapeEdges.paddingLeft : 0 }}>
     {landscape && <LandscapeMixerToolbar top={topPadding} bottom={bottomPadding} />}
     <View style={{ flex: 1 }}>
-    <MixerLoadingBoundary>{!state.server ? <EmptyMixer /> : <FlatList key={landscape ? 'strips' : 'rows'} horizontal={landscape} onLayout={event => setBankHeight(event.nativeEvent.layout.height)} extraData={state.preferences}
+    <MixerLoadingBoundary>{!state.server ? <EmptyMixer /> : <>
+    {!!focusedRow && <FocusedFader channel={focusedRow.channel} label={focusedRow.label} onClose={closeFocused} />}
+    <FlatList style={focusedRow ? { display: 'none' } : undefined} key={landscape ? 'strips' : 'rows'} horizontal={landscape} onLayout={event => setBankHeight(event.nativeEvent.layout.height)} extraData={state.preferences}
       data={sections} renderItem={renderSection} keyExtractor={item => String(item.header.channel)} contentInsetAdjustmentBehavior="never"
       contentContainerStyle={{ paddingTop: topPadding, ...(landscape ? { paddingLeft: 8, paddingRight: landscapeEdges.paddingRight } : { paddingLeft: 20, paddingRight: 20 }), paddingBottom: bottomPadding }} keyboardShouldPersistTaps="handled"
       ListEmptyComponent={<View style={{ alignItems: 'center', paddingVertical: 40, gap: 12 }}>
@@ -123,7 +134,7 @@ export default function Mixer() {
         <Text style={{ color: theme.text, fontSize: 19, fontWeight: '600' }}>{hidden.length ? 'All channels hidden' : 'No channels'}</Text>
         <Text style={{ color: theme.muted, textAlign: 'center', lineHeight: 22 }}>{hidden.length ? 'Use Edit to show channels.' : 'Check the server’s desk connection.'}</Text>
         {hidden.length > 0 && <NativeButton title="Edit channels" onPress={() => router.push('/layout')} />}
-      </View>} />}</MixerLoadingBoundary>
+      </View>} /></>}</MixerLoadingBoundary>
     </View>
     </View>
   </Page>;
