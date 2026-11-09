@@ -23,6 +23,7 @@ import LandscapeMixerToolbar from '../../../src/components/LandscapeMixerToolbar
 import FaderFocusTransition from '../../../src/components/FaderFocusTransition';
 import ExpandableFader from '../../../src/components/ExpandableFader';
 import { useStableMixerLayout } from '../../../src/components/useStableMixerLayout';
+import LandscapeFaderViewport from '../../../src/components/LandscapeFaderViewport';
 
 export default function Mixer() {
   const { session, state, mix } = useSession();
@@ -128,16 +129,18 @@ export default function Mixer() {
       paddingLeft: landscape ? landscapeEdges.paddingLeft : 0, paddingRight: landscape ? landscapeEdges.paddingRight : 0 }}>
     {landscape && <LandscapeMixerToolbar top={topPadding} bottom={bottomPadding} />}
     <View onLayout={event => setBankHeight(event.nativeEvent.layout.height)} style={{ flex: 1, minWidth: 0, overflow: landscape ? 'hidden' : 'visible' }}>
+    <LandscapeFaderViewport enabled={landscape}>
     <MixerLoadingBoundary>{!state.server ? <EmptyMixer /> : !layoutReady ? <View style={{ flex: 1 }} /> : <FaderFocusTransition row={focusedRow} onClose={closeFocused}>
     <FlatList key={landscape ? 'strips' : 'rows'} horizontal={landscape} extraData={state.preferences}
       data={sections} renderItem={renderSection} keyExtractor={item => String(item.header.channel)} contentInsetAdjustmentBehavior="never"
-      contentContainerStyle={{ paddingTop: topPadding, ...(landscape ? { paddingLeft: 8, paddingRight: 8 } : { paddingLeft: 20, paddingRight: 20 }), paddingBottom: bottomPadding }} keyboardShouldPersistTaps="handled"
+      contentContainerStyle={{ paddingTop: topPadding, ...(landscape ? { paddingLeft: 16, paddingRight: 16 } : { paddingLeft: 20, paddingRight: 20 }), paddingBottom: bottomPadding }} keyboardShouldPersistTaps="handled"
       ListEmptyComponent={<View style={{ alignItems: 'center', paddingVertical: 40, gap: 12 }}>
         <Icon name={{ ios: 'eye.slash', android: 'visibility_off', web: 'visibility_off' }} size={34} color={theme.muted} />
         <Text style={{ color: theme.text, fontSize: 19, fontWeight: '600' }}>{hidden.length ? 'All channels hidden' : 'No channels'}</Text>
         <Text style={{ color: theme.muted, textAlign: 'center', lineHeight: 22 }}>{hidden.length ? 'Use Edit to show channels.' : 'Check the server’s desk connection.'}</Text>
         {hidden.length > 0 && <NativeButton title="Edit channels" onPress={() => router.push('/layout')} />}
       </View>} /></FaderFocusTransition>}</MixerLoadingBoundary>
+    </LandscapeFaderViewport>
     </View>
     </View>
   </Page>;

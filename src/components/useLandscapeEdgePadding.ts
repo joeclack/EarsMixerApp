@@ -20,5 +20,5 @@ export function useLandscapeEdgePadding(left: number, right: number) {
   // Prefer asymmetric cutout insets. iOS may reserve equal space at both edges;
   // in that case the interface orientation identifies the front-camera edge.
   const notchOnRight = right > left || (right === left && orientation === Orientation.LANDSCAPE_LEFT);
-  return notchOnRight ? { paddingLeft: cornerPadding, paddingRight: inset + 20 } : { paddingLeft: inset + 20, paddingRight: cornerPadding };
+  return notchOnRight ? { paddingLeft: cornerPadding, paddingRight: inset + 8 } : { paddingLeft: inset + 8, paddingRight: cornerPadding };
 }

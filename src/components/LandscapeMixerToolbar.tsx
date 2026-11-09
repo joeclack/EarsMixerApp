@@ -8,7 +8,7 @@ export default function LandscapeMixerToolbar({ top, bottom }: { top: number; bo
   const { height } = useWindowDimensions();
   const auxes = mix.config?.aux || [];
   const selected = auxes.find(aux => aux.channel === mix.aux);
-  return <View style={{ width: 76, flexShrink: 0, backgroundColor: theme.bg, zIndex: 1,
+  return <View style={{ width: 76, flexShrink: 0, zIndex: 1,
     paddingTop: top, paddingBottom: bottom, alignItems: 'center', justifyContent: 'flex-start', gap: 10 }}>
     <LandscapeAuxPicker auxes={auxes} selected={mix.aux} disabled={!state.server || !auxes.length || mix.status !== 'connected'}
       onChange={selectedAux => session.preferences({ selectedAux })} />
