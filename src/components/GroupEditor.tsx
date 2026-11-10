@@ -1,7 +1,8 @@
 import GroupCreateToolbar from './GroupCreateToolbar';
-import { Text, TextInput, View } from 'react-native';
-import { Host, Switch } from '@expo/ui';
-import { Section, Message } from './ui';
+import GroupScopeHeading from './GroupScopeHeading';
+import { Platform, Pressable, Text, TextInput, View } from 'react-native';
+import GroupScopeSwitch from './GroupScopeSwitch';
+import { Section, Message, Icon } from './ui';
 import NativeButton from './NativeButton';
 import { useTheme } from '../theme';
 import { closeGroupEditor, useGroupEditor, type GroupEditorProps } from './useGroupEditor';
@@ -14,11 +15,13 @@ export default function GroupEditor(props: GroupEditorProps) {
   </>;
   return <>
     <GroupCreateToolbar {...editor} />
+    <GroupScopeHeading allAuxes={editor.allAuxes} mixName={editor.mixName} />
     <Message error>{editor.error}</Message>
-    <Section title="APPLIES TO" footer={!editor.allAuxes ? editor.mixName : undefined}>
-      <Host matchContents={{ vertical: true }} colorScheme={theme.scheme} seedColor={theme.tint} style={{ padding: 16, minHeight: 56 }}>
-        <Switch label="All monitor mixes" value={editor.allAuxes} onValueChange={editor.setAllAuxes} disabled={editor.busy || (!editor.allAuxes && !editor.canApplyAll)} />
-      </Host>
+    <Section card={Platform.OS !== 'android'}>
+      <View style={{ paddingHorizontal: 16 }}>
+      <GroupScopeSwitch value={editor.allAuxes} onChange={editor.setAllAuxes} disabled={editor.busy || (!editor.allAuxes && !editor.canApplyAll)} />
+      {!editor.allAuxes && !editor.canApplyAll && <Text style={{ color: theme.muted, fontSize: 13, marginTop: 4 }}>Channels already grouped in another mix.</Text>}
+      </View>
     </Section>
     <Section title="GROUP NAME">
       <TextInput accessibilityLabel="Group name" placeholder="Group name" placeholderTextColor={theme.muted} value={editor.name}
@@ -26,14 +29,30 @@ export default function GroupEditor(props: GroupEditorProps) {
         style={{ color: theme.text, fontSize: 17, padding: 16, minHeight: 52, position: 'relative' }} />
     </Section>
     <Section title={'CHANNELS (' + editor.members.length + ')'}>
-      {editor.members.map((channel, index) => <View key={channel.channel} style={{ padding: 16, gap: 8 }}>
-        <Text style={{ color: theme.text, fontSize: 17 }}>{index + 1}. {channel.label}</Text>
+      {editor.members.map((channel, index) => <View key={channel.channel} style={{ padding: 16, gap: 8,
+        borderBottomWidth: Platform.OS === 'android' && index < editor.members.length - 1 ? 1 : 0, borderBottomColor: theme.line }}>
+        <Text style={{ color: theme.text, fontSize: 17 }}>{Platform.OS === 'android' ? channel.label : (index + 1) + '. ' + channel.label}</Text>
         {channel.unavailable && <Text style={{ color: theme.muted }}>Currently unavailable</Text>}
-        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+        {Platform.OS === 'android' ? <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+          <Pressable accessibilityRole="button" accessibilityLabel={'Remove ' + channel.label + ' from group'}
+            accessibilityState={{ disabled: !editor.canRemove }} disabled={!editor.canRemove} onPress={() => editor.removeMember(channel.channel)}
+            style={({ pressed }) => ({ minHeight: 44, minWidth: 44, alignItems: 'center', justifyContent: 'center', opacity: !editor.canRemove ? 0.3 : pressed ? 0.6 : 1 })}>
+            <Icon name={{ android: 'delete_outline' }} color={theme.danger} />
+          </Pressable>
+          <View style={{ flex: 1 }} />
+          {[-1, 1].map(direction => {
+            const disabled = editor.busy || index + direction < 0 || index + direction >= editor.members.length;
+            return <Pressable key={direction} accessibilityRole="button" accessibilityLabel={'Move ' + channel.label + (direction < 0 ? ' up' : ' down')}
+              accessibilityState={{ disabled }} disabled={disabled} onPress={() => editor.move([index], direction < 0 ? index - 1 : index + 2)}
+              style={({ pressed }) => ({ minHeight: 44, minWidth: 44, opacity: disabled ? 0.3 : pressed ? 0.6 : 1, justifyContent: 'center', alignItems: 'center' })}>
+              <Icon name={{ android: direction < 0 ? 'arrow_upward' : 'arrow_downward' }} />
+            </Pressable>;
+          })}
+        </View> : <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
           <NativeButton compact title="Up" symbol="arrow.up" accessibilityLabel={'Move ' + channel.label + ' up'} disabled={editor.busy || index === 0} onPress={() => editor.move([index], index - 1)} />
           <NativeButton compact title="Down" symbol="arrow.down" accessibilityLabel={'Move ' + channel.label + ' down'} disabled={editor.busy || index === editor.members.length - 1} onPress={() => editor.move([index], index + 2)} />
           <NativeButton compact title="Remove" destructive accessibilityLabel={'Remove ' + channel.label} disabled={!editor.canRemove} onPress={() => editor.removeMember(channel.channel)} />
-        </View>
+        </View>}
       </View>)}
       {!editor.members.length && <Text style={{ color: theme.muted, padding: 16 }}>Add channels below.</Text>}
     </Section>

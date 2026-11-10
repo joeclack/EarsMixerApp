@@ -36,14 +36,14 @@ export function Page({ title, children, scroll = true, compactHeader = true, too
     {!state.hydrated && <View style={styles.loading}><ActivityIndicator /></View>}
   </ScreenSurface>;
 }
-export function Section({ title, footer, symbol, children }: React.PropsWithChildren<{ title?: string; footer?: string; symbol?: SymbolViewProps['name'] }>) {
+export function Section({ title, footer, symbol, children, card = true }: React.PropsWithChildren<{ title?: string; footer?: string; symbol?: SymbolViewProps['name']; card?: boolean }>) {
   const theme = useTheme();
   return <View style={{ marginBottom: 26 }}>
     {!!title && <View style={{ marginLeft: 16, marginBottom: 8, flexDirection: 'row', alignItems: 'center', gap: 8 }}>
       {!!symbol && <Icon name={symbol} size={14} />}
       <Text accessibilityRole="header" style={{ color: theme.muted, fontSize: 13, fontWeight: '600' }}>{title}</Text>
     </View>}
-    <HardwarePanel>{children}</HardwarePanel>
+    {card ? <HardwarePanel>{children}</HardwarePanel> : children}
     {!!footer && <Text style={[styles.footer, { color: theme.muted }]}>{footer}</Text>}
   </View>;
 }

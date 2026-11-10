@@ -1,7 +1,7 @@
 import React from 'react';
 import { useResetDeviceData } from './useResetDeviceData';
 import ProfileCard from './ProfileCard';
-import { Text, View, Pressable, Switch } from 'react-native';
+import { Text, View, Pressable, Switch, Platform } from 'react-native';
 import { router } from 'expo-router';
 import Constants from 'expo-constants';
 import { useSession } from '../mixer/context';
@@ -13,7 +13,7 @@ export default function SettingsContent() {
   const reset = useResetDeviceData();
   return <>
     <View style={{ marginBottom: 26 }}><ProfileCard /></View>
-    <Section title="Appearance" symbol={{ ios: 'circle.lefthalf.filled', android: 'contrast', web: 'contrast' }}><Row title="Theme" /><Segmented label="Appearance" value={state.settings.appearance}
+    <Section title="Appearance" symbol={{ ios: 'circle.lefthalf.filled', android: 'contrast', web: 'contrast' }}>{Platform.OS !== 'android' && <Row title="Theme" />}<Segmented label="Appearance" value={state.settings.appearance}
       options={[{ value: 'system', label: 'System' }, { value: 'light', label: 'Light' }, { value: 'dark', label: 'Dark' }]}
       onChange={value => session.setSettings({ appearance: value as 'system' | 'light' | 'dark' })} /></Section>
     <Section title="Mixer" symbol={{ ios: 'slider.horizontal.3', android: 'tune', web: 'tune' }}>

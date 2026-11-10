@@ -12,7 +12,7 @@ export default function LandscapeAuxPicker({ auxes, selected, disabled, onChange
   const haptic = useToolbarHaptic();
   const label = auxes.find(aux => aux.channel === selected)?.label || 'Choose mix';
   return <Host matchContents colorScheme={theme.scheme} seedColor={theme.tint}>
-    <DropdownMenu expanded={!disabled && expanded} onDismissRequest={() => setExpanded(false)}>
+    <DropdownMenu expanded={!disabled && expanded} onDismissRequest={() => setExpanded(false)} color={theme.panel}>
       <DropdownMenu.Trigger><IconButton enabled={!disabled} onClick={() => { haptic(); setExpanded(true); }} modifiers={[semantics({ contentDescription: 'Choose AUX, ' + label })]}>
         <RNHostView matchContents><Icon name={{ android: 'headphones' }} /></RNHostView>
       </IconButton></DropdownMenu.Trigger>
