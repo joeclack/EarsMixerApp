@@ -20,7 +20,9 @@ export default function MixerToolbar() {
         <MixerHeading />
       </Stack.Toolbar.View>
     </Stack.Toolbar>
-    <Stack.Toolbar placement="right" tintColor={theme.tint}>
+    <Stack.Toolbar placement="right" tintColor={theme.tint}
+      backgroundColor={Platform.OS === 'android' ? theme.panel : undefined}
+      buttonContainerColor={Platform.OS === 'android' ? 'transparent' : undefined}>
     {Platform.OS === 'ios' ? <Stack.Toolbar.Button icon={state.demo ? 'play.circle' : mix.status === 'connected' ? 'wifi' : 'wifi.slash'}
       accessibilityLabel={status + '. Connect to mixer'} tintColor={color} onPress={() => router.push('/connect')} /> :
       <Stack.Toolbar.View><Pressable accessibilityRole="button" accessibilityLabel={status + '. Connect to mixer'}
