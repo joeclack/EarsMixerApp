@@ -14,6 +14,16 @@ export default function MixerToolbar() {
   const label = selected?.label || 'Choose mix';
   const status = mix.status === 'connected' ? 'Connected' : mix.status === 'disconnected' ? 'Disconnected' : 'Connecting';
   const color = state.demo ? theme.orange : mix.status === 'connected' ? theme.green : mix.status === 'disconnected' ? theme.danger : theme.orange;
+  const modeActions = [
+    <Stack.Toolbar.MenuAction key="level" isOn={mix.parameter === 'level'} onPress={() => session.mixer.setParameter('level')}>Level</Stack.Toolbar.MenuAction>,
+    <Stack.Toolbar.MenuAction key="pan" isOn={mix.parameter === 'pan'} onPress={() => session.mixer.setParameter('pan')}>Pan</Stack.Toolbar.MenuAction>,
+  ];
+  const otherActions = [
+    <Stack.Toolbar.MenuAction key="templates" onPress={() => router.push('/templates')}>{state.selectedTemplate ? state.selectedTemplate.name + ': Templates' : 'Templates'}</Stack.Toolbar.MenuAction>,
+    <Stack.Toolbar.MenuAction key="layout" onPress={() => router.push('/layout')}>Edit channels</Stack.Toolbar.MenuAction>,
+    <Stack.Toolbar.MenuAction key="groups" onPress={() => router.push('/groups')}>Channel groups</Stack.Toolbar.MenuAction>,
+    <Stack.Toolbar.MenuAction key="off" destructive disabled={mix.status !== 'connected' || !mix.aux} onPress={setAllLevelsOff}>Set all levels to off</Stack.Toolbar.MenuAction>,
+  ];
   return <>
     <Stack.Toolbar placement="left">
       <Stack.Toolbar.View hidesSharedBackground>
@@ -37,14 +47,12 @@ export default function MixerToolbar() {
     </Stack.Toolbar.Menu>}
     {state.server && <Stack.Toolbar.Menu icon={Platform.OS === 'ios' ? 'ellipsis' : require('../../assets/toolbar/more.png')} accessibilityLabel="Mixer options">
       <Stack.Toolbar.Label>Options</Stack.Toolbar.Label>
-      <Stack.Toolbar.Menu inline title="Fader mode" icon={Platform.OS === 'ios' ? 'slider.horizontal.3' : require('../../assets/toolbar/fader-mode.png')}>
-        <Stack.Toolbar.MenuAction isOn={mix.parameter === 'level'} onPress={() => session.mixer.setParameter('level')}>Level</Stack.Toolbar.MenuAction>
-        <Stack.Toolbar.MenuAction isOn={mix.parameter === 'pan'} onPress={() => session.mixer.setParameter('pan')}>Pan</Stack.Toolbar.MenuAction>
-      </Stack.Toolbar.Menu>
-      <Stack.Toolbar.MenuAction onPress={() => router.push('/templates')}>{state.selectedTemplate ? state.selectedTemplate.name + ': Templates' : 'Templates'}</Stack.Toolbar.MenuAction>
-      <Stack.Toolbar.MenuAction onPress={() => router.push('/layout')}>Edit channels</Stack.Toolbar.MenuAction>
-      <Stack.Toolbar.MenuAction onPress={() => router.push('/groups')}>Channel groups</Stack.Toolbar.MenuAction>
-      <Stack.Toolbar.MenuAction destructive disabled={mix.status !== 'connected' || !mix.aux} onPress={setAllLevelsOff}>Set all levels to off</Stack.Toolbar.MenuAction>
+      {Platform.OS === 'android' ? modeActions : <Stack.Toolbar.Menu inline title="Fader mode" icon="slider.horizontal.3">
+        {modeActions}
+      </Stack.Toolbar.Menu>}
+      {Platform.OS === 'android' ? <Stack.Toolbar.Menu inline title="Options">
+        {otherActions}
+      </Stack.Toolbar.Menu> : otherActions}
     </Stack.Toolbar.Menu>}
     {Platform.OS === 'ios' ? <Stack.Toolbar.Button icon="gearshape" accessibilityLabel="Settings" onPress={() => router.push('/settings')} /> :
       <Stack.Toolbar.View><Pressable accessibilityRole="button" accessibilityLabel="Settings" onPress={() => router.push('/settings')} style={styles.headerButton}>
