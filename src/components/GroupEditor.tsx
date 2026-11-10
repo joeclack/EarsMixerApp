@@ -1,5 +1,5 @@
 import GroupCreateToolbar from './GroupCreateToolbar';
-import { Text, TextInput, View } from 'react-native';
+import { Platform, Text, TextInput, View } from 'react-native';
 import { Host, Switch } from '@expo/ui';
 import { Section, Message } from './ui';
 import NativeButton from './NativeButton';
@@ -15,7 +15,7 @@ export default function GroupEditor(props: GroupEditorProps) {
   return <>
     <GroupCreateToolbar {...editor} />
     <Message error>{editor.error}</Message>
-    <Section title="APPLIES TO" footer={!editor.allAuxes ? editor.mixName : undefined}>
+    <Section title="APPLIES TO" card={Platform.OS !== 'android'} footer={!editor.allAuxes ? editor.mixName : undefined}>
       <Host matchContents={{ vertical: true }} colorScheme={theme.scheme} seedColor={theme.tint} style={{ padding: 16, minHeight: 56 }}>
         <Switch label="All monitor mixes" value={editor.allAuxes} onValueChange={editor.setAllAuxes} disabled={editor.busy || (!editor.allAuxes && !editor.canApplyAll)} />
       </Host>
