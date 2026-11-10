@@ -15,10 +15,12 @@ export default function GroupEditor(props: GroupEditorProps) {
   return <>
     <GroupCreateToolbar {...editor} />
     <Message error>{editor.error}</Message>
-    <Section title="APPLIES TO" card={Platform.OS !== 'android'} footer={!editor.allAuxes ? editor.mixName : undefined}>
-      <Host matchContents={{ vertical: true }} colorScheme={theme.scheme} seedColor={theme.tint} style={{ padding: 16, minHeight: 56 }}>
+    <Section title="APPLIES TO" card={Platform.OS !== 'android'} footer={!editor.allAuxes ? 'Only this mix: ' + editor.mixName : undefined}>
+      <View style={{ paddingHorizontal: 16 }}>
+      <Host matchContents={{ vertical: true }} colorScheme={theme.scheme} seedColor={theme.tint} style={{ minHeight: 56 }}>
         <Switch label="All monitor mixes" value={editor.allAuxes} onValueChange={editor.setAllAuxes} disabled={editor.busy || (!editor.allAuxes && !editor.canApplyAll)} />
       </Host>
+      </View>
     </Section>
     <Section title="GROUP NAME">
       <TextInput accessibilityLabel="Group name" placeholder="Group name" placeholderTextColor={theme.muted} value={editor.name}
