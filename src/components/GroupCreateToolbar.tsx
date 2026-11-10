@@ -6,7 +6,7 @@ export default function GroupCreateToolbar({ creating, busy, canSave, save }: {
 }) {
   if (!creating) return null;
   const title = busy ? 'Creating…' : 'Create';
-  if (Platform.OS === 'web') return <Stack.Screen options={{ headerRight: () =>
+  if (Platform.OS !== 'ios') return <Stack.Screen options={{ headerRight: () =>
     <Pressable accessibilityRole="button" accessibilityState={{ disabled: !canSave }} disabled={!canSave} onPress={save}
       style={{ minHeight: 44, paddingHorizontal: 16, justifyContent: 'center', opacity: canSave ? 1 : 0.4 }}>
       <Text style={{ color: '#007AFF', fontSize: 17, fontWeight: '600' }}>{title}</Text>
