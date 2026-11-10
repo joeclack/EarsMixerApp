@@ -27,15 +27,15 @@ export default function MixerToolbar() {
         onPress={() => router.push('/connect')} style={styles.headerButton}>
         <Icon name={{ android: mix.status === 'connected' ? 'wifi' : 'wifi_off' }} color={color} />
       </Pressable></Stack.Toolbar.View>}
-    {state.server && !!mix.config?.aux.length && <Stack.Toolbar.Menu icon={Platform.OS === 'ios' ? 'headphones' : undefined}
+    {state.server && !!mix.config?.aux.length && <Stack.Toolbar.Menu icon={Platform.OS === 'ios' ? 'headphones' : require('../../assets/toolbar/headphones.png')}
       accessibilityLabel={'Choose AUX, ' + label} disabled={mix.status !== 'connected'}>
       <Stack.Toolbar.Label>Choose AUX</Stack.Toolbar.Label>
       {mix.config.aux.map(aux => <Stack.Toolbar.MenuAction key={aux.channel} isOn={mix.aux === aux.channel}
         onPress={() => session.preferences({ selectedAux: aux.channel })}>{aux.label}</Stack.Toolbar.MenuAction>)}
     </Stack.Toolbar.Menu>}
-    {state.server && <Stack.Toolbar.Menu icon={Platform.OS === 'ios' ? 'ellipsis' : undefined} accessibilityLabel="Mixer options">
+    {state.server && <Stack.Toolbar.Menu icon={Platform.OS === 'ios' ? 'ellipsis' : require('../../assets/toolbar/more.png')} accessibilityLabel="Mixer options">
       <Stack.Toolbar.Label>Options</Stack.Toolbar.Label>
-      <Stack.Toolbar.Menu inline title="Fader mode">
+      <Stack.Toolbar.Menu inline title="Fader mode" icon={Platform.OS === 'ios' ? 'slider.horizontal.3' : require('../../assets/toolbar/fader-mode.png')}>
         <Stack.Toolbar.MenuAction isOn={mix.parameter === 'level'} onPress={() => session.mixer.setParameter('level')}>Level</Stack.Toolbar.MenuAction>
         <Stack.Toolbar.MenuAction isOn={mix.parameter === 'pan'} onPress={() => session.mixer.setParameter('pan')}>Pan</Stack.Toolbar.MenuAction>
       </Stack.Toolbar.Menu>
