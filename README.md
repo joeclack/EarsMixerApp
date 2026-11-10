@@ -2,7 +2,7 @@
 
 Native iOS and Android app for personal monitor mixing with [EarsMixer](https://github.com/joeclack/EarsMixer). Built with Expo SDK 58 and React Native, with a browser preview.
 
-Check out /screenshots for a in-app screenshots
+Check out /screenshots for in-app screenshots
 
 ## Features
 
