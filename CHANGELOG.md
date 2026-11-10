@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.19.0 — Landscape controls and refined fader interaction
+
+- Add matching native circular landscape controls for AUX selection, Level/Pan mode and setting all levels to off. Centre the rail vertically, label the current mode, use an infinity icon for off, and provide optional button haptics.
+- Keep the landscape toolbar and mixer on one shared background, soften scrolling edges, and protect controls from the notch and rounded corners in either orientation.
+- Remove fixed rotation blanking delays and keep faders mounted while layout measurements settle, hiding intermediate geometry without repeated rebuilds.
+- Give the tall fader a fully rounded housing, a centred display that fits its text, and a close button below it.
+- Add press growth and a shorter expansion hold with a delayed, cancellable haptic. Scrolling and handle holds do not expand; grabbing a handle for adjustment has its own light haptic.
+- Simplify the project README around purpose, repository layout, development and deployment.
+
+
 ## 0.18.0 — Landscape AUX toolbar and tall faders
 
 - Add a fixed left-side landscape AUX selector with a native circular iOS menu and the selected mix name when space allows. Keep the faders full height and use a native browser select on web.
