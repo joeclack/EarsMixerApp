@@ -1,7 +1,7 @@
 import GroupCreateToolbar from './GroupCreateToolbar';
 import GroupScopeHeading from './GroupScopeHeading';
 import { Platform, Pressable, Text, TextInput, View } from 'react-native';
-import { Host, Switch } from '@expo/ui';
+import GroupScopeSwitch from './GroupScopeSwitch';
 import { Section, Message, Icon } from './ui';
 import NativeButton from './NativeButton';
 import { useTheme } from '../theme';
@@ -19,9 +19,8 @@ export default function GroupEditor(props: GroupEditorProps) {
     <Message error>{editor.error}</Message>
     <Section card={Platform.OS !== 'android'}>
       <View style={{ paddingHorizontal: 16 }}>
-      <Host matchContents={{ vertical: true }} colorScheme={theme.scheme} seedColor={theme.tint} style={{ minHeight: 56 }}>
-        <Switch label="All monitor mixes" value={editor.allAuxes} onValueChange={editor.setAllAuxes} disabled={editor.busy || (!editor.allAuxes && !editor.canApplyAll)} />
-      </Host>
+      <GroupScopeSwitch value={editor.allAuxes} onChange={editor.setAllAuxes} disabled={editor.busy || (!editor.allAuxes && !editor.canApplyAll)} />
+      {!editor.allAuxes && !editor.canApplyAll && <Text style={{ color: theme.muted, fontSize: 13, marginTop: 4 }}>Channels already grouped in another mix.</Text>}
       </View>
     </Section>
     <Section title="GROUP NAME">
