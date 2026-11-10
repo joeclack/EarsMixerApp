@@ -1,4 +1,5 @@
 import GroupCreateToolbar from './GroupCreateToolbar';
+import GroupScopeHeading from './GroupScopeHeading';
 import { Platform, Pressable, Text, TextInput, View } from 'react-native';
 import { Host, Switch } from '@expo/ui';
 import { Section, Message, Icon } from './ui';
@@ -14,8 +15,9 @@ export default function GroupEditor(props: GroupEditorProps) {
   </>;
   return <>
     <GroupCreateToolbar {...editor} />
+    <GroupScopeHeading allAuxes={editor.allAuxes} mixName={editor.mixName} />
     <Message error>{editor.error}</Message>
-    <Section title="APPLIES TO" card={Platform.OS !== 'android'} footer={!editor.allAuxes ? 'Only this mix: ' + editor.mixName : undefined}>
+    <Section card={Platform.OS !== 'android'}>
       <View style={{ paddingHorizontal: 16 }}>
       <Host matchContents={{ vertical: true }} colorScheme={theme.scheme} seedColor={theme.tint} style={{ minHeight: 56 }}>
         <Switch label="All monitor mixes" value={editor.allAuxes} onValueChange={editor.setAllAuxes} disabled={editor.busy || (!editor.allAuxes && !editor.canApplyAll)} />
