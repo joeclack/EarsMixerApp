@@ -1,7 +1,7 @@
 import React from 'react';
 import { useResetDeviceData } from './useResetDeviceData';
 import ProfileCard from './ProfileCard';
-import { Text, View, Pressable, Switch, Platform } from 'react-native';
+import { Text, View, Switch, Platform } from 'react-native';
 import { router } from 'expo-router';
 import Constants from 'expo-constants';
 import { useSession } from '../mixer/context';
@@ -12,6 +12,14 @@ export default function SettingsContent() {
   const { session, state, mix } = useSession(), theme = useTheme();
   const reset = useResetDeviceData();
   return <>
+    <Section title="Mixer connection" symbol={{ ios: 'wifi', android: 'wifi', web: 'wifi' }} footer="Tap the mixer to change it, scan a code or enter an address.">
+      <Row title={state.demo ? 'Demo mode' : state.server ? new URL(state.server).host : 'Connect to a mixer'}
+        detail={state.demo ? 'Demo' : mix.status === 'connected' ? 'Connected' : mix.status === 'disconnected' ? 'Not connected' : 'Connecting…'} onPress={() => router.push('/connect')}>
+        <Text style={{ color: theme.tint, fontSize: 15 }}>{state.server ? 'Change' : 'Connect'}</Text>
+      </Row>
+      {!state.demo && <Row title="Try demo" onPress={() => void session.startDemo()} />}
+      {state.server && <Row title="Disconnect" destructive onPress={() => session.disconnect()} />}
+    </Section>
     <View style={{ marginBottom: 26 }}><ProfileCard /></View>
     <Section title="Appearance" symbol={{ ios: 'circle.lefthalf.filled', android: 'contrast', web: 'contrast' }}>{Platform.OS !== 'android' && <Row title="Theme" />}
       <View style={{ padding: 12, paddingTop: Platform.OS === 'android' ? 12 : 0 }}><Segmented label="Appearance" value={state.settings.appearance}
@@ -20,22 +28,6 @@ export default function SettingsContent() {
     <Section title="Mixer" symbol={{ ios: 'slider.horizontal.3', android: 'tune', web: 'tune' }}>
       <Row title="Haptic feedback"><Switch accessibilityLabel="Haptic feedback" value={state.settings.haptics} onValueChange={haptics => session.setSettings({ haptics })} /></Row>
       <Row title="Edit channels" onPress={() => router.push('/layout')} />
-    </Section>
-    <Section title="Recent states" symbol={{ ios: 'clock', android: 'history', web: 'history' }}>
-      {!Object.keys(state.recentStates).length && <Row title="No saved levels" />}
-      {Object.entries(state.recentStates).sort(([, a], [, b]) => b.editedAt - a.editedAt).map(([key, saved]) => <View key={key} style={{ padding: 16, gap: 6 }}>
-        <Text style={{ color: theme.text, fontWeight: '600' }}>{saved.name}</Text>
-        <Text style={{ color: theme.muted }}>{new Date(saved.editedAt).toLocaleString()}</Text>
-      </View>)}
-    </Section>
-    <Section title="Connection" symbol={{ ios: 'wifi', android: 'wifi', web: 'wifi' }}><View style={{ flexDirection: 'row', alignItems: 'center' }}>
-      <View style={{ flex: 1 }}><Row title={state.demo ? 'Demo mode' : state.server ? new URL(state.server).host : 'Connect to a mixer'}
-        detail={state.demo ? 'Demo' : mix.status === 'connected' ? 'Connected' : mix.status === 'disconnected' ? 'Not connected' : 'Connecting…'} onPress={() => router.push('/connect')} /></View>
-      {state.server && <Pressable accessibilityRole="button" onPress={() => session.disconnect()} style={{ minHeight: 44, paddingHorizontal: 16, justifyContent: 'center' }}>
-        <Text style={{ color: theme.danger, fontSize: 15 }}>Disconnect</Text>
-      </Pressable>}
-    </View>
-      {!state.demo && <Row title="Try demo" onPress={() => void session.startDemo()} />}
     </Section>
     <Section><Row title="Reset device data" destructive onPress={reset.confirm} /></Section>
     <Section title="Developer tools" symbol={{ ios: 'wrench.and.screwdriver', android: 'build', web: 'build' }}>

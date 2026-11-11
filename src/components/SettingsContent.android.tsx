@@ -17,8 +17,15 @@ const appearances = [{ value: 'system', label: 'System' }, { value: 'light', lab
 export default function SettingsContent() {
   const { session, state, mix } = useSession(), theme = useTheme();
   const reset = useResetDeviceData();
-  const recent = Object.entries(state.recentStates).sort(([, a], [, b]) => b.editedAt - a.editedAt);
   return <>
+    <MaterialSection title="Mixer connection" symbol="wifi" footer="Tap the mixer to change it, scan a code or enter an address.">
+      <MaterialItem title={state.demo ? 'Demo mode' : state.server ? new URL(state.server).host : 'Connect to a mixer'}
+        detail={state.demo ? 'Demo' : mix.status === 'connected' ? 'Connected' : mix.status === 'disconnected' ? 'Not connected' : 'Connecting…'}
+        symbol={state.demo ? 'play_circle' : mix.status === 'connected' ? 'wifi' : 'wifi_off'} onPress={() => router.push('/connect')}
+        trailing={<TextButton onClick={() => router.push('/connect')}><Text>{state.server ? 'Change' : 'Connect'}</Text></TextButton>} />
+      {!state.demo && <MaterialItem title="Try demo" symbol="play_circle" onPress={() => void session.startDemo()} />}
+      {state.server && <MaterialItem title="Disconnect" symbol="link_off" destructive onPress={() => session.disconnect()} />}
+    </MaterialSection>
     {/* Text entry stays a React Native field, in a card matching the sections. */}
     <View style={{ marginBottom: 24 }}>
       <MaterialSectionTitle title="This device" symbol="account_circle" />
@@ -42,17 +49,6 @@ export default function SettingsContent() {
         trailing={<Switch value={state.settings.haptics} onCheckedChange={haptics => session.setSettings({ haptics })}
           modifiers={[semantics({ contentDescription: 'Haptic feedback' })]} />} />
       <MaterialItem title="Edit channels" symbol="reorder" onPress={() => router.push('/layout')} />
-    </MaterialSection>
-    <MaterialSection title="Recent states" symbol="history">
-      {!recent.length && <MaterialItem title="No saved levels" />}
-      {recent.map(([key, saved]) => <MaterialItem key={key} title={saved.name} detail={new Date(saved.editedAt).toLocaleString()} />)}
-    </MaterialSection>
-    <MaterialSection title="Connection" symbol="wifi">
-      <MaterialItem title={state.demo ? 'Demo mode' : state.server ? new URL(state.server).host : 'Connect to a mixer'}
-        detail={state.demo ? 'Demo' : mix.status === 'connected' ? 'Connected' : mix.status === 'disconnected' ? 'Not connected' : 'Connecting…'}
-        symbol={state.demo ? 'play_circle' : mix.status === 'connected' ? 'wifi' : 'wifi_off'} onPress={() => router.push('/connect')}
-        trailing={state.server ? <TextButton onClick={() => session.disconnect()} colors={{ contentColor: theme.danger }}><Text>Disconnect</Text></TextButton> : undefined} />
-      {!state.demo && <MaterialItem title="Try demo" symbol="play_circle" onPress={() => void session.startDemo()} />}
     </MaterialSection>
     <MaterialSection>
       <MaterialItem title="Reset device data" symbol="delete_forever" destructive onPress={reset.confirm} />
