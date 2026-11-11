@@ -106,3 +106,14 @@ export function LcdReadout({ children, minWidth = 62 }: { children: ReactNode; m
     </View>
   </View>;
 }
+
+// A recessed numbered key for ordered instructions.
+export function StepNumber({ value }: { value: number }) {
+  const { dark, tint } = useTheme();
+  return <View {...hidden} style={{ width: 26, height: 26, borderRadius: 13, alignItems: 'center', justifyContent: 'center',
+    backgroundColor: dark ? '#0B151B' : '#FFFFFF', borderWidth: 1, borderColor: dark ? '#30434D' : '#BCCCD5',
+    boxShadow: [{ inset: true, offsetX: 0, offsetY: 1, blurRadius: 3, color: dark ? '#00000099' : '#24414E1F' }] }}>
+    <Text style={{ color: tint, fontSize: 13, lineHeight: 16, fontWeight: '700', fontVariant: ['tabular-nums'],
+      fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace' }}>{value}</Text>
+  </View>;
+}

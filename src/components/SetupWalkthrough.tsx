@@ -13,14 +13,15 @@ import { Message } from './ui';
 import HardwareEmblem from './HardwareEmblem';
 import SetupProgress from './SetupProgress';
 import NativeButton from './NativeButton';
-import { Engraved, Led } from './ConsoleDetails';
+import { Engraved, Led, StepNumber } from './ConsoleDetails';
 
 const steps = [
-  { title: 'Set your nickname', symbol: 'person.crop.circle' as const, body: 'This name identifies your connection to the mixer.', bullets: [] },
-  { title: 'Connect to a mixer', symbol: 'wifi' as const, body: 'Make sure you are on the correct Wi-Fi.', bullets: [] },
-  { title: 'Choose a template (optional)', symbol: 'square.stack' as const, body: '', bullets: ['Open the … menu and tap Templates.', 'Choose a saved layout, or keep your own.', 'Templates never change desk levels.'] },
-  { title: 'Adjust your mix', symbol: 'slider.horizontal.3' as const, body: '', bullets: ['Tap the headphones button to choose your AUX.', 'Choose Level or Pan in the … menu.', 'Drag a handle to adjust.', 'Rotate for vertical faders.'] },
-  { title: 'Keep your layout', symbol: 'eye.slash' as const, body: '', bullets: ['Tap Edit to reorder or hide channels.', 'Layouts save automatically on this phone.', 'Reconnects to your last mixer.'] },
+  { title: 'Set your nickname', symbol: 'person.crop.circle' as const, material: 'account_circle' as const, body: 'This name identifies your connection to the mixer.', bullets: [] },
+  { title: 'Connect to a mixer', symbol: 'wifi' as const, material: 'wifi' as const, body: 'Make sure you are on the correct Wi-Fi.', bullets: [] },
+  { title: 'Choose a template (optional)', symbol: 'square.stack' as const, material: 'layers' as const, body: '', bullets: ['Open the … menu and tap Templates.', 'Choose a saved layout, or keep your own.', 'Templates never change desk levels.'] },
+  { title: 'Adjust your mix', symbol: 'slider.horizontal.3' as const, material: 'tune' as const, body: '', bullets: ['Tap the headphones button to choose your AUX.', 'Choose Level or Pan in the … menu.', 'Drag a handle to adjust.', 'Long press a fader for a tall, finer fader.'] },
+  { title: 'Go landscape', symbol: 'rotate.right' as const, material: 'screen_rotation' as const, body: 'Turn your phone sideways for a bank of vertical faders, just like the desk.', bullets: ['Scroll sideways through your channels.', 'Use the side rail to switch AUX and choose Level or Pan.', 'Set every level to off from the rail.'] },
+  { title: 'Keep your layout', symbol: 'eye.slash' as const, material: 'visibility_off' as const, body: '', bullets: ['Tap Edit to reorder or hide channels.', 'Layouts save automatically on this phone.', 'Reconnects to your last mixer.'] },
 ];
 export default function SetupWalkthrough() {
   const { session, state, mix } = useSession(), theme = useTheme();
@@ -54,12 +55,12 @@ export default function SetupWalkthrough() {
     <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
     <ScrollView contentInsetAdjustmentBehavior="never" automaticallyAdjustContentInsets={false} style={{ flex: 1 }} keyboardShouldPersistTaps="handled" automaticallyAdjustKeyboardInsets contentContainerStyle={{ flexGrow: 1, padding: 28, gap: 24, justifyContent: 'flex-start', maxWidth: 600, width: '100%', alignSelf: 'center' }}>
       <Animated.View key={step} entering={FadeIn.duration(160).reduceMotion(ReduceMotion.System)} style={{ gap: 24 }}>
-      <HardwareEmblem name={{ ios: current.symbol, android: step === 0 ? 'account_circle' : step === 1 ? 'wifi' : step === 2 ? 'layers' : step === 3 ? 'tune' : 'visibility_off', web: step === 0 ? 'account_circle' : step === 1 ? 'wifi' : step === 2 ? 'layers' : step === 3 ? 'tune' : 'visibility_off' }} />
+      <HardwareEmblem name={{ ios: current.symbol, android: current.material, web: current.material }} />
       <Text accessibilityRole="header" style={{ color: theme.text, fontSize: 30, fontWeight: '700' }}>{current.title}</Text>
       {!!current.body && <Text style={{ color: theme.muted, fontSize: 17, lineHeight: 26 }}>{current.body}</Text>}
       {!!current.bullets.length && <View accessibilityRole="list" style={{ gap: 16 }}>
-        {current.bullets.map(text => <View key={text} style={{ flexDirection: 'row', gap: 12 }}>
-          <Led color="teal" size={6} style={{ marginTop: 8 }} />
+        {current.bullets.map((text, index) => <View key={text} style={{ flexDirection: 'row', gap: 12 }}>
+          <StepNumber value={index + 1} />
           <Text style={{ flex: 1, color: theme.muted, fontSize: 17, lineHeight: 26 }}>{text}</Text>
         </View>)}
       </View>}

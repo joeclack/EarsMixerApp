@@ -11,7 +11,7 @@ import { Page, EmptyMixer, Icon } from '../../../src/components/ui';
 import NativeButton from '../../../src/components/NativeButton';
 import Fader, { FaderValue } from '../../../src/components/Fader';
 import FaderHousing from '../../../src/components/FaderHousing';
-import { CornerScrews, Engraved } from '../../../src/components/ConsoleDetails';
+import { Engraved } from '../../../src/components/ConsoleDetails';
 import FaderDisplay from '../../../src/components/FaderDisplay';
 import GroupExpandTarget from '../../../src/components/GroupExpandTarget';
 import CloseButton from '../../../src/components/CloseButton';
@@ -95,7 +95,6 @@ export default function Mixer() {
         paddingHorizontal: landscape ? 4 : 10, paddingTop: landscape ? 4 : 0, paddingBottom: landscape ? 4 : 12 }
         : landscape ? { paddingHorizontal: 4, paddingVertical: 6 } : {}),
     }}>
-      {grouped && !landscape && <CornerScrews />}
       {grouped && !landscape && (open ? <View style={{ minHeight: 48, paddingHorizontal: 6, gap: 8,
         flexDirection: 'row', alignItems: 'center', borderBottomWidth: 1, borderBottomColor: theme.line, marginBottom: 10 }}>
         <Icon name={{ ios: 'link', android: 'link', web: 'link' }} size={14} />
