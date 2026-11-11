@@ -1,9 +1,10 @@
 import { useSetAllLevelsOff } from './useSetAllLevelsOff';
-import { Platform } from 'react-native';
+import { Platform, Pressable } from 'react-native';
 import { router, Stack } from 'expo-router';
 import { useSession } from '../mixer/context';
 import { useTheme } from '../theme';
 import AuxSelector from './AuxSelector';
+import { Icon, styles } from './ui';
 
 export default function MixerToolbar() {
   const { session, state, mix } = useSession();
@@ -37,19 +38,20 @@ export default function MixerToolbar() {
       {mix.config.aux.map(aux => <Stack.Toolbar.MenuAction key={aux.channel} isOn={mix.aux === aux.channel}
         onPress={() => session.preferences({ selectedAux: aux.channel })}>{aux.label}</Stack.Toolbar.MenuAction>)}
     </Stack.Toolbar.Menu>}
-    {/* One menu for mixer options and Settings, leaving room for a long AUX name.
-        It is always shown, since Settings is where the mixer connection lives. */}
-    <Stack.Toolbar.Menu icon={Platform.OS === 'ios' ? 'ellipsis' : require('../../assets/toolbar/more.png')} accessibilityLabel="Mixer options and settings">
-      {state.server && (Platform.OS === 'android' ? modeActions : <Stack.Toolbar.Menu inline title="Fader mode" icon="slider.horizontal.3">
+    {/* Mixer options and Settings share one glass group, leaving room for a long AUX name. */}
+    {state.server && <Stack.Toolbar.Menu icon={Platform.OS === 'ios' ? 'ellipsis' : require('../../assets/toolbar/more.png')} accessibilityLabel="Mixer options">
+      <Stack.Toolbar.Label>Options</Stack.Toolbar.Label>
+      {Platform.OS === 'android' ? modeActions : <Stack.Toolbar.Menu inline title="Fader mode" icon="slider.horizontal.3">
         {modeActions}
-      </Stack.Toolbar.Menu>)}
-      {state.server && <Stack.Toolbar.Menu inline title="Options">
-        {otherActions}
       </Stack.Toolbar.Menu>}
-      <Stack.Toolbar.Menu inline title="App">
-        <Stack.Toolbar.MenuAction icon={Platform.OS === 'ios' ? 'gearshape' : undefined} onPress={() => router.push('/settings')}>Settings</Stack.Toolbar.MenuAction>
-      </Stack.Toolbar.Menu>
-    </Stack.Toolbar.Menu>
+      {Platform.OS === 'android' ? <Stack.Toolbar.Menu inline title="Options">
+        {otherActions}
+      </Stack.Toolbar.Menu> : otherActions}
+    </Stack.Toolbar.Menu>}
+    {Platform.OS === 'ios' ? <Stack.Toolbar.Button icon="gearshape" accessibilityLabel="Settings" onPress={() => router.push('/settings')} /> :
+      <Stack.Toolbar.View><Pressable accessibilityRole="button" accessibilityLabel="Settings" onPress={() => router.push('/settings')} style={styles.headerButton}>
+        <Icon name={{ android: 'settings' }} />
+      </Pressable></Stack.Toolbar.View>}
   </Stack.Toolbar>
   </>;
 }

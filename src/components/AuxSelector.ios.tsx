@@ -22,11 +22,15 @@ export default function AuxSelector() {
   // The capsule gets an explicit size from the name's measured width, rather than
   // measuring itself while the header reappears after rotation, and ignores the
   // safe area so a stale landscape inset cannot offset it.
-  const label = Math.min(MAX_TEXT, Math.ceil(textWidth));
+  const label = Math.min(MAX_TEXT, Math.ceil(textWidth) + 4);
   const width = PADDING * 2 + ICON + GAP + label;
   return <View onTouchStart={unavailable ? undefined : haptic} style={{ width, height: HEIGHT }}>
-    <RNText numberOfLines={1} accessible={false} onLayout={event => setTextWidth(event.nativeEvent.layout.width)}
-      style={{ position: 'absolute', opacity: 0, fontSize: 17, fontWeight: '600' }}>{name}</RNText>
+    {/* Measure the name at its natural width, outside the capsule's own frame. */}
+    <View pointerEvents="none" accessible={false} importantForAccessibility="no-hide-descendants" accessibilityElementsHidden
+      style={{ position: 'absolute', left: 0, top: 0, width: 1000, flexDirection: 'row', opacity: 0 }}>
+      <RNText numberOfLines={1} onLayout={event => setTextWidth(event.nativeEvent.layout.width)}
+        style={{ fontSize: 17, fontWeight: '600' }}>{name}</RNText>
+    </View>
     {textWidth > 0 && <Host colorScheme={theme.scheme} ignoreSafeArea="all" style={{ width, height: HEIGHT }}>
       <Menu label={<HStack spacing={GAP}>
           <Image systemName="headphones" size={ICON} color={theme.tint} />
