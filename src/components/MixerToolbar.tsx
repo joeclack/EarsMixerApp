@@ -3,8 +3,8 @@ import { Platform, Pressable } from 'react-native';
 import { router, Stack } from 'expo-router';
 import { useSession } from '../mixer/context';
 import { useTheme } from '../theme';
+import AuxSelector from './AuxSelector';
 import { Icon, styles } from './ui';
-import MixerHeading from './MixerHeading';
 
 export default function MixerToolbar() {
   const { session, state, mix } = useSession();
@@ -12,8 +12,6 @@ export default function MixerToolbar() {
   const setAllLevelsOff = useSetAllLevelsOff();
   const selected = mix.config?.aux.find(aux => aux.channel === mix.aux);
   const label = selected?.label || 'Choose mix';
-  const status = mix.status === 'connected' ? 'Connected' : mix.status === 'disconnected' ? 'Disconnected' : 'Connecting';
-  const color = state.demo ? theme.orange : mix.status === 'connected' ? theme.green : mix.status === 'disconnected' ? theme.danger : theme.orange;
   const modeActions = [
     <Stack.Toolbar.MenuAction key="level" isOn={mix.parameter === 'level'} onPress={() => session.mixer.setParameter('level')}>Level</Stack.Toolbar.MenuAction>,
     <Stack.Toolbar.MenuAction key="pan" isOn={mix.parameter === 'pan'} onPress={() => session.mixer.setParameter('pan')}>Pan</Stack.Toolbar.MenuAction>,
@@ -27,24 +25,20 @@ export default function MixerToolbar() {
   return <>
     <Stack.Toolbar placement="left">
       <Stack.Toolbar.View hidesSharedBackground>
-        <MixerHeading />
+        <AuxSelector />
       </Stack.Toolbar.View>
     </Stack.Toolbar>
     <Stack.Toolbar placement="right" tintColor={theme.tint}
       backgroundColor={Platform.OS === 'android' ? theme.panel : undefined}
       buttonContainerColor={Platform.OS === 'android' ? 'transparent' : undefined}>
-    {Platform.OS === 'ios' ? <Stack.Toolbar.Button icon={state.demo ? 'play.circle' : mix.status === 'connected' ? 'wifi' : 'wifi.slash'}
-      accessibilityLabel={status + '. Connect to mixer'} tintColor={color} onPress={() => router.push('/connect')} /> :
-      <Stack.Toolbar.View><Pressable accessibilityRole="button" accessibilityLabel={status + '. Connect to mixer'}
-        onPress={() => router.push('/connect')} style={styles.headerButton}>
-        <Icon name={{ android: mix.status === 'connected' ? 'wifi' : 'wifi_off' }} color={color} />
-      </Pressable></Stack.Toolbar.View>}
-    {state.server && !!mix.config?.aux.length && <Stack.Toolbar.Menu icon={Platform.OS === 'ios' ? 'headphones' : require('../../assets/toolbar/headphones.png')}
+    {/* On iOS the AUX is chosen from the leading selector. */}
+    {Platform.OS !== 'ios' && state.server && !!mix.config?.aux.length && <Stack.Toolbar.Menu icon={Platform.OS === 'ios' ? 'headphones' : require('../../assets/toolbar/headphones.png')}
       accessibilityLabel={'Choose AUX, ' + label} disabled={mix.status !== 'connected'}>
       <Stack.Toolbar.Label>Choose AUX</Stack.Toolbar.Label>
       {mix.config.aux.map(aux => <Stack.Toolbar.MenuAction key={aux.channel} isOn={mix.aux === aux.channel}
         onPress={() => session.preferences({ selectedAux: aux.channel })}>{aux.label}</Stack.Toolbar.MenuAction>)}
     </Stack.Toolbar.Menu>}
+    {/* Mixer options and Settings share one glass group, leaving room for a long AUX name. */}
     {state.server && <Stack.Toolbar.Menu icon={Platform.OS === 'ios' ? 'ellipsis' : require('../../assets/toolbar/more.png')} accessibilityLabel="Mixer options">
       <Stack.Toolbar.Label>Options</Stack.Toolbar.Label>
       {Platform.OS === 'android' ? modeActions : <Stack.Toolbar.Menu inline title="Fader mode" icon="slider.horizontal.3">

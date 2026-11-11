@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.20.0 - Fixed some UI layout bugs and refined
+
+- Fixed misaligned landscape toolbar when notch is on right side.
+- Changed the layout of the main toolbar on the Mixer page.
+- Re-ordered settings page. Moved the Connection menun item out of Mixer and accessible in Settings.
+- Connection toasts now show if the connection is lost.
+- Faders now use more neumorphism. 
+- Light mode colours enhanced. 
+- Android UI audited and added more native support. 
+- Added more walk-through screens in the setup of the app, showcasing the tall fader, giving the user a demo of how faders work
+
 ## 0.19.0 — Landscape controls and refined fader interaction
 
 - Add matching native circular landscape controls for AUX selection, Level/Pan mode and setting all levels to off. Centre the rail vertically, label the current mode, use an infinity icon for off, and provide optional button haptics.

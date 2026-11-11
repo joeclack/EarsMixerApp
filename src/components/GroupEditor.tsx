@@ -23,12 +23,12 @@ export default function GroupEditor(props: GroupEditorProps) {
       {!editor.allAuxes && !editor.canApplyAll && <Text style={{ color: theme.muted, fontSize: 13, marginTop: 4 }}>Channels already grouped in another mix.</Text>}
       </View>
     </Section>
-    <Section title="GROUP NAME">
+    <Section title="Group name">
       <TextInput accessibilityLabel="Group name" placeholder="Group name" placeholderTextColor={theme.muted} value={editor.name}
         onChangeText={editor.rename} editable={!editor.busy} maxLength={80} autoCorrect={false} autoCapitalize="words" autoComplete="off"
         style={{ color: theme.text, fontSize: 17, padding: 16, minHeight: 52, position: 'relative' }} />
     </Section>
-    <Section title={'CHANNELS (' + editor.members.length + ')'}>
+    <Section title={'Channels (' + editor.members.length + ')'}>
       {editor.members.map((channel, index) => <View key={channel.channel} style={{ padding: 16, gap: 8,
         borderBottomWidth: Platform.OS === 'android' && index < editor.members.length - 1 ? 1 : 0, borderBottomColor: theme.line }}>
         <Text style={{ color: theme.text, fontSize: 17 }}>{Platform.OS === 'android' ? channel.label : (index + 1) + '. ' + channel.label}</Text>
@@ -56,7 +56,7 @@ export default function GroupEditor(props: GroupEditorProps) {
       </View>)}
       {!editor.members.length && <Text style={{ color: theme.muted, padding: 16 }}>Add channels below.</Text>}
     </Section>
-    <Section title="ADD CHANNELS">
+    <Section title="Add channels">
       {editor.available.map(channel => <View key={channel.channel} style={{ paddingHorizontal: 8, paddingVertical: 4 }}>
         <NativeButton title={channel.label} symbol="plus.circle" accessibilityLabel={'Add ' + channel.label} disabled={editor.busy} onPress={() => editor.add(channel.channel)} />
       </View>)}

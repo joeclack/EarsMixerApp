@@ -6,7 +6,7 @@ import { groupLabel } from '../mixer/groups';
 import { useGroupsList } from './useGroupsList';
 export default function GroupsList() {
   const list = useGroupsList(), theme = useTheme();
-  return <><Message error>{list.error}</Message><Section title="YOUR GROUPS">
+  return <><Message error>{list.error}</Message><Section title="Your groups">
     {Platform.OS === 'android' ? <Pressable accessibilityRole="button" accessibilityLabel="Create new group"
       accessibilityState={{ disabled: !list.canCreate }} disabled={!list.canCreate} onPress={() => list.open('new')}
       style={({ pressed }) => ({ minHeight: 56, paddingHorizontal: 16, paddingVertical: 14, flexDirection: 'row', alignItems: 'center', gap: 12,

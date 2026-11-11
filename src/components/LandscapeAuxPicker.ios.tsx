@@ -6,11 +6,14 @@ import { useTheme } from '../theme';
 import type { LandscapeAuxPickerProps } from './LandscapeAuxPicker';
 import { useToolbarHaptic } from './useToolbarHaptic';
 
+// The rail sits inside the left safe-area inset that iOS reserves in landscape
+// even on the side without the notch. Without ignoreSafeArea the hosted SwiftUI
+// button shifts right of its frame, out of line with the rail labels.
 export default function LandscapeAuxPicker({ auxes, selected, disabled: unavailable, onChange }: LandscapeAuxPickerProps) {
   const theme = useTheme();
   const haptic = useToolbarHaptic();
   const label = auxes.find(aux => aux.channel === selected)?.label || 'Choose mix';
-  return <View onTouchStart={unavailable ? undefined : haptic}><Host colorScheme={theme.scheme} style={{ width: 64, height: 64 }}>
+  return <View onTouchStart={unavailable ? undefined : haptic}><Host colorScheme={theme.scheme} ignoreSafeArea="all" style={{ width: 64, height: 64 }}>
     <Menu label={<Image systemName="headphones" size={22} modifiers={[frame({ width: 44, height: 44 })]} />}
       modifiers={[menuStyle('button'), buttonStyle(Number(Platform.Version) >= 26 ? 'glass' : 'bordered'), buttonBorderShape('circle'),
         frame({ width: 64, height: 64 }), tint(theme.tint), disabled(unavailable), accessibilityLabel('Choose AUX, ' + label)]}>
