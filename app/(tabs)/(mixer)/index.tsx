@@ -23,6 +23,7 @@ import { useLandscapeEdgePadding } from '../../../src/components/useLandscapeEdg
 import LandscapeMixerToolbar from '../../../src/components/LandscapeMixerToolbar';
 import FaderFocusTransition from '../../../src/components/FaderFocusTransition';
 import ExpandableFader from '../../../src/components/ExpandableFader';
+import type { FaderOrigin } from '../../../src/components/ExpandableFader';
 import { useStableMixerLayout } from '../../../src/components/useStableMixerLayout';
 import LandscapeFaderViewport from '../../../src/components/LandscapeFaderViewport';
 
@@ -38,6 +39,7 @@ export default function Mixer() {
   useEffect(() => { session.mixer.cancelWrites(); }, [landscape, session]);
   const [expanded, setExpanded] = useState<number[]>([]);
   const [focused, setFocused] = useState<number | null>(null);
+  const [focusOrigin, setFocusOrigin] = useState<FaderOrigin>();
   useEffect(() => { setFocused(null); }, [state.server, mix.aux, mix.parameter, landscape]);
   useEffect(() => { setExpanded([]); }, [state.server, mix.aux, state.preferences.groupsByAux, state.preferences.globalGroups]);
   useFocusEffect(useCallback(() => {
@@ -83,8 +85,8 @@ export default function Mixer() {
       </View>}
       <View style={landscape ? { width: 88, alignSelf: grouped && !open ? 'center' : 'flex-start' } : undefined}>
         {landscape ? <FaderHousing vertical><Fader channel={channel.channel} label={channel.label} vertical length={stripHeight} /></FaderHousing>
-          : <ExpandableFader channel={channel.channel} label={channel.label} onEnlarge={() => {
-            session.mixer.cancelWrites(); setFocused(channel.channel);
+          : <ExpandableFader channel={channel.channel} label={channel.label} onEnlarge={origin => {
+            session.mixer.cancelWrites(); setFocusOrigin(origin); setFocused(channel.channel);
           }} />}
       </View>
     </View>;
@@ -134,7 +136,7 @@ export default function Mixer() {
     <View pointerEvents={layoutReady ? 'auto' : 'none'} accessibilityElementsHidden={!layoutReady}
       importantForAccessibility={layoutReady ? 'auto' : 'no-hide-descendants'} style={{ flex: 1, opacity: layoutReady ? 1 : 0 }}>
     <LandscapeFaderViewport enabled={landscape}>
-    <MixerLoadingBoundary>{!state.server ? <EmptyMixer /> : <FaderFocusTransition row={focusedRow} onClose={closeFocused}>
+    <MixerLoadingBoundary>{!state.server ? <EmptyMixer /> : <FaderFocusTransition row={focusedRow} origin={focusOrigin} onClose={closeFocused}>
     <FlatList key={landscape ? 'strips' : 'rows'} horizontal={landscape} extraData={state.preferences}
       data={sections} renderItem={renderSection} keyExtractor={item => String(item.header.channel)} contentInsetAdjustmentBehavior="never"
       contentContainerStyle={{ paddingTop: topPadding, ...(landscape ? { paddingLeft: 16, paddingRight: 16 } : { paddingLeft: 20, paddingRight: 20 }), paddingBottom: bottomPadding }} keyboardShouldPersistTaps="handled"
