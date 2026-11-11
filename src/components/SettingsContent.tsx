@@ -13,9 +13,10 @@ export default function SettingsContent() {
   const reset = useResetDeviceData();
   return <>
     <View style={{ marginBottom: 26 }}><ProfileCard /></View>
-    <Section title="Appearance" symbol={{ ios: 'circle.lefthalf.filled', android: 'contrast', web: 'contrast' }}>{Platform.OS !== 'android' && <Row title="Theme" />}<Segmented label="Appearance" value={state.settings.appearance}
-      options={[{ value: 'system', label: 'System' }, { value: 'light', label: 'Light' }, { value: 'dark', label: 'Dark' }]}
-      onChange={value => session.setSettings({ appearance: value as 'system' | 'light' | 'dark' })} /></Section>
+    <Section title="Appearance" symbol={{ ios: 'circle.lefthalf.filled', android: 'contrast', web: 'contrast' }}>{Platform.OS !== 'android' && <Row title="Theme" />}
+      <View style={{ padding: 12, paddingTop: Platform.OS === 'android' ? 12 : 0 }}><Segmented label="Appearance" value={state.settings.appearance}
+        options={[{ value: 'system', label: 'System' }, { value: 'light', label: 'Light' }, { value: 'dark', label: 'Dark' }]}
+        onChange={value => session.setSettings({ appearance: value as 'system' | 'light' | 'dark' })} /></View></Section>
     <Section title="Mixer" symbol={{ ios: 'slider.horizontal.3', android: 'tune', web: 'tune' }}>
       <Row title="Haptic feedback"><Switch accessibilityLabel="Haptic feedback" value={state.settings.haptics} onValueChange={haptics => session.setSettings({ haptics })} /></Row>
       <Row title="Edit channels" onPress={() => router.push('/layout')} />

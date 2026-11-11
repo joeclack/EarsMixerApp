@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useState, type PropsWithChildren } from 'react';
+import { View } from 'react-native';
 import { Host } from '@expo/ui';
 import { DropdownMenu, DropdownMenuItem, IconButton, RNHostView, Text } from '@expo/ui/jetpack-compose';
 import { semantics } from '@expo/ui/jetpack-compose/modifiers';
@@ -11,7 +12,7 @@ export default function LandscapeAuxPicker({ auxes, selected, disabled, onChange
   const theme = useTheme(), [expanded, setExpanded] = useState(false);
   const haptic = useToolbarHaptic();
   const label = auxes.find(aux => aux.channel === selected)?.label || 'Choose mix';
-  return <Host matchContents colorScheme={theme.scheme} seedColor={theme.tint}>
+  return <RailButton disabled={disabled}><Host matchContents colorScheme={theme.scheme} seedColor={theme.tint}>
     <DropdownMenu expanded={!disabled && expanded} onDismissRequest={() => setExpanded(false)} color={theme.panel}>
       <DropdownMenu.Trigger><IconButton enabled={!disabled} onClick={() => { haptic(); setExpanded(true); }} modifiers={[semantics({ contentDescription: 'Choose AUX, ' + label })]}>
         <RNHostView matchContents><Icon name={{ android: 'headphones' }} /></RNHostView>
@@ -20,5 +21,12 @@ export default function LandscapeAuxPicker({ auxes, selected, disabled, onChange
         <DropdownMenuItem.Text><Text>{(aux.channel === selected ? '✓ ' : '') + aux.label}</Text></DropdownMenuItem.Text>
       </DropdownMenuItem>)}</DropdownMenu.Items>
     </DropdownMenu>
-  </Host>;
+  </Host></RailButton>;
+}
+
+// The shared filled circle behind every landscape rail control on Android.
+export function RailButton({ disabled, children }: PropsWithChildren<{ disabled: boolean }>) {
+  const theme = useTheme();
+  return <View style={{ width: 48, height: 48, borderRadius: 24, backgroundColor: theme.panel, alignItems: 'center', justifyContent: 'center',
+    overflow: 'hidden', opacity: disabled ? 0.4 : 1 }}>{children}</View>;
 }
