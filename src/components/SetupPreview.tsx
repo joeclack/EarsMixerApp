@@ -258,6 +258,18 @@ function Adjust() {
   </View>;
 }
 
+function MiniStrip({ level }: { level: number }) {
+  const { dark } = useTheme(), palette = hardwarePalette(dark);
+  return <View style={{ width: 16, flex: 1, borderRadius: 8, backgroundColor: dark ? '#0B171C' : '#E9E2CC',
+    borderWidth: dark ? 0 : 1, borderColor: '#B42B43', alignItems: 'center',
+    boxShadow: [{ offsetX: 0, offsetY: 2, blurRadius: 4, color: dark ? '#000000A6' : '#2E4A5833' }] }}>
+    <View style={{ position: 'absolute', top: 8, bottom: 8, width: 2, borderRadius: 1, backgroundColor: '#000000' }} />
+    <View style={{ position: 'absolute', bottom: 8, height: `${level * 70}%`, width: 2, borderRadius: 1, backgroundColor: palette.indicator }} />
+    <View style={{ position: 'absolute', bottom: `${level * 70}%`, width: 14, height: 9, borderRadius: 2, backgroundColor: '#1F292E',
+      borderWidth: 1, borderColor: '#5A6970' }} />
+  </View>;
+}
+
 // A phone turned sideways, showing the vertical fader bank and the side rail.
 function Landscape() {
   const theme = useTheme();
