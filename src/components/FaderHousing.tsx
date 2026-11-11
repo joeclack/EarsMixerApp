@@ -8,28 +8,31 @@ import { useTheme } from '../theme';
 export default memo(function FaderHousing({ vertical, children, size = 1 }: PropsWithChildren<{ vertical: boolean; size?: number }>) {
   const theme = useTheme();
   const radius = vertical ? 44 * size : 999;
+  // Landscape strips sit 6 pt apart inside groups, so their lip is narrower.
+  const lip = vertical && size === 1 ? 3 : 6;
   return <View style={{ alignSelf: vertical ? 'center' : 'stretch', width: vertical ? 88 * size : undefined }}>
-    <FaderBevel dark={theme.dark} radius={vertical ? radius : 999} />
+    <FaderLip dark={theme.dark} width={lip} radius={vertical ? radius + lip : 999} />
     <Housing vertical={vertical} radius={radius}>{children}</Housing>
   </View>;
 });
 
-// The surrounding surface rises into the pill with no visible edge of its own:
-// broad soft light above and shadow below, fading out into the background.
-// It never affects layout or touches.
-function FaderBevel({ dark, radius }: { dark: boolean; radius: number }) {
-  return <View pointerEvents="none" accessible={false} style={{ position: 'absolute', inset: 0, borderRadius: radius,
-    // Opaque like the housing it sits under, so iOS always renders the shadows.
-    backgroundColor: dark ? '#061014' : '#E1DDC9',
+// A tight curved lip where the surface swells up to meet the pill: lit along
+// the top, shaded underneath, and feathered into the background by small soft
+// shadows. It hugs the edge, so the pill reads as growing out of the page
+// rather than floating above it. It never affects layout or touches.
+function FaderLip({ dark, width, radius }: { dark: boolean; width: number; radius: number }) {
+  return <View pointerEvents="none" accessible={false} style={{ position: 'absolute', inset: -width, borderRadius: radius,
     boxShadow: dark
-      ? [{ offsetX: 0, offsetY: -6, blurRadius: 16, spreadDistance: 2, color: '#8FB4C21A' },
-        { offsetX: 0, offsetY: -1, blurRadius: 3, color: '#8FB4C214' },
-        { offsetX: 0, offsetY: 9, blurRadius: 20, spreadDistance: 3, color: '#000000A6' },
-        { offsetX: 0, offsetY: 2, blurRadius: 5, color: '#00000080' }]
-      : [{ offsetX: 0, offsetY: -7, blurRadius: 16, spreadDistance: 3, color: '#FFFFFF' },
-        { offsetX: 0, offsetY: -2, blurRadius: 4, color: '#FFFFFFCC' },
-        { offsetX: 0, offsetY: 9, blurRadius: 20, spreadDistance: 3, color: '#2E4A5833' },
-        { offsetX: 0, offsetY: 2, blurRadius: 5, color: '#2E4A5826' }] }} />;
+      ? [{ offsetX: 0, offsetY: -2, blurRadius: 5, color: 'rgba(150,195,210,0.13)' },
+        { offsetX: 0, offsetY: 3, blurRadius: 6, color: 'rgba(0,0,0,0.5)' }]
+      : [{ offsetX: 0, offsetY: -2, blurRadius: 5, color: 'rgba(255,255,255,0.95)' },
+        { offsetX: 0, offsetY: 3, blurRadius: 6, color: 'rgba(46,74,88,0.2)' }] }}>
+    <LinearGradient colors={dark
+      ? ['rgba(150,195,210,0.2)', 'rgba(150,195,210,0.04)', 'rgba(0,0,0,0.1)', 'rgba(0,0,0,0.42)']
+      : ['rgba(255,255,255,1)', 'rgba(255,255,255,0.35)', 'rgba(46,74,88,0.05)', 'rgba(46,74,88,0.2)']}
+      locations={[0, 0.45, 0.6, 1]} start={{ x: 0.5, y: 0 }} end={{ x: 0.5, y: 1 }}
+      style={[StyleSheet.absoluteFill, { borderRadius: radius }]} />
+  </View>;
 }
 
 function Housing({ vertical, radius, children }: PropsWithChildren<{ vertical: boolean; radius: number }>) {
