@@ -5,6 +5,7 @@ import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import { scheduleOnRN, scheduleOnUI } from 'react-native-worklets';
 import FaderHandleSurface from './FaderHandleSurface';
 import { LinearGradient } from 'expo-linear-gradient';
+import { LcdReadout } from './ConsoleDetails';
 import { FADER_CAP_HEIGHT, FADER_CAP_WIDTH, FADER_INSET, FADER_TRACK_CENTER, FADER_LIGHT } from './faderGeometry';
 import { DragHaptics } from '../mixer/dragHaptics';
 import * as Haptics from 'expo-haptics';
@@ -205,8 +206,8 @@ export default memo(function Fader({ channel, label, vertical = false, length = 
 
 export const FaderValue = memo(function FaderValue({ channel }: { channel: number }) {
   const { session, mix } = useFaderSession(channel);
-  const theme = useTheme();
-  return <Text style={{ color: theme.muted, fontSize: 12, fontVariant: ['tabular-nums'] }}>{levelText(session.mixer.displayValue(channel), mix.parameter)}</Text>;
+  const value = levelText(session.mixer.displayValue(channel), mix.parameter);
+  return <View accessible accessibilityLabel={value}><LcdReadout>{value}</LcdReadout></View>;
 });
 
 

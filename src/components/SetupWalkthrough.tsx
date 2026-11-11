@@ -13,6 +13,7 @@ import { Message } from './ui';
 import HardwareEmblem from './HardwareEmblem';
 import SetupProgress from './SetupProgress';
 import NativeButton from './NativeButton';
+import { Engraved, Led } from './ConsoleDetails';
 
 const steps = [
   { title: 'Set your nickname', symbol: 'person.crop.circle' as const, body: 'This name identifies your connection to the mixer.', bullets: [] },
@@ -45,7 +46,9 @@ export default function SetupWalkthrough() {
   }, [step, session]);
   return <ScreenSurface><SafeAreaView edges={['top', 'bottom', 'left', 'right']} style={{ flex: 1 }}>
     <View style={{ paddingHorizontal: 28, paddingTop: 16, paddingBottom: 12, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 16, maxWidth: 600, width: '100%', alignSelf: 'center' }}>
-      <Text accessibilityLiveRegion="polite" style={{ color: theme.muted, fontSize: 14 }}>Step {step + 1} of {steps.length}</Text>
+      <Engraved size={11} accessibilityLiveRegion="polite" accessibilityLabel={`Step ${step + 1} of ${steps.length}`} style={{ letterSpacing: 1.6 }}>
+        Step {step + 1} / {steps.length}
+      </Engraved>
       <SetupProgress step={step} count={steps.length} />
     </View>
     <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
@@ -56,7 +59,7 @@ export default function SetupWalkthrough() {
       {!!current.body && <Text style={{ color: theme.muted, fontSize: 17, lineHeight: 26 }}>{current.body}</Text>}
       {!!current.bullets.length && <View accessibilityRole="list" style={{ gap: 16 }}>
         {current.bullets.map(text => <View key={text} style={{ flexDirection: 'row', gap: 12 }}>
-          <Text style={{ color: theme.tint, fontSize: 18 }}>•</Text>
+          <Led color="teal" size={6} style={{ marginTop: 8 }} />
           <Text style={{ flex: 1, color: theme.muted, fontSize: 17, lineHeight: 26 }}>{text}</Text>
         </View>)}
       </View>}
@@ -65,9 +68,13 @@ export default function SetupWalkthrough() {
         onSubmitEditing={() => { Keyboard.dismiss(); setStep(1); }}
         style={{ fontSize: 20, color: theme.text, paddingVertical: 16, borderBottomWidth: 1, borderBottomColor: theme.line }} />}
       {step === 1 && <View style={{ gap: 16, alignItems: 'flex-start' }}>
-        <Text accessibilityLiveRegion="polite" style={{ color: mix.status === 'connected' ? theme.green : theme.muted, fontSize: 17 }}>
-          {state.demo ? 'Demo mode' : mix.status === 'connected' && state.server ? 'Connected to ' + new URL(state.server).host : state.connecting || mix.status === 'connecting' || mix.status === 'loading' ? 'Connecting…' : checking ? 'Looking for a mixer…' : 'Not connected'}
-        </Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+          <Led size={8} color={mix.status === 'connected' || state.demo ? 'green' : 'amber'} on={state.demo || mix.status !== 'disconnected' || checking || state.connecting}
+            pulse={!state.demo && mix.status !== 'connected'} />
+          <Text accessibilityLiveRegion="polite" style={{ color: mix.status === 'connected' ? theme.green : theme.muted, fontSize: 17 }}>
+            {state.demo ? 'Demo mode' : mix.status === 'connected' && state.server ? 'Connected to ' + new URL(state.server).host : state.connecting || mix.status === 'connecting' || mix.status === 'loading' ? 'Connecting…' : checking ? 'Looking for a mixer…' : 'Not connected'}
+          </Text>
+        </View>
         <NativeButton title={state.server ? 'Change mixer' : 'Connect'} bordered onPress={() => router.push('/connect')} />
       </View>}
       <Message error>{state.message}</Message>
