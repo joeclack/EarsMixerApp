@@ -17,7 +17,7 @@ import { releasePosition } from '../mixer/faderPrecision';
 
 // Long-press timing for opening the tall fader: a pause before any visible
 // response, then a steady lift that ends exactly when the fader opens.
-const HOLD_DELAY = 70, HOLD_LIFT = 210, HOLD_SCALE = 1.03;
+const HOLD_DELAY = 50, HOLD_LIFT = 150, HOLD_SCALE = 1.03;
 
 export default memo(function Fader({ channel, label, vertical = false, length = 200, size = 1, onEnlarge, pressScale }: { channel: number; label: string; vertical?: boolean; length?: number; size?: number; onEnlarge?: () => void; pressScale?: SharedValue<number> }) {
   const { session, mix } = useFaderSession(channel);
