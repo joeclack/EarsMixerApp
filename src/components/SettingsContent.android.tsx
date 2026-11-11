@@ -15,7 +15,7 @@ const appearances = [{ value: 'system', label: 'System' }, { value: 'light', lab
 
 // Native Material settings in the console palette, mirroring the iOS form.
 export default function SettingsContent() {
-  const { session, state } = useSession(), theme = useTheme();
+  const { session, state, mix } = useSession(), theme = useTheme();
   const reset = useResetDeviceData();
   const recent = Object.entries(state.recentStates).sort(([, a], [, b]) => b.editedAt - a.editedAt);
   return <>
@@ -48,8 +48,9 @@ export default function SettingsContent() {
       {recent.map(([key, saved]) => <MaterialItem key={key} title={saved.name} detail={new Date(saved.editedAt).toLocaleString()} />)}
     </MaterialSection>
     <MaterialSection title="Connection" symbol="wifi">
-      <MaterialItem title={state.demo ? 'Demo mode' : state.server ? new URL(state.server).host : 'Connect'} detail={state.server ? 'Change mixer' : undefined}
-        symbol={state.demo ? 'play_circle' : 'router'} onPress={() => router.push('/connect')}
+      <MaterialItem title={state.demo ? 'Demo mode' : state.server ? new URL(state.server).host : 'Connect to a mixer'}
+        detail={state.demo ? 'Demo' : mix.status === 'connected' ? 'Connected' : mix.status === 'disconnected' ? 'Not connected' : 'Connecting…'}
+        symbol={state.demo ? 'play_circle' : mix.status === 'connected' ? 'wifi' : 'wifi_off'} onPress={() => router.push('/connect')}
         trailing={state.server ? <TextButton onClick={() => session.disconnect()} colors={{ contentColor: theme.danger }}><Text>Disconnect</Text></TextButton> : undefined} />
       {!state.demo && <MaterialItem title="Try demo" symbol="play_circle" onPress={() => void session.startDemo()} />}
     </MaterialSection>

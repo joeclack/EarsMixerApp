@@ -2,13 +2,16 @@ import React from 'react';
 import Section from './HardwareSection.ios';
 import { useResetDeviceData } from './useResetDeviceData';
 import { Host, Form, Toggle, Picker, Text, Button, LabeledContent, VStack, HStack, Spacer, TextField, useNativeState } from '@expo/ui/swift-ui';
-import { tag, pickerStyle, buttonStyle, lineLimit, scrollContentBackground, disabled } from '@expo/ui/swift-ui/modifiers';
+import { foregroundStyle, tag, pickerStyle, buttonStyle, lineLimit, scrollContentBackground, disabled } from '@expo/ui/swift-ui/modifiers';
 import { router } from 'expo-router';
 import Constants from 'expo-constants';
 import { useSession } from '../mixer/context';
 import { useTheme } from '../theme';
 export default function SettingsContent() {
-  const { session, state } = useSession(), theme = useTheme();
+  const { session, state, mix } = useSession(), theme = useTheme();
+  // The mixer page has no connection control; Settings is the one place for it.
+  const status = state.demo ? 'Demo' : mix.status === 'connected' ? 'Connected' : mix.status === 'disconnected' ? 'Not connected' : 'Connecting…';
+  const statusColor = state.demo ? theme.orange : mix.status === 'connected' ? theme.green : mix.status === 'disconnected' ? theme.danger : theme.orange;
   const nickname = useNativeState(state.settings.nickname);
   const reset = useResetDeviceData(() => nickname.set(''));
   return <Host style={{ flex: 1 }} colorScheme={theme.scheme} seedColor={theme.tint}>
@@ -36,12 +39,13 @@ export default function SettingsContent() {
       </Section>
       <Section title="Connection" symbol="wifi">
         <HStack spacing={12}>
-          <Button systemImage="wifi" onPress={() => router.push('/connect')} modifiers={[buttonStyle('borderless')]}>
-            <Text modifiers={[lineLimit(1)]}>{state.demo ? 'Demo mode' : state.server ? new URL(state.server).host : 'Connect'}</Text>
+          <Button systemImage={state.demo ? 'play.circle' : mix.status === 'connected' ? 'wifi' : 'wifi.slash'} onPress={() => router.push('/connect')} modifiers={[buttonStyle('borderless')]}>
+            <Text modifiers={[lineLimit(1)]}>{state.demo ? 'Demo mode' : state.server ? new URL(state.server).host : 'Connect to a mixer'}</Text>
           </Button>
           <Spacer />
-          {state.server && <Button label="Disconnect" role="destructive" modifiers={[buttonStyle('borderless')]} onPress={() => session.disconnect()} />}
+          <Text modifiers={[foregroundStyle(statusColor)]}>{status}</Text>
         </HStack>
+        {state.server && <Button label="Disconnect" role="destructive" onPress={() => session.disconnect()} />}
         {!state.demo && <Button label="Try demo" onPress={() => void session.startDemo()} />}
       </Section>
       <Section>

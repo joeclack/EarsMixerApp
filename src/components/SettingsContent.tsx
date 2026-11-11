@@ -9,7 +9,7 @@ import { useTheme } from '../theme';
 import { Row, Section } from './ui';
 import Segmented from './Segmented';
 export default function SettingsContent() {
-  const { session, state } = useSession(), theme = useTheme();
+  const { session, state, mix } = useSession(), theme = useTheme();
   const reset = useResetDeviceData();
   return <>
     <View style={{ marginBottom: 26 }}><ProfileCard /></View>
@@ -29,7 +29,8 @@ export default function SettingsContent() {
       </View>)}
     </Section>
     <Section title="Connection" symbol={{ ios: 'wifi', android: 'wifi', web: 'wifi' }}><View style={{ flexDirection: 'row', alignItems: 'center' }}>
-      <View style={{ flex: 1 }}><Row title={state.demo ? 'Demo mode' : state.server ? new URL(state.server).host : 'Connect'} onPress={() => router.push('/connect')} /></View>
+      <View style={{ flex: 1 }}><Row title={state.demo ? 'Demo mode' : state.server ? new URL(state.server).host : 'Connect to a mixer'}
+        detail={state.demo ? 'Demo' : mix.status === 'connected' ? 'Connected' : mix.status === 'disconnected' ? 'Not connected' : 'Connecting…'} onPress={() => router.push('/connect')} /></View>
       {state.server && <Pressable accessibilityRole="button" onPress={() => session.disconnect()} style={{ minHeight: 44, paddingHorizontal: 16, justifyContent: 'center' }}>
         <Text style={{ color: theme.danger, fontSize: 15 }}>Disconnect</Text>
       </Pressable>}
