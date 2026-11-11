@@ -13,7 +13,7 @@ import { FADER_CAP_HEIGHT, FADER_CAP_WIDTH } from './faderGeometry';
 import FaderHousing from './FaderHousing';
 import HardwarePanel from './HardwarePanel';
 import { hardwarePalette } from './hardwarePalette';
-import { Engraved, LcdReadout, Led } from './ConsoleDetails';
+import { Engraved, LcdReadout } from './ConsoleDetails';
 import { Icon } from './ui';
 
 // Small previews of the real interface for each setup step. Most are static
@@ -48,7 +48,7 @@ function Presence({ nickname }: { nickname: string }) {
   const theme = useTheme();
   return <Card>
     <View style={{ gap: 2 }}>
-      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}><Led size={6} /><Engraved size={9}>Monitor mix</Engraved></View>
+      <Engraved size={9}>Monitor mix</Engraved>
       <Text style={{ color: theme.text, fontSize: 20, fontWeight: '700' }}>Drums IEM</Text>
     </View>
     <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
@@ -57,10 +57,9 @@ function Presence({ nickname }: { nickname: string }) {
   </Card>;
 }
 
-function MixerRow({ name, host, on = true, last = false }: { name: string; host: string; on?: boolean; last?: boolean }) {
+function MixerRow({ name, host, last = false }: { name: string; host: string; last?: boolean }) {
   const theme = useTheme();
   return <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 10, borderBottomWidth: last ? 0 : 1, borderBottomColor: theme.line }}>
-    <Led on={on} />
     <View style={{ flex: 1 }}>
       <Text style={{ color: theme.text, fontSize: 16 }}>{name}</Text>
       <Text style={{ color: theme.muted, fontSize: 12, marginTop: 2 }}>{host}</Text>

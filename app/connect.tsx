@@ -10,7 +10,7 @@ import { Icon, Message, Row } from '../src/components/ui';
 import CloseButton from '../src/components/CloseButton';
 import NativeButton from '../src/components/NativeButton';
 import Segmented from '../src/components/Segmented';
-import { Led, PanelHeading } from '../src/components/ConsoleDetails';
+import { PanelHeading } from '../src/components/ConsoleDetails';
 import { useNearbyMixers } from '../src/discovery/useNearbyMixers';
 import { reachableMixer, type NearbyMixer } from '../src/discovery/browser';
 export default function Connect() {
@@ -65,7 +65,7 @@ export default function Connect() {
               <Text style={{ color: theme.tint, fontSize: 15 }}>Search again</Text>
             </Pressable>} />
         </View>
-        {nearby.mixers.map(mixer => <Row key={mixer.id} title={mixer.name} detail={new URL(mixer.urls[0]).host} leading={<Led color="green" />}
+        {nearby.mixers.map(mixer => <Row key={mixer.id} title={mixer.name} detail={new URL(mixer.urls[0]).host}
           onPress={() => { if (!busy) void connectNearby(mixer); }} />)}
         {!nearby.mixers.length && <Text style={{ color: theme.muted, fontSize: 15, lineHeight: 21 }}>
           {nearby.message || (nearby.status === 'searching' ? 'Looking for mixers on your network…' : 'No mixers found. Try Manual.')}
@@ -86,7 +86,7 @@ export default function Connect() {
       {!!state.recent.length && <>
         <View style={{ marginBottom: 8 }}><PanelHeading title="Recent mixers" /></View>
         {state.recent.map(item => <View key={item.url} style={{ flexDirection: 'row', alignItems: 'center' }}>
-          <View style={{ flex: 1 }}><Row title={new URL(item.url).host} detail={state.server === item.url ? 'Current mixer' : 'Tap to connect'} leading={<Led on={state.server === item.url} color="green" />} onPress={() => { if (!busy) void connect(item.url); }} /></View>
+          <View style={{ flex: 1 }}><Row title={new URL(item.url).host} detail={state.server === item.url ? 'Current mixer' : 'Tap to connect'} onPress={() => { if (!busy) void connect(item.url); }} /></View>
           <Pressable accessibilityLabel={'Forget ' + new URL(item.url).host} accessibilityRole="button" disabled={busy} onPress={() => void session.forget(item.url)}
             style={{ width: 44, height: 44, alignItems: 'center', justifyContent: 'center' }}><Icon name={{ ios: 'minus.circle', android: 'remove_circle_outline', web: 'remove_circle_outline' }} size={20} color={theme.muted} /></Pressable>
         </View>)}

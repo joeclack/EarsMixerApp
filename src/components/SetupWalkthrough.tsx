@@ -12,7 +12,6 @@ import { useTheme } from '../theme';
 import { Message } from './ui';
 import SetupProgress from './SetupProgress';
 import NativeButton from './NativeButton';
-import { Led } from './ConsoleDetails';
 import SetupList from './SetupList';
 import SetupPreview from './SetupPreview';
 
@@ -73,13 +72,9 @@ export default function SetupWalkthrough() {
             onSubmitEditing={() => { Keyboard.dismiss(); setStep(1); }}
             style={{ fontSize: 20, color: theme.text, paddingVertical: 14, marginTop: 6, borderBottomWidth: 1, borderBottomColor: theme.line }} />}
           {step === 1 && <View style={{ gap: 14, alignItems: 'flex-start', marginTop: 6 }}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-              <Led size={8} color={mix.status === 'connected' || state.demo ? 'green' : 'amber'} on={state.demo || mix.status !== 'disconnected' || checking || state.connecting}
-                pulse={!state.demo && mix.status !== 'connected'} />
-              <Text accessibilityLiveRegion="polite" style={{ color: mix.status === 'connected' ? theme.green : theme.muted, fontSize: 17 }}>
-                {state.demo ? 'Demo mode' : mix.status === 'connected' && state.server ? 'Connected to ' + new URL(state.server).host : state.connecting || mix.status === 'connecting' || mix.status === 'loading' ? 'Connecting…' : checking ? 'Looking for a mixer…' : 'Not connected'}
-              </Text>
-            </View>
+            <Text accessibilityLiveRegion="polite" style={{ color: mix.status === 'connected' ? theme.green : theme.muted, fontSize: 17 }}>
+              {state.demo ? 'Demo mode' : mix.status === 'connected' && state.server ? 'Connected to ' + new URL(state.server).host : state.connecting || mix.status === 'connecting' || mix.status === 'loading' ? 'Connecting…' : checking ? 'Looking for a mixer…' : 'Not connected'}
+            </Text>
             <NativeButton title={state.server ? 'Change mixer' : 'Connect'} bordered onPress={() => router.push('/connect')} />
           </View>}
           <Message error>{state.message}</Message>
