@@ -12,7 +12,6 @@ import { Page, EmptyMixer, Icon } from '../../../src/components/ui';
 import NativeButton from '../../../src/components/NativeButton';
 import Fader, { FaderValue } from '../../../src/components/Fader';
 import FaderHousing from '../../../src/components/FaderHousing';
-import { Engraved } from '../../../src/components/ConsoleDetails';
 import FaderDisplay from '../../../src/components/FaderDisplay';
 import GroupExpandTarget from '../../../src/components/GroupExpandTarget';
 import CloseButton from '../../../src/components/CloseButton';
@@ -93,7 +92,6 @@ export default function Mixer() {
       {landscape ? grouped && !open ? <GroupExpandTarget label={group.label} onExpand={expand}>
         <FaderDisplay channel={channel.channel} label={channel.label} expandable />
       </GroupExpandTarget> : <FaderDisplay channel={channel.channel} label={channel.label} /> : !channel.members && <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 8 }}>
-        <Engraved size={9} style={{ minWidth: 30 }}>{'CH' + String(channel.channel).padStart(2, '0')}</Engraved>
         <Text numberOfLines={2} style={{ color: theme.text, fontSize: 15, fontWeight: '600', flex: 1 }}>{channel.label}</Text>
         <FaderValue channel={channel.channel} />
       </View>}
