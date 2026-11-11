@@ -55,7 +55,7 @@ export default function MixerToolbar() {
         {otherActions}
       </Stack.Toolbar.Menu> : otherActions}
     </Stack.Toolbar.Menu>}
-    {Platform.OS === 'ios' ? <Stack.Toolbar.Button icon="gearshape" accessibilityLabel="Settings" onPress={() => router.push('/settings')} /> :
+    {Platform.OS === 'ios' ? <Stack.Toolbar.Button icon="gearshape" accessibilityLabel="Settings" separateBackground onPress={() => router.push('/settings')} /> :
       <Stack.Toolbar.View><Pressable accessibilityRole="button" accessibilityLabel="Settings" onPress={() => router.push('/settings')} style={styles.headerButton}>
         <Icon name={{ android: 'settings' }} />
       </Pressable></Stack.Toolbar.View>}
