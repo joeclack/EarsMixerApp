@@ -1,6 +1,6 @@
-import { memo, useCallback, useMemo, useState, type ReactNode } from 'react';
+import { memo, useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { Image, Modal, Platform, Text, View } from 'react-native';
-import Animated, { Easing, useAnimatedStyle, useReducedMotion, useSharedValue, withDelay, withSpring, withTiming, type SharedValue } from 'react-native-reanimated';
+import Animated, { cancelAnimation, Easing, useAnimatedStyle, useReducedMotion, useSharedValue, withDelay, withRepeat, withSequence, withSpring, withTiming, type SharedValue } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
 import AppBackground from './AppBackground';
@@ -147,13 +147,22 @@ function PracticeHandle({ vertical, size = 1, style }: { vertical: boolean; size
 
 // A practice bar with the same hold-to-open as the mixer: holding the bar
 // (not the handle) lifts it and opens the tall practice fader.
-function PracticeFader({ channel, onEnlarge }: { channel: PracticeChannel; onEnlarge(): void }) {
+function PracticeFader({ channel, onEnlarge, demo = false }: { channel: PracticeChannel; onEnlarge(): void; demo?: boolean }) {
   const theme = useTheme(), { session } = useSession();
   const [track, setTrack] = useState(0);
   const { pan, step } = usePracticeDrag(channel, track, false);
   const lift = useSharedValue(1);
   const holdAllowed = useSharedValue(false);
   const reducedMotion = useReducedMotion();
+  // Until first touched, a demo bar gently repeats the hold lift to show it can be held.
+  const [demoing, setDemoing] = useState(demo);
+  const stopDemo = useCallback(() => setDemoing(false), []);
+  useEffect(() => {
+    if (!demoing || reducedMotion) return;
+    lift.set(withRepeat(withSequence(withDelay(1200, withTiming(HOLD_SCALE, { duration: HOLD_LIFT * 2, easing: Easing.out(Easing.quad) })),
+      withTiming(1, { duration: 320, easing: Easing.inOut(Easing.quad) })), -1));
+    return () => { cancelAnimation(lift); lift.set(1); };
+  }, [demoing, reducedMotion, lift]);
   const opened = useCallback(() => {
     if (session.state.settings.haptics) void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy).catch(() => {});
     onEnlarge();
@@ -166,6 +175,8 @@ function PracticeFader({ channel, onEnlarge }: { channel: PracticeChannel; onEnl
   }, [track, channel.position]);
   const hold = useMemo(() => Gesture.LongPress().minDuration(HOLD_DELAY + HOLD_LIFT).maxDistance(3).onBegin(event => {
     'worklet';
+    scheduleOnRN(stopDemo);
+    cancelAnimation(lift); lift.set(1);
     holdAllowed.set(!onHandle(event.x));
     if (!holdAllowed.get() || reducedMotion) return;
     lift.set(withDelay(HOLD_DELAY, withTiming(HOLD_SCALE, { duration: HOLD_LIFT, easing: Easing.out(Easing.quad) })));
@@ -176,7 +187,7 @@ function PracticeFader({ channel, onEnlarge }: { channel: PracticeChannel; onEnl
     'worklet';
     holdAllowed.set(false);
     lift.set(reducedMotion ? 1 : withSpring(1, { duration: 200, dampingRatio: 0.7 }));
-  }), [lift, holdAllowed, onHandle, opened, reducedMotion]);
+  }), [lift, holdAllowed, onHandle, opened, reducedMotion, stopDemo]);
   const gesture = useMemo(() => Gesture.Simultaneous(pan, hold), [pan, hold]);
   const liftStyle = useAnimatedStyle(() => ({ transform: [{ scale: lift.get() }] }));
   const thumbStyle = useAnimatedStyle(() => ({ transform: [{ translateX: track * channel.position.get() }] }));
@@ -246,12 +257,22 @@ function PracticeFocus({ channel, onClose }: { channel: PracticeChannel; onClose
   </View>;
 }
 
+// A highlighted pointer to the tall fader, the step's headline feature.
+function TallFaderCallout() {
+  const theme = useTheme();
+  return <View style={{ alignSelf: 'center', flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 14, height: 34, borderRadius: 17,
+    backgroundColor: theme.tint + '22', borderWidth: 1, borderColor: theme.tint + '66' }}>
+    <Icon name={{ ios: 'hand.tap', android: 'touch_app', web: 'touch_app' }} size={16} />
+    <Text style={{ color: theme.tint, fontSize: 14, fontWeight: '700' }}>Hold a fader for the tall view</Text>
+  </View>;
+}
+
 function Adjust() {
   const channels = [usePracticeChannel('Keys', -6), usePracticeChannel('Click', 2.4)];
   const [focused, setFocused] = useState<number | null>(null);
   return <View style={{ gap: 14 }}>
-    {channels.map((channel, index) => <PracticeFader key={channel.label} channel={channel} onEnlarge={() => setFocused(index)} />)}
-    <View style={{ alignItems: 'center' }}><Engraved size={10}>Drag a handle, or hold a fader</Engraved></View>
+    <TallFaderCallout />
+    {channels.map((channel, index) => <PracticeFader key={channel.label} channel={channel} demo={index === 1} onEnlarge={() => setFocused(index)} />)}
     <Modal visible={focused !== null} animationType="fade" transparent statusBarTranslucent onRequestClose={() => setFocused(null)}>
       {focused !== null && <PracticeFocus channel={channels[focused]} onClose={() => setFocused(null)} />}
     </Modal>

@@ -19,7 +19,8 @@ const steps = [
   { title: 'Set your nickname', body: 'This name identifies your connection to the mixer.', bullets: [] },
   { title: 'Connect to a mixer', body: 'Make sure you are on the correct Wi-Fi.', bullets: [] },
   { title: 'Choose a template (optional)', body: '', bullets: ['Open the … menu and tap Templates.', 'Choose a saved layout, or keep your own.', 'Templates never change desk levels.'] },
-  { title: 'Adjust your mix', body: '', bullets: ['Tap the headphones button to choose your AUX.', 'Choose Level or Pan in the … menu.', 'Drag a handle to adjust.', 'Long press a fader for a tall, finer fader.'] },
+  { title: 'Adjust your mix', body: '', featured: 'Hold any fader to open a tall fader with longer travel for fine control.',
+    bullets: ['Drag a handle to adjust.', 'Tap the headphones button to choose your AUX.', 'Choose Level or Pan in the … menu.'] },
   { title: 'Go landscape', body: 'Turn your phone sideways for a bank of vertical faders, just like the desk.', bullets: ['Scroll sideways through your channels.', 'Use the side rail to switch AUX and choose Level or Pan.', 'Set every level to off from the rail.'] },
   { title: 'Keep your layout', body: '', bullets: ['Tap Edit to reorder or hide channels.', 'Layouts save automatically on this phone.', 'Reconnects to your last mixer.'] },
 ];
@@ -61,7 +62,7 @@ export default function SetupWalkthrough() {
     </View>
     <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <Animated.View key={step} entering={FadeIn.duration(160).reduceMotion(ReduceMotion.System)} style={{ flex: 1, maxWidth: 600, width: '100%', alignSelf: 'center' }}>
-        <View style={{ flexGrow: 0, flexShrink: 1, height: step === 3 ? 260 : current.bullets.length ? 230 : 280, minHeight: 0, overflow: 'hidden' }}>
+        <View style={{ flexGrow: 0, flexShrink: 1, height: step === 3 ? 280 : current.bullets.length ? 230 : 280, minHeight: 0, overflow: 'hidden' }}>
           <SetupPreview step={step} nickname={state.settings.nickname} />
         </View>
         <View style={{ paddingHorizontal: 20, paddingTop: 20, gap: 10 }}>
@@ -79,7 +80,7 @@ export default function SetupWalkthrough() {
           </View>}
           <Message error>{state.message}</Message>
         </View>
-        {current.bullets.length ? <SetupList items={current.bullets} /> : <View style={{ flex: 1 }} />}
+        {current.bullets.length ? <SetupList items={current.bullets} featured={'featured' in current ? current.featured : undefined} /> : <View style={{ flex: 1 }} />}
       </Animated.View>
       <View style={{ paddingHorizontal: 20, paddingTop: 12, paddingBottom: 16, maxWidth: 600, width: '100%', alignSelf: 'center' }}>
         <NativeButton title={next} prominent fullWidth disabled={finishing} onPress={() => {
