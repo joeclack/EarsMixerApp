@@ -44,4 +44,4 @@ For a real server, enter its reachable network address, such as `192.168.1.100:8
 - **Web:** `npm run web` for development; `npm run build:web` exports `dist/` for a static host with SPA route fallback. The mixer server must be reachable from the browser and allow the required CORS reads.
 - **CI previews:** GitHub Actions builds Android APK and iOS simulator artifacts. Downloadable Android previews are also listed under [Releases](https://github.com/joeclack/EarsMixerApp/releases).
 
-Version: **0.19.0**. Expo reads it from `package.json`; build profiles are in [eas.json](eas.json). See [CHANGELOG.md](CHANGELOG.md) for changes.
+Version: **0.20.0**. Expo reads it from `package.json`; build profiles are in [eas.json](eas.json). See [CHANGELOG.md](CHANGELOG.md) for changes.
