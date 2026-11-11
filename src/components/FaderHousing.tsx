@@ -23,15 +23,15 @@ export default memo(function FaderHousing({ vertical, children, size = 1 }: Prop
 function FaderLip({ dark, width, radius }: { dark: boolean; width: number; radius: number }) {
   return <View pointerEvents="none" accessible={false} style={{ position: 'absolute', inset: -width, borderRadius: radius,
     boxShadow: dark
-      ? [{ offsetX: 0, offsetY: -2, blurRadius: 5, color: 'rgba(150,195,210,0.13)' },
+      ? [{ offsetX: 0, offsetY: -2, blurRadius: 6, color: 'rgba(150,195,210,0.08)' },
         { offsetX: 0, offsetY: 2, blurRadius: 4, color: 'rgba(0,0,0,0.28)' },
         { offsetX: 0, offsetY: 5, blurRadius: 14, color: 'rgba(0,0,0,0.3)' }]
-      : [{ offsetX: 0, offsetY: -2, blurRadius: 5, color: 'rgba(255,255,255,0.95)' },
+      : [{ offsetX: 0, offsetY: -2, blurRadius: 6, color: 'rgba(255,255,255,0.7)' },
         { offsetX: 0, offsetY: 2, blurRadius: 4, color: 'rgba(46,74,88,0.1)' },
         { offsetX: 0, offsetY: 5, blurRadius: 14, color: 'rgba(46,74,88,0.12)' }] }}>
     <LinearGradient colors={dark
-      ? ['rgba(150,195,210,0.2)', 'rgba(150,195,210,0.04)', 'rgba(0,0,0,0.08)', 'rgba(0,0,0,0.22)', 'rgba(0,0,0,0.16)']
-      : ['rgba(255,255,255,1)', 'rgba(255,255,255,0.35)', 'rgba(46,74,88,0.04)', 'rgba(46,74,88,0.11)', 'rgba(46,74,88,0.08)']}
+      ? ['rgba(150,195,210,0.12)', 'rgba(150,195,210,0.03)', 'rgba(0,0,0,0.08)', 'rgba(0,0,0,0.22)', 'rgba(0,0,0,0.16)']
+      : ['rgba(255,255,255,0.75)', 'rgba(255,255,255,0.25)', 'rgba(46,74,88,0.04)', 'rgba(46,74,88,0.11)', 'rgba(46,74,88,0.08)']}
       locations={[0, 0.45, 0.6, 0.85, 1]} start={{ x: 0.5, y: 0 }} end={{ x: 0.5, y: 1 }}
       style={[StyleSheet.absoluteFill, { borderRadius: radius }]} />
   </View>;
@@ -41,7 +41,7 @@ function Housing({ vertical, radius, children }: PropsWithChildren<{ vertical: b
   const theme = useTheme();
   if (!theme.dark) return <View style={{ alignSelf: 'stretch',
     borderRadius: radius, paddingHorizontal: vertical ? 2 : 16, paddingVertical: vertical ? 10 : 4,
-    backgroundColor: theme.consoleFace, borderWidth: 2, borderColor: theme.consoleRed,
+    backgroundColor: theme.consoleFace, borderWidth: 1.5, borderColor: theme.consoleRed,
     boxShadow: [{ offsetX: 0, offsetY: 2, blurRadius: 3, color: '#5A422D26' }] }}>
     <LinearGradient pointerEvents="none" colors={theme.consoleGradient} locations={[0, 0.3, 1]}
       start={vertical ? { x: 0, y: 0.5 } : { x: 0.5, y: 0 }} end={vertical ? { x: 1, y: 0.5 } : { x: 0.5, y: 1 }}
@@ -55,7 +55,7 @@ function Housing({ vertical, radius, children }: PropsWithChildren<{ vertical: b
   return <View style={{ alignSelf: 'stretch',
     borderRadius: 999, backgroundColor: '#061014', overflow: 'hidden',
     borderWidth: vertical ? 2 : 0, borderColor: '#061014', paddingHorizontal: vertical ? 2 : 16, paddingVertical: vertical ? 10 : 4 }}>
-    <LinearGradient pointerEvents="none" colors={['#02090C', '#16272E', '#526A74']}
+    <LinearGradient pointerEvents="none" colors={['#02090C', '#16272E', '#34474F']}
       locations={[0, 0.55, 1]} start={{ x: 0.15, y: 0 }} end={{ x: 0.8, y: 1 }}
       style={[StyleSheet.absoluteFill, { borderRadius: 999 }]} />
     <View pointerEvents="none" style={{ position: 'absolute', top: 1, bottom: 1.5, left: 1.3, right: 1.3,
