@@ -7,7 +7,7 @@ import { useSession } from '../mixer/context';
 import { useTheme } from '../theme';
 import { useToolbarHaptic } from './useToolbarHaptic';
 
-const MAX_TEXT = 170, HEIGHT = 48, ICON = 17, GAP = 8, PADDING = 20;
+const MAX_TEXT = 220, HEIGHT = 48, ICON = 17, GAP = 8, PADDING = 20;
 
 // The mixer header's leading control: a native capsule showing the current AUX
 // that opens the AUX list, in place of a static title.
