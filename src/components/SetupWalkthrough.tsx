@@ -20,7 +20,7 @@ const steps = [
   { title: 'Connect to a mixer', body: 'Make sure you are on the correct Wi-Fi.', bullets: [] },
   { title: 'Choose a template (optional)', body: '', bullets: ['Open the … menu and tap Templates.', 'Choose a saved layout, or keep your own.', 'Templates never change desk levels.'] },
   { title: 'Adjust your mix', body: '', featured: 'Hold any fader to open a tall fader with longer travel for fine control.',
-    bullets: ['Drag a handle to adjust.', 'Tap the headphones button to choose your AUX.', 'Choose Level or Pan in the … menu.'] },
+    bullets: ['Drag a handle to adjust.', 'Tap the mix name at the top left to choose your AUX.', 'Choose Level or Pan in the … menu.'] },
   { title: 'Go landscape', body: 'Turn your phone sideways for a bank of vertical faders, just like the desk.', bullets: ['Scroll sideways through your channels.', 'Use the side rail to switch AUX and choose Level or Pan.', 'Set every level to off from the rail.'] },
   { title: 'Keep your layout', body: '', bullets: ['Tap Edit to reorder or hide channels.', 'Layouts save automatically on this phone.', 'Reconnects to your last mixer.'] },
 ];

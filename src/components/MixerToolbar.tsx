@@ -4,7 +4,7 @@ import { router, Stack } from 'expo-router';
 import { useSession } from '../mixer/context';
 import { useTheme } from '../theme';
 import { Icon, styles } from './ui';
-import MixerHeading from './MixerHeading';
+import AuxSelector from './AuxSelector';
 
 export default function MixerToolbar() {
   const { session, state, mix } = useSession();
@@ -27,7 +27,7 @@ export default function MixerToolbar() {
   return <>
     <Stack.Toolbar placement="left">
       <Stack.Toolbar.View hidesSharedBackground>
-        <MixerHeading />
+        <AuxSelector />
       </Stack.Toolbar.View>
     </Stack.Toolbar>
     <Stack.Toolbar placement="right" tintColor={theme.tint}
@@ -39,7 +39,8 @@ export default function MixerToolbar() {
         onPress={() => router.push('/connect')} style={styles.headerButton}>
         <Icon name={{ android: mix.status === 'connected' ? 'wifi' : 'wifi_off' }} color={color} />
       </Pressable></Stack.Toolbar.View>}
-    {state.server && !!mix.config?.aux.length && <Stack.Toolbar.Menu icon={Platform.OS === 'ios' ? 'headphones' : require('../../assets/toolbar/headphones.png')}
+    {/* On iOS the AUX is chosen from the leading selector. */}
+    {Platform.OS !== 'ios' && state.server && !!mix.config?.aux.length && <Stack.Toolbar.Menu icon={Platform.OS === 'ios' ? 'headphones' : require('../../assets/toolbar/headphones.png')}
       accessibilityLabel={'Choose AUX, ' + label} disabled={mix.status !== 'connected'}>
       <Stack.Toolbar.Label>Choose AUX</Stack.Toolbar.Label>
       {mix.config.aux.map(aux => <Stack.Toolbar.MenuAction key={aux.channel} isOn={mix.aux === aux.channel}
