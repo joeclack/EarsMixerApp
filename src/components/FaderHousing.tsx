@@ -21,8 +21,8 @@ function FaderRise({ dark, radius }: { dark: boolean; radius: number }) {
     boxShadow: dark
       ? [{ offsetX: 0, offsetY: -3, blurRadius: 8, color: 'rgba(160,200,215,0.06)' },
         { offsetX: 0, offsetY: 3, blurRadius: 10, color: 'rgba(0,0,0,0.25)' }]
-      : [{ offsetX: 0, offsetY: -3, blurRadius: 8, color: 'rgba(255,255,255,0.6)' },
-        { offsetX: 0, offsetY: 3, blurRadius: 10, color: 'rgba(46,74,88,0.1)' }] }} />;
+      : [{ offsetX: 0, offsetY: -3, blurRadius: 8, color: 'rgba(255,255,255,0.5)' },
+        { offsetX: 0, offsetY: 3, blurRadius: 10, color: 'rgba(46,74,88,0.09)' }] }} />;
 }
 
 // The pill's outermost band is translucent, so the real page shows through it,
@@ -36,7 +36,7 @@ function Housing({ vertical, radius, children }: PropsWithChildren<{ vertical: b
   return <View style={{ alignSelf: 'stretch', borderRadius: radius, paddingHorizontal: vertical ? 2 : 16, paddingVertical: vertical ? 10 : 4 }}>
     <LinearGradient pointerEvents="none" colors={theme.dark
       ? ['rgba(160,200,215,0.10)', 'rgba(160,200,215,0.02)', 'rgba(0,0,0,0.12)', 'rgba(0,0,0,0.35)']
-      : ['rgba(255,255,255,0.9)', 'rgba(255,255,255,0.3)', 'rgba(46,74,88,0.04)', 'rgba(46,74,88,0.18)']}
+      : ['rgba(255,255,255,0.55)', 'rgba(255,255,255,0.15)', 'rgba(46,74,88,0.03)', 'rgba(46,74,88,0.12)']}
       locations={[0, 0.35, 0.6, 1]} start={{ x: 0.5, y: 0 }} end={{ x: 0.5, y: 1 }}
       style={[StyleSheet.absoluteFill, { borderRadius: radius }]} />
     {theme.dark ? <View pointerEvents="none" style={{ position: 'absolute', inset: BEZEL, borderRadius: face, overflow: 'hidden', backgroundColor: '#0B171C' }}>
@@ -47,14 +47,17 @@ function Housing({ vertical, radius, children }: PropsWithChildren<{ vertical: b
       <View style={[StyleSheet.absoluteFill, { borderRadius: face,
         boxShadow: [{ offsetX: 2, offsetY: 3, blurRadius: 9, spreadDistance: 2, color: '#000000A0', inset: true }] }]} />
     </View> : <View pointerEvents="none" style={{ position: 'absolute', inset: BEZEL, borderRadius: face, overflow: 'hidden',
-      backgroundColor: theme.consoleFace, borderWidth: 1, borderColor: theme.consoleRed }}>
+      backgroundColor: theme.consoleFace }}>
       <LinearGradient colors={theme.consoleGradient} locations={[0, 0.3, 1]}
         start={vertical ? { x: 0, y: 0.5 } : { x: 0.5, y: 0 }} end={vertical ? { x: 1, y: 0.5 } : { x: 0.5, y: 1 }}
         style={StyleSheet.absoluteFill} />
       <View style={[StyleSheet.absoluteFill, { borderRadius: face,
-        boxShadow: [{ inset: true, offsetX: 2, offsetY: 3, blurRadius: 8, spreadDistance: 1, color: theme.consoleShadow },
-          { inset: true, offsetX: -1, offsetY: -2, blurRadius: 2, color: '#FFFFFFAA' }] }]} />
-      <View style={{ position: 'absolute', inset: 1, borderRadius: face, borderWidth: 1, borderColor: theme.consoleRim }} />
+        // The face curves down from the bezel with soft shading and no edge line.
+        boxShadow: [{ inset: true, offsetX: 0, offsetY: 2, blurRadius: 4, color: 'rgba(90,66,45,0.35)' },
+          { inset: true, offsetX: 0, offsetY: -2, blurRadius: 3, color: 'rgba(255,255,255,0.5)' },
+          { inset: true, offsetX: 0, offsetY: 0, blurRadius: 0, spreadDistance: 1, color: 'rgba(90,66,45,0.12)' }] }]} />
+      {/* The console red, inlaid as a fine pinstripe inside the face. */}
+      <View style={{ position: 'absolute', inset: 3, borderRadius: face === 999 ? 999 : face - 3, borderWidth: 1, borderColor: 'rgba(180,43,67,0.75)' }} />
     </View>}
     {children}
   </View>;
