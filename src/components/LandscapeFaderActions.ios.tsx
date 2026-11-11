@@ -12,7 +12,7 @@ export default function LandscapeFaderActions({ parameter, disabled: unavailable
   const style = buttonStyle(Number(Platform.Version) >= 26 ? 'glass' : 'bordered');
   return <View style={{ width: 64, alignItems: 'center', gap: 10 }}>
     <View onTouchStart={unavailable ? undefined : haptic}>
-    <Host colorScheme={theme.scheme} style={{ width: 64, height: 64 }}>
+    <Host colorScheme={theme.scheme} ignoreSafeArea="all" style={{ width: 64, height: 64 }}>
       <Menu label={<Image systemName="slider.horizontal.3" size={22} modifiers={[frame({ width: 44, height: 44 })]} />}
         modifiers={[menuStyle('button'), style, buttonBorderShape('circle'), frame({ width: 64, height: 64 }), tint(theme.tint), disabled(unavailable), accessibilityLabel('Fader mode, ' + parameter)]}>
         <Picker label="Fader mode" selection={parameter} onSelectionChange={value => { if (value === 'level' || value === 'pan') onModeChange(value); }} modifiers={[pickerStyle('inline')]}>
@@ -22,7 +22,7 @@ export default function LandscapeFaderActions({ parameter, disabled: unavailable
     </Host>
     </View>
       <RNText style={{ color: theme.muted, fontSize: 11, lineHeight: 15 }}>{parameter === 'level' ? 'Level' : 'Pan'}</RNText>
-    <Host colorScheme={theme.scheme} style={{ width: 64, height: 64 }}>
+    <Host colorScheme={theme.scheme} ignoreSafeArea="all" style={{ width: 64, height: 64 }}>
       <Button role="destructive" onPress={() => { haptic(); onAllOff(); }}
         modifiers={[style, buttonBorderShape('circle'), frame({ width: 64, height: 64 }), tint(theme.danger), disabled(offDisabled), accessibilityLabel('Set all levels to off')]}>
         <Image systemName="infinity" size={22} modifiers={[frame({ width: 44, height: 44 })]} />
