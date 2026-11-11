@@ -62,7 +62,7 @@ export default function SetupWalkthrough() {
     </View>
     <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <Animated.View key={step} entering={FadeIn.duration(160).reduceMotion(ReduceMotion.System)} style={{ flex: 1, maxWidth: 600, width: '100%', alignSelf: 'center' }}>
-        <View style={{ flexGrow: 0, flexShrink: 1, height: current.bullets.length ? 230 : 280, minHeight: 0, overflow: 'hidden' }}>
+        <View style={{ flexGrow: 0, flexShrink: 1, height: step === 3 ? 260 : current.bullets.length ? 230 : 280, minHeight: 0, overflow: 'hidden' }}>
           <SetupPreview step={step} nickname={state.settings.nickname} />
         </View>
         <View style={{ paddingHorizontal: 20, paddingTop: 20, gap: 10 }}>

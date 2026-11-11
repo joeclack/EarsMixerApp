@@ -1,5 +1,12 @@
-import { memo, type ReactNode } from 'react';
+import { memo, useCallback, useMemo, useRef, useState, type ReactNode } from 'react';
 import { Image, Text, View } from 'react-native';
+import Animated, { useAnimatedStyle, useSharedValue } from 'react-native-reanimated';
+import { Gesture, GestureDetector } from 'react-native-gesture-handler';
+import { scheduleOnRN } from 'react-native-worklets';
+import * as Haptics from 'expo-haptics';
+import { useSession } from '../mixer/context';
+import { DragHaptics } from '../mixer/dragHaptics';
+import { dbToPosition, levelText, positionToDb } from '../mixer/model';
 import { useTheme } from '../theme';
 import { faderArtwork } from './faderArtwork';
 import { FADER_CAP_HEIGHT, FADER_CAP_WIDTH } from './faderGeometry';
@@ -9,12 +16,15 @@ import { hardwarePalette } from './hardwarePalette';
 import { Engraved, LcdReadout, Led } from './ConsoleDetails';
 import { Icon } from './ui';
 
-// Small static previews of the real interface for each setup step. They are
-// illustrations only, hidden from assistive technologies and never interactive.
+// Small previews of the real interface for each setup step. Most are static
+// illustrations hidden from assistive technologies; the Adjust step's faders
+// are practice faders the user can drag, which never send anything to a desk.
 export default memo(function SetupPreview({ step, nickname }: { step: number; nickname: string }) {
   const preview = [<Presence key={0} nickname={nickname} />, <Connect key={1} />, <Templates key={2} />,
     <Adjust key={3} />, <Landscape key={4} />, <Layout key={5} />][step];
-  return <View pointerEvents="none" accessible={false} accessibilityElementsHidden importantForAccessibility="no-hide-descendants"
+  const interactive = step === 3;
+  return <View pointerEvents={interactive ? 'box-none' : 'none'} accessible={false} accessibilityElementsHidden={!interactive}
+    importantForAccessibility={interactive ? 'auto' : 'no-hide-descendants'}
     style={{ flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 28 }}>
     <View style={{ width: '100%', maxWidth: 340 }}>{preview}</View>
   </View>;
@@ -83,31 +93,60 @@ function Templates() {
   </View>;
 }
 
-// One static fader in the real housing, using the real handle artwork.
-function StaticFader({ position, label, value }: { position: number; label: string; value: string }) {
-  const theme = useTheme();
+// A practice fader with the real housing, handle artwork, readout and drag
+// haptics. Its level is local to setup and never reaches the mixer.
+function PracticeFader({ label, initialDb }: { label: string; initialDb: number }) {
+  const theme = useTheme(), { session } = useSession();
+  const [track, setTrack] = useState(0);
+  const [db, setDb] = useState(initialDb);
+  const position = useSharedValue(dbToPosition(initialDb));
+  const start = useSharedValue(0);
+  const haptics = useRef(new DragHaptics(() => { if (session.state.settings.haptics) void Haptics.selectionAsync().catch(() => {}); })).current;
+  const begin = useCallback((value: number) => haptics.begin(value), [haptics]);
+  const report = useCallback((value: number) => { haptics.move(value); setDb(positionToDb(value)); }, [haptics]);
+  const end = useCallback(() => haptics.end(true), [haptics]);
+  const set = useCallback((value: number) => { position.set(value); setDb(positionToDb(value)); }, [position]);
+  const pan = useMemo(() => Gesture.Pan().enabled(track > 0).activeOffsetX([-3, 3]).failOffsetY([-10, 10]).onStart(() => {
+    'worklet';
+    start.set(position.get()); scheduleOnRN(begin, position.get());
+  }).onUpdate(event => {
+    'worklet';
+    const next = Math.max(0, Math.min(1, start.get() + event.translationX / track));
+    position.set(next); scheduleOnRN(report, next);
+  }).onFinalize(() => { 'worklet'; scheduleOnRN(end); }), [track, position, start, begin, report, end]);
+  const thumbStyle = useAnimatedStyle(() => ({ transform: [{ translateX: track * position.get() }] }));
+  const fillStyle = useAnimatedStyle(() => ({ width: track * position.get() }));
+  const text = levelText(db, 'level');
   return <View style={{ gap: 8 }}>
     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 8 }}>
       <Text style={{ flex: 1, color: theme.text, fontSize: 15, fontWeight: '600' }}>{label}</Text>
-      <LcdReadout>{value}</LcdReadout>
+      <LcdReadout>{text}</LcdReadout>
     </View>
     <FaderHousing vertical={false}>
-      <View style={{ height: 56, justifyContent: 'center', marginHorizontal: FADER_CAP_HEIGHT / 2 }}>
-        <View style={{ height: 6, borderRadius: 3, backgroundColor: '#000000' }} />
-        <View style={{ position: 'absolute', left: 0, width: `${position * 100}%`, height: 6, borderRadius: 3, backgroundColor: theme.dark ? '#48D8C4' : '#7EEBD0' }} />
-        <View style={{ position: 'absolute', left: `${position * 100}%`, marginLeft: -FADER_CAP_HEIGHT / 2, width: FADER_CAP_HEIGHT, height: FADER_CAP_WIDTH,
-          alignItems: 'center', justifyContent: 'center', boxShadow: [{ offsetX: 1, offsetY: 4, blurRadius: 4, color: '#000000B3' }], borderRadius: 8 }}>
-          <Image source={faderArtwork} resizeMode="stretch" style={{ width: FADER_CAP_WIDTH, height: FADER_CAP_HEIGHT, transform: [{ rotate: '90deg' }] }} />
+      <GestureDetector gesture={pan}>
+        <View accessible accessibilityRole="adjustable" accessibilityLabel={label + ' practice fader'} accessibilityValue={{ text }}
+          accessibilityActions={[{ name: 'increment' }, { name: 'decrement' }]}
+          onAccessibilityAction={event => set(Math.max(0, Math.min(1, position.get() + (event.nativeEvent.actionName === 'increment' ? 0.05 : -0.05))))}
+          style={{ height: 56, justifyContent: 'center' }}>
+          <View onLayout={event => setTrack(event.nativeEvent.layout.width)} style={{ marginHorizontal: FADER_CAP_HEIGHT / 2, height: 6, justifyContent: 'center' }}>
+            <View style={{ height: 6, borderRadius: 3, backgroundColor: '#000000' }} />
+            <Animated.View style={[{ position: 'absolute', left: 0, height: 6, borderRadius: 3, backgroundColor: theme.dark ? '#48D8C4' : '#7EEBD0' }, fillStyle]} />
+            <Animated.View style={[{ position: 'absolute', left: -FADER_CAP_HEIGHT / 2, top: 3 - FADER_CAP_WIDTH / 2, width: FADER_CAP_HEIGHT, height: FADER_CAP_WIDTH,
+              alignItems: 'center', justifyContent: 'center', boxShadow: [{ offsetX: 1, offsetY: 4, blurRadius: 4, color: '#000000B3' }], borderRadius: 8 }, thumbStyle]}>
+              <Image source={faderArtwork} resizeMode="stretch" style={{ width: FADER_CAP_WIDTH, height: FADER_CAP_HEIGHT, transform: [{ rotate: '90deg' }] }} />
+            </Animated.View>
+          </View>
         </View>
-      </View>
+      </GestureDetector>
     </FaderHousing>
   </View>;
 }
 
 function Adjust() {
-  return <View style={{ gap: 20 }}>
-    <StaticFader label="Keys" value="-6 dB" position={0.55} />
-    <StaticFader label="Click" value="2.4 dB" position={0.78} />
+  return <View style={{ gap: 14 }}>
+    <PracticeFader label="Keys" initialDb={-6} />
+    <PracticeFader label="Click" initialDb={2.4} />
+    <View style={{ alignItems: 'center' }}><Engraved size={10}>Try it: drag a handle</Engraved></View>
   </View>;
 }
 
