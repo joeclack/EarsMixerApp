@@ -1,7 +1,6 @@
 import { memo, useEffect, type ReactNode } from 'react';
 import { Platform, Text, View, type StyleProp, type TextProps, type TextStyle, type ViewStyle } from 'react-native';
 import Animated, { cancelAnimation, Easing, ReduceMotion, useAnimatedStyle, useSharedValue, withRepeat, withTiming } from 'react-native-reanimated';
-import { LinearGradient } from 'expo-linear-gradient';
 import { useTheme } from '../theme';
 
 // Small console-hardware details drawn around native controls, never over them.
@@ -40,29 +39,6 @@ export const Led = memo(function Led({ on = true, color = 'green', size = 8, pul
         borderRadius: size, backgroundColor: tone.core, opacity: 0.85 }} />
     </Animated.View>}
   </View>;
-});
-
-// A recessed slotted screw head. The slot angle varies per screw like real hardware.
-export const Screw = memo(function Screw({ size = 7, angle = 35, style }: { size?: number; angle?: number; style?: StyleProp<ViewStyle> }) {
-  const { dark } = useTheme();
-  return <View {...hidden} style={[{ width: size, height: size, borderRadius: size / 2, overflow: 'hidden',
-    boxShadow: [{ offsetX: 0, offsetY: 0.5, blurRadius: 0.5, color: dark ? '#FFFFFF1A' : '#FFFFFFE6' },
-      { offsetX: 0, offsetY: -0.5, blurRadius: 0.5, color: dark ? '#000000CC' : '#6E808866' }] }, style]}>
-    <LinearGradient colors={dark ? ['#7D8F96', '#3A474D', '#1B2328'] : ['#F4F7F8', '#B9C6CC', '#8A9AA1']}
-      start={{ x: 0.2, y: 0 }} end={{ x: 0.8, y: 1 }} style={{ position: 'absolute', inset: 0 }} />
-    <View style={{ position: 'absolute', left: size * 0.12, right: size * 0.12, top: size / 2 - 0.6, height: 1.2,
-      backgroundColor: dark ? '#0B1215' : '#4E5F66', transform: [{ rotate: angle + 'deg' }] }} />
-  </View>;
-});
-
-// Four screws pinned to the corners of a panel. The parent must be positioned.
-export const CornerScrews = memo(function CornerScrews({ inset = 7, size = 6 }: { inset?: number; size?: number }) {
-  return <>
-    <Screw size={size} angle={30} style={{ position: 'absolute', left: inset, top: inset }} />
-    <Screw size={size} angle={-55} style={{ position: 'absolute', right: inset, top: inset }} />
-    <Screw size={size} angle={70} style={{ position: 'absolute', left: inset, bottom: inset }} />
-    <Screw size={size} angle={-15} style={{ position: 'absolute', right: inset, bottom: inset }} />
-  </>;
 });
 
 // Small-caps lettering stamped into the panel: a fine highlight on the lower lip
