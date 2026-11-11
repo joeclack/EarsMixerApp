@@ -24,13 +24,15 @@ function FaderLip({ dark, width, radius }: { dark: boolean; width: number; radiu
   return <View pointerEvents="none" accessible={false} style={{ position: 'absolute', inset: -width, borderRadius: radius,
     boxShadow: dark
       ? [{ offsetX: 0, offsetY: -2, blurRadius: 5, color: 'rgba(150,195,210,0.13)' },
-        { offsetX: 0, offsetY: 3, blurRadius: 6, color: 'rgba(0,0,0,0.5)' }]
+        { offsetX: 0, offsetY: 2, blurRadius: 4, color: 'rgba(0,0,0,0.28)' },
+        { offsetX: 0, offsetY: 5, blurRadius: 14, color: 'rgba(0,0,0,0.3)' }]
       : [{ offsetX: 0, offsetY: -2, blurRadius: 5, color: 'rgba(255,255,255,0.95)' },
-        { offsetX: 0, offsetY: 3, blurRadius: 6, color: 'rgba(46,74,88,0.2)' }] }}>
+        { offsetX: 0, offsetY: 2, blurRadius: 4, color: 'rgba(46,74,88,0.1)' },
+        { offsetX: 0, offsetY: 5, blurRadius: 14, color: 'rgba(46,74,88,0.12)' }] }}>
     <LinearGradient colors={dark
-      ? ['rgba(150,195,210,0.2)', 'rgba(150,195,210,0.04)', 'rgba(0,0,0,0.1)', 'rgba(0,0,0,0.42)']
-      : ['rgba(255,255,255,1)', 'rgba(255,255,255,0.35)', 'rgba(46,74,88,0.05)', 'rgba(46,74,88,0.2)']}
-      locations={[0, 0.45, 0.6, 1]} start={{ x: 0.5, y: 0 }} end={{ x: 0.5, y: 1 }}
+      ? ['rgba(150,195,210,0.2)', 'rgba(150,195,210,0.04)', 'rgba(0,0,0,0.08)', 'rgba(0,0,0,0.22)', 'rgba(0,0,0,0.16)']
+      : ['rgba(255,255,255,1)', 'rgba(255,255,255,0.35)', 'rgba(46,74,88,0.04)', 'rgba(46,74,88,0.11)', 'rgba(46,74,88,0.08)']}
+      locations={[0, 0.45, 0.6, 0.85, 1]} start={{ x: 0.5, y: 0 }} end={{ x: 0.5, y: 1 }}
       style={[StyleSheet.absoluteFill, { borderRadius: radius }]} />
   </View>;
 }
