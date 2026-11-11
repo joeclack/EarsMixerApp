@@ -33,7 +33,7 @@ const BEZEL = 3;
 function Housing({ vertical, radius, children }: PropsWithChildren<{ vertical: boolean; radius: number }>) {
   const theme = useTheme();
   const face = radius === 999 ? 999 : radius - BEZEL;
-  return <View style={{ alignSelf: 'stretch', borderRadius: radius, paddingHorizontal: vertical ? 2 : 16, paddingVertical: vertical ? 10 : 4 }}>
+  return <View style={{ alignSelf: 'stretch', borderRadius: radius, paddingHorizontal: vertical ? 2 : 16, paddingVertical: vertical ? 10 : 7 }}>
     <LinearGradient pointerEvents="none" colors={theme.dark
       ? ['rgba(160,200,215,0.10)', 'rgba(160,200,215,0.02)', 'rgba(0,0,0,0.12)', 'rgba(0,0,0,0.35)']
       : ['rgba(255,255,255,0.55)', 'rgba(255,255,255,0.15)', 'rgba(46,74,88,0.03)', 'rgba(46,74,88,0.12)']}
@@ -57,7 +57,7 @@ function Housing({ vertical, radius, children }: PropsWithChildren<{ vertical: b
           { inset: true, offsetX: 0, offsetY: -2, blurRadius: 3, color: 'rgba(255,255,255,0.5)' },
           { inset: true, offsetX: 0, offsetY: 0, blurRadius: 0, spreadDistance: 1, color: 'rgba(90,66,45,0.12)' }] }]} />
       {/* The console red, inlaid as a fine pinstripe inside the face. */}
-      <View style={{ position: 'absolute', inset: 3, borderRadius: face === 999 ? 999 : face - 3, borderWidth: 1, borderColor: 'rgba(180,43,67,0.75)' }} />
+      <View style={{ position: 'absolute', inset: 1.5, borderRadius: face === 999 ? 999 : face - 1.5, borderWidth: 1, borderColor: 'rgba(180,43,67,0.75)' }} />
     </View>}
     {children}
   </View>;
