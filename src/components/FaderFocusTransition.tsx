@@ -1,5 +1,5 @@
 import { useCallback, useLayoutEffect, useRef, useState, type PropsWithChildren } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { StyleSheet, View, useWindowDimensions } from 'react-native';
 import Animated, { cancelAnimation, Easing, interpolate, ReduceMotion, useAnimatedStyle, useReducedMotion, useSharedValue, withTiming } from 'react-native-reanimated';
 import { scheduleOnRN } from 'react-native-worklets';
 import AppBackground from './AppBackground';
@@ -22,11 +22,16 @@ export default function FaderFocusTransition({ row, origin, onClose, children }:
   const generation = useRef(0);
   const root = useRef<View>(null);
   const [size, setSize] = useState({ width: 0, height: 0 });
+  const window = useWindowDimensions();
+  // This view's position in the window, for aligning the panel's background.
+  const [origin0, setOrigin0] = useState({ x: 0, y: 0 });
   const bounds = useSharedValue({ x: 0, y: 0, width: 0, height: 0 });
   const from = useSharedValue({ x: 0, y: 0, width: 0, height: 0 });
   const clear = useCallback((id: number) => { if (id === generation.current) setRetained(undefined); }, []);
   const measure = useCallback(() => {
-    root.current?.measureInWindow((x, y, width, height) => { if (width > 0) bounds.set({ x, y, width, height }); });
+    root.current?.measureInWindow((x, y, width, height) => {
+      if (width > 0) { bounds.set({ x, y, width, height }); setOrigin0(current => current.x === x && current.y === y ? current : { x, y }); }
+    });
   }, [bounds]);
   useLayoutEffect(() => {
     const id = ++generation.current;
@@ -81,7 +86,11 @@ export default function FaderFocusTransition({ row, origin, onClose, children }:
     {!!retained && <Animated.View pointerEvents={row ? 'auto' : 'none'} accessibilityElementsHidden={!row} importantForAccessibility={row ? 'auto' : 'no-hide-descendants'}
       style={[{ position: 'absolute', overflow: 'hidden' }, panelStyle]}>
       <Animated.View style={[{ position: 'absolute', width: size.width, height: size.height }, layerStyle]}>
-        <AppBackground />
+        {/* Size and place the background as the full window so its gradient
+            and grain continue seamlessly from the screen behind the header. */}
+        <View pointerEvents="none" style={{ position: 'absolute', left: -origin0.x, top: -origin0.y, width: window.width, height: window.height }}>
+          <AppBackground />
+        </View>
         <Animated.View style={[StyleSheet.absoluteFill, faderStyle]}>
           <FocusedFader channel={retained.channel} label={retained.label} onClose={onClose} />
         </Animated.View>
