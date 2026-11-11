@@ -57,13 +57,7 @@ export default function GroupEditor(props: GroupEditorProps) {
       {!editor.members.length && <Text style={{ color: theme.muted, padding: 16 }}>Add channels below.</Text>}
     </Section>
     <Section title="Add channels">
-      {editor.available.map((channel, index) => Platform.OS === 'android' ? <Pressable key={channel.channel} accessibilityRole="button" accessibilityLabel={'Add ' + channel.label}
-        accessibilityState={{ disabled: editor.busy }} disabled={editor.busy} onPress={() => editor.add(channel.channel)} android_ripple={{ color: theme.line }}
-        style={{ minHeight: 52, paddingHorizontal: 16, flexDirection: 'row', alignItems: 'center', gap: 12, opacity: editor.busy ? 0.4 : 1,
-          borderTopWidth: index ? 1 : 0, borderTopColor: theme.line }}>
-        <Icon name={{ android: 'add_circle_outline' }} />
-        <Text style={{ flex: 1, color: theme.text, fontSize: 17 }}>{channel.label}</Text>
-      </Pressable> : <View key={channel.channel} style={{ paddingHorizontal: 8, paddingVertical: 4 }}>
+      {editor.available.map(channel => <View key={channel.channel} style={{ paddingHorizontal: 8, paddingVertical: 4 }}>
         <NativeButton title={channel.label} symbol="plus.circle" accessibilityLabel={'Add ' + channel.label} disabled={editor.busy} onPress={() => editor.add(channel.channel)} />
       </View>)}
       {!editor.available.length && <Text style={{ color: theme.muted, padding: 16 }}>No other channels available to add.</Text>}
