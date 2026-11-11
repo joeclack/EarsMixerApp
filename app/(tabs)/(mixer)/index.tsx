@@ -18,6 +18,7 @@ import CloseButton from '../../../src/components/CloseButton';
 import { FADER_INSET } from '../../../src/components/faderGeometry';
 import MixerToolbar from '../../../src/components/MixerToolbar';
 import AuxPresence from '../../../src/components/AuxPresence';
+import ConnectionNotice from '../../../src/components/ConnectionNotice';
 import MixerLoadingBoundary from '../../../src/components/MixerLoadingBoundary';
 import { useLandscapeEdgePadding } from '../../../src/components/useLandscapeEdgePadding';
 import LandscapeMixerToolbar from '../../../src/components/LandscapeMixerToolbar';
@@ -164,5 +165,6 @@ export default function Mixer() {
     </View>
     </View>
     </Animated.View>
+    <ConnectionNotice />
   </Page>;
 }
