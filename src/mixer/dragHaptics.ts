@@ -1,25 +1,29 @@
-// Keep fast travel tactile without scheduling a pulse for every skipped percent.
-export class DragHaptics {
-  private percent = 0;
-  private lastPulse = -Infinity;
-  private lastBurst = -Infinity;
-  private timers: ReturnType<typeof setTimeout>[] = [];
-  constructor(private pulse: () => void) {}
-  begin(position: number) { this.end(); this.percent = Math.round(position * 100); this.lastPulse = this.lastBurst = -Infinity; }
-  move(position: number) {
-    const percent = Math.round(Math.max(0, Math.min(1, position)) * 100);
-    const delta = Math.abs(percent - this.percent);
-    this.percent = percent;
-    if (!delta) return;
-    const now = Date.now();
-    if (delta >= 5 && now - this.lastBurst >= 100) {
-      this.timers.forEach(clearTimeout); this.timers = [];
-      this.lastBurst = this.lastPulse = now;
-      this.pulse();
-      this.timers = [18, 36].map(delay => setTimeout(() => this.pulse(), delay));
-    } else if (now - this.lastPulse >= 25 && now - this.lastBurst >= 45) {
-      this.lastPulse = now; this.pulse();
-    }
-  }
-  end(finishBurst = false) { if (finishBurst) return; this.timers.forEach(clearTimeout); this.timers = []; }
+import { useCallback } from 'react';
+import { useSharedValue } from 'react-native-reanimated';
+import { scheduleOnRN } from 'react-native-worklets';
+import * as Haptics from 'expo-haptics';
+import { detentAt, stepDetent } from './detents';
+
+// Simulated fader detents: one light tick each time the handle travels a fixed
+// distance on screen, regardless of the level it represents. Ticks are decided
+// on the UI thread inside the drag gesture, so they follow the finger without
+// waiting for React, and a fast swipe gives at most one tick per frame rather
+// than queued bursts. A handle pinned at either end of its travel is silent.
+export function useDetentHaptics(enabled: boolean) {
+  const state = useSharedValue({ detent: 0, tickedAt: 0 });
+  const tick = useCallback(() => { if (enabled) void Haptics.selectionAsync().catch(() => {}); }, [enabled]);
+  // Call from the gesture's onStart with the handle's position in points.
+  const start = useCallback((points: number) => {
+    'worklet';
+    state.set({ detent: detentAt(points), tickedAt: state.get().tickedAt });
+  }, [state]);
+  // Call from the gesture's onUpdate with the handle's new position in points.
+  const move = useCallback((points: number) => {
+    'worklet';
+    const next = { ...state.get() };
+    const play = stepDetent(next, points, Date.now());
+    state.set(next);
+    if (play) scheduleOnRN(tick);
+  }, [state, tick]);
+  return { start, move };
 }

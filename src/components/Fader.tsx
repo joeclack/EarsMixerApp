@@ -7,7 +7,7 @@ import FaderHandleSurface from './FaderHandleSurface';
 import { LinearGradient } from 'expo-linear-gradient';
 import { LcdReadout } from './ConsoleDetails';
 import { FADER_CAP_HEIGHT, FADER_CAP_WIDTH, FADER_INSET, FADER_TRACK_CENTER, FADER_LIGHT } from './faderGeometry';
-import { DragHaptics } from '../mixer/dragHaptics';
+import { useDetentHaptics } from '../mixer/dragHaptics';
 import * as Haptics from 'expo-haptics';
 import { useFaderSession } from '../mixer/context';
 import { useTheme } from '../theme';
@@ -36,7 +36,7 @@ export default memo(function Fader({ channel, label, vertical = false, length = 
   const scale = pressScale || localScale;
   useEffect(() => { cancelAnimation(scale); scale.set(1); }, [mix.epoch, vertical, scale]);
   const drag = useRef<DragToken | null>(null);
-  const haptics = useRef(new DragHaptics(() => { if (session.state.settings.haptics) void Haptics.selectionAsync().catch(() => {}); })).current;
+  const detents = useDetentHaptics(session.state.settings.haptics);
   const inset = FADER_INSET * size;
   // A vertical strip's length is given, so its travel is right on the first
   // frame; only horizontal bars wait for their measured width.
@@ -46,28 +46,26 @@ export default memo(function Fader({ channel, label, vertical = false, length = 
     if (epoch !== session.mixer.state.epoch) return;
     drag.current = session.mixer.beginDrag(channel);
     if (!drag.current) return;
-    haptics.begin(initial);
     if (session.state.settings.haptics) void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
-  }, [session, channel, haptics]);
+  }, [session, channel]);
   const update = useCallback((next: number) => {
     if (!drag.current || drag.current.epoch !== session.mixer.state.epoch) return;
-    haptics.move(next);
     session.mixer.drag(drag.current, next);
-  }, [session, haptics]);
+  }, [session]);
   const finish = useCallback((next: number, success: boolean) => {
     if (drag.current) {
       if (success) { session.mixer.drag(drag.current, next); session.mixer.flush(drag.current); }
       session.mixer.cancelDrag(drag.current);
     }
-    drag.current = null; haptics.end(success); active.value = false;
+    drag.current = null; active.value = false;
     if (session.mixer.displayValue(channel) !== undefined) thumb.value = session.mixer.position(channel);
-  }, [session, channel, haptics, active, thumb]);
+  }, [session, channel, active, thumb]);
   useEffect(() => {
     active.value = false;
     if (drag.current) session.mixer.cancelDrag(drag.current);
-    drag.current = null; haptics.end();
-  }, [mix.epoch, extent, vertical, session, haptics, active]);
-  useEffect(() => () => { if (drag.current) session.mixer.cancelDrag(drag.current); haptics.end(); }, [session, haptics]);
+    drag.current = null;
+  }, [mix.epoch, extent, vertical, session, active]);
+  useEffect(() => () => { if (drag.current) session.mixer.cancelDrag(drag.current); }, [session]);
   useEffect(() => {
     let context = '';
     let previous: number | undefined;
@@ -149,12 +147,14 @@ export default memo(function Fader({ channel, label, vertical = false, length = 
       active.value = true; start.value = thumb.value; lastDispatch.value = 0;
       sampled.value = thumb.value;
       origin.value = vertical ? -event.translationY : event.translationX;
+      detents.start(start.value * travel);
       scheduleOnRN(begin, start.value, epoch);
     }).onUpdate(event => {
       'worklet';
       const movement = (vertical ? -event.translationY : event.translationX) - origin.value;
       const next = Math.max(0, Math.min(1, start.value + movement / travel));
       thumb.value = next;
+      detents.move(next * travel);
       const now = Date.now();
       if (now - lastDispatch.value >= 30) {
         lastDispatch.value = now; sampled.value = next; scheduleOnRN(update, next);
@@ -165,7 +165,7 @@ export default memo(function Fader({ channel, label, vertical = false, length = 
       thumb.value = final;
       scheduleOnRN(finish, final, success);
     });
-  }, [ready, travel, vertical, mix.epoch, thumb, start, active, lastDispatch, sampled, origin, begin, update, finish, enlarge, scale, reducedMotion]);
+  }, [ready, travel, vertical, mix.epoch, thumb, start, active, lastDispatch, sampled, origin, begin, update, finish, enlarge, scale, reducedMotion, detents]);
   const thumbStyle = useAnimatedStyle(() => ({ transform: vertical ? [{ translateY: travel * (1 - thumb.value) }] : [{ translateX: travel * thumb.value }] }));
   const fillStyle = useAnimatedStyle(() => vertical ? { height: travel * thumb.value } : { width: travel * thumb.value });
   return <GestureDetector gesture={enlarge}><View onLayout={vertical ? undefined : event => setWidth(event.nativeEvent.layout.width)} style={{ height: vertical ? length : 56, width: vertical ? 80 * size : undefined, alignSelf: vertical ? 'center' : undefined }}>

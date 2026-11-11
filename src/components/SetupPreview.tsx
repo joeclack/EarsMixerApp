@@ -1,11 +1,10 @@
-import { memo, useCallback, useMemo, useRef, useState, type ReactNode } from 'react';
+import { memo, useCallback, useMemo, useState, type ReactNode } from 'react';
 import { Image, Text, View } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue } from 'react-native-reanimated';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import { scheduleOnRN } from 'react-native-worklets';
-import * as Haptics from 'expo-haptics';
 import { useSession } from '../mixer/context';
-import { DragHaptics } from '../mixer/dragHaptics';
+import { useDetentHaptics } from '../mixer/dragHaptics';
 import { dbToPosition, levelText, positionToDb } from '../mixer/model';
 import { useTheme } from '../theme';
 import { faderArtwork } from './faderArtwork';
@@ -100,19 +99,17 @@ function PracticeFader({ label, initialDb }: { label: string; initialDb: number 
   const [db, setDb] = useState(initialDb);
   const position = useSharedValue(dbToPosition(initialDb));
   const start = useSharedValue(0);
-  const haptics = useRef(new DragHaptics(() => { if (session.state.settings.haptics) void Haptics.selectionAsync().catch(() => {}); })).current;
-  const begin = useCallback((value: number) => haptics.begin(value), [haptics]);
-  const report = useCallback((value: number) => { haptics.move(value); setDb(positionToDb(value)); }, [haptics]);
-  const end = useCallback(() => haptics.end(true), [haptics]);
+  const detents = useDetentHaptics(session.state.settings.haptics);
+  const report = useCallback((value: number) => setDb(positionToDb(value)), []);
   const set = useCallback((value: number) => { position.set(value); setDb(positionToDb(value)); }, [position]);
   const pan = useMemo(() => Gesture.Pan().enabled(track > 0).activeOffsetX([-3, 3]).failOffsetY([-10, 10]).onStart(() => {
     'worklet';
-    start.set(position.get()); scheduleOnRN(begin, position.get());
+    start.set(position.get()); detents.start(position.get() * track);
   }).onUpdate(event => {
     'worklet';
     const next = Math.max(0, Math.min(1, start.get() + event.translationX / track));
-    position.set(next); scheduleOnRN(report, next);
-  }).onFinalize(() => { 'worklet'; scheduleOnRN(end); }), [track, position, start, begin, report, end]);
+    position.set(next); detents.move(next * track); scheduleOnRN(report, next);
+  }), [track, position, start, report, detents]);
   const thumbStyle = useAnimatedStyle(() => ({ transform: [{ translateX: track * position.get() }] }));
   const fillStyle = useAnimatedStyle(() => ({ width: track * position.get() }));
   const text = levelText(db, 'level');
