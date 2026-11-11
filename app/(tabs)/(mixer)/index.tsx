@@ -1,4 +1,5 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import Animated, { cancelAnimation, Easing, ReduceMotion, useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 import { FlatList, Text, View, useWindowDimensions } from 'react-native';
 import { router, useFocusEffect } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -35,7 +36,20 @@ export default function Mixer() {
   const landscapeEdges = useLandscapeEdgePadding(insets.left, insets.right);
   const landscape = width > height;
   const [bankHeight, setBankHeight] = useState(height);
-  const layoutReady = useStableMixerLayout([width, height, insets.top, insets.bottom, insets.left, insets.right, bankHeight].join('|'));
+  const layoutReady = useStableMixerLayout([width, height, insets.top, insets.bottom, insets.left, insets.right,
+    landscapeEdges.paddingLeft, landscapeEdges.paddingRight, bankHeight].join('|'), landscape ? 'landscape' : 'portrait');
+  // Hide stale geometry immediately, then fade the settled layout in on the UI
+  // thread rather than letting faders visibly resize through each stage.
+  // Only a rotation fades in; other single-frame hides return immediately.
+  const reveal = useSharedValue(1);
+  const revealedOrientation = useRef(landscape);
+  useLayoutEffect(() => {
+    if (!layoutReady) { cancelAnimation(reveal); reveal.set(0); return; }
+    const rotated = revealedOrientation.current !== landscape;
+    revealedOrientation.current = landscape;
+    reveal.set(rotated ? withTiming(1, { duration: 180, easing: Easing.out(Easing.cubic), reduceMotion: ReduceMotion.System }) : 1);
+  }, [layoutReady, landscape, reveal]);
+  const revealStyle = useAnimatedStyle(() => ({ opacity: reveal.get() }));
   useEffect(() => { session.mixer.cancelWrites(); }, [landscape, session]);
   const [expanded, setExpanded] = useState<number[]>([]);
   const [focused, setFocused] = useState<number | null>(null);
@@ -129,12 +143,14 @@ export default function Mixer() {
   }, [landscape, cardHeight, stripHeight, theme, mix.parameter, session, expanded]);
   return <Page title={mix.config?.aux.find(aux => aux.channel === mix.aux)?.label || 'Mixer'} scroll={false} compactHeader hideHeader={landscape} toolbar={<MixerToolbar />}>
     <AuxPresence />
-    <View style={{ flex: 1, flexDirection: landscape ? 'row' : 'column',
-      paddingLeft: landscape ? landscapeEdges.paddingLeft : 0, paddingRight: landscape ? landscapeEdges.paddingRight : 0 }}>
+    {/* The plain opacity hides stale layout within the same commit; the
+        animated layer then fades the settled layout in. */}
+    <Animated.View style={[{ flex: 1 }, revealStyle]}>
+    <View pointerEvents={layoutReady ? 'auto' : 'none'} accessibilityElementsHidden={!layoutReady}
+      importantForAccessibility={layoutReady ? 'auto' : 'no-hide-descendants'} style={{ flex: 1, flexDirection: landscape ? 'row' : 'column',
+      paddingLeft: landscape ? landscapeEdges.paddingLeft : 0, paddingRight: landscape ? landscapeEdges.paddingRight : 0, opacity: layoutReady ? 1 : 0 }}>
     {landscape && <LandscapeMixerToolbar top={topPadding} bottom={bottomPadding} />}
     <View onLayout={event => setBankHeight(event.nativeEvent.layout.height)} style={{ flex: 1, minWidth: 0, overflow: landscape ? 'hidden' : 'visible' }}>
-    <View pointerEvents={layoutReady ? 'auto' : 'none'} accessibilityElementsHidden={!layoutReady}
-      importantForAccessibility={layoutReady ? 'auto' : 'no-hide-descendants'} style={{ flex: 1, opacity: layoutReady ? 1 : 0 }}>
     <LandscapeFaderViewport enabled={landscape}>
     <MixerLoadingBoundary>{!state.server ? <EmptyMixer /> : <FaderFocusTransition row={focusedRow} origin={focusOrigin} onClose={closeFocused}>
     <FlatList key={landscape ? 'strips' : 'rows'} horizontal={landscape} extraData={state.preferences}
@@ -149,6 +165,6 @@ export default function Mixer() {
     </LandscapeFaderViewport>
     </View>
     </View>
-    </View>
+    </Animated.View>
   </Page>;
 }

@@ -38,7 +38,10 @@ export default memo(function Fader({ channel, label, vertical = false, length = 
   const drag = useRef<DragToken | null>(null);
   const haptics = useRef(new DragHaptics(() => { if (session.state.settings.haptics) void Haptics.selectionAsync().catch(() => {}); })).current;
   const inset = FADER_INSET * size;
-  const travel = Math.max(0, width - inset * 2);
+  // A vertical strip's length is given, so its travel is right on the first
+  // frame; only horizontal bars wait for their measured width.
+  const extent = vertical ? length : width;
+  const travel = Math.max(0, extent - inset * 2);
   const begin = useCallback((initial: number, epoch: number) => {
     if (epoch !== session.mixer.state.epoch) return;
     drag.current = session.mixer.beginDrag(channel);
@@ -63,7 +66,7 @@ export default memo(function Fader({ channel, label, vertical = false, length = 
     active.value = false;
     if (drag.current) session.mixer.cancelDrag(drag.current);
     drag.current = null; haptics.end();
-  }, [mix.epoch, width, vertical, session, haptics, active]);
+  }, [mix.epoch, extent, vertical, session, haptics, active]);
   useEffect(() => () => { if (drag.current) session.mixer.cancelDrag(drag.current); haptics.end(); }, [session, haptics]);
   useEffect(() => {
     let context = '';
@@ -100,7 +103,7 @@ export default memo(function Fader({ channel, label, vertical = false, length = 
     };
     syncPosition();
     return session.mixer.subscribeChannel(channel, syncPosition);
-  }, [session, channel, thumb, active, vertical, width]);
+  }, [session, channel, thumb, active, vertical, extent]);
   const epoch = mix.epoch;
   const pressHaptic = useCallback(() => {
     if (session.state.settings.haptics) void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy).catch(() => {});
@@ -165,7 +168,7 @@ export default memo(function Fader({ channel, label, vertical = false, length = 
   }, [ready, travel, vertical, mix.epoch, thumb, start, active, lastDispatch, sampled, origin, begin, update, finish, enlarge, scale, reducedMotion]);
   const thumbStyle = useAnimatedStyle(() => ({ transform: vertical ? [{ translateY: travel * (1 - thumb.value) }] : [{ translateX: travel * thumb.value }] }));
   const fillStyle = useAnimatedStyle(() => vertical ? { height: travel * thumb.value } : { width: travel * thumb.value });
-  return <GestureDetector gesture={enlarge}><View onLayout={event => setWidth(vertical ? event.nativeEvent.layout.height : event.nativeEvent.layout.width)} style={{ height: vertical ? length : 56, width: vertical ? 80 * size : undefined, alignSelf: vertical ? 'center' : undefined }}>
+  return <GestureDetector gesture={enlarge}><View onLayout={vertical ? undefined : event => setWidth(event.nativeEvent.layout.width)} style={{ height: vertical ? length : 56, width: vertical ? 80 * size : undefined, alignSelf: vertical ? 'center' : undefined }}>
     <View pointerEvents="none" style={vertical
       ? { position: 'absolute', top: inset, bottom: inset, left: FADER_TRACK_CENTER * size - 4, width: 8, borderRadius: 4, backgroundColor: '#010709', justifyContent: 'flex-end' }
       : { position: 'absolute', left: inset, right: inset, top: 24, height: 8, borderRadius: 4, backgroundColor: '#010709' }}>
@@ -176,7 +179,7 @@ export default memo(function Fader({ channel, label, vertical = false, length = 
           end={vertical ? { x: 1, y: 0.5 } : { x: 0.5, y: 1 }} style={{ position: 'absolute', inset: 0, borderRadius: 4 }} />
       </Animated.View>
     </View>
-    <FaderScale width={width} travel={travel} vertical={vertical} parameter={mix.parameter} color={FADER_LIGHT} size={size} />
+    <FaderScale width={extent} travel={travel} vertical={vertical} parameter={mix.parameter} color={FADER_LIGHT} size={size} />
     <GestureDetector gesture={gesture}><Animated.View accessible accessibilityRole="adjustable" accessibilityLabel={label + (mix.parameter === 'pan' ? ' pan' : ' level')}
       accessibilityHint={onEnlarge ? 'Touch and hold to open a full-screen fader' : undefined}
       accessibilityState={{ disabled: !ready }} accessibilityValue={{ min: 0, max: 100, now: Math.round(position * 100), text: levelText(session.mixer.displayValue(channel), mix.parameter) }}
