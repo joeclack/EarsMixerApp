@@ -30,6 +30,7 @@ function Navigation() {
   // the last mixer. Once it lifts, the mixer screen handles later reconnects.
   const [starting, setStarting] = useState(true);
   const mixerLoading = useMixerLoading();
+  const hasNickname = session.hasNickname();
   const [startupDone, setStartupDone] = useState(false);
   const covering = !startupDone && (!state.hydrated || starting || mixerLoading);
   useEffect(() => { if (!covering) setStartupDone(true); }, [covering]);
@@ -37,7 +38,7 @@ function Navigation() {
     if (Platform.OS !== 'web') Appearance.setColorScheme(state.settings.appearance === 'system' ? 'unspecified' : state.settings.appearance);
   }, [state.settings.appearance]);
   useEffect(() => {
-    if (state.hydrated && (!state.setupComplete || !state.lastServer || session.state.server)) setStarting(false);
+    if (state.hydrated && (!state.setupComplete || !hasNickname || !state.lastServer || session.state.server)) setStarting(false);
     if (!state.setupComplete) {
       prompted.current = false;
       if (state.hydrated && navigation?.key && !setupPresented.current) { setupPresented.current = true; router.push('/setup'); }
@@ -45,6 +46,11 @@ function Navigation() {
     }
     setupPresented.current = false;
     if (pathname === '/setup') return;
+    // Devices set up before the nickname was required add one before connecting.
+    if (!hasNickname) {
+      if (state.hydrated && navigation?.key && pathname !== '/nickname') router.push('/nickname');
+      return;
+    }
     if (!state.hydrated || !navigation?.key || prompted.current) return;
     prompted.current = true;
     const controller = new AbortController();
@@ -71,7 +77,7 @@ function Navigation() {
       if (!controller.signal.aborted) router.push('/connect');
     })();
     return () => controller.abort();
-  }, [state.hydrated, state.setupComplete, navigation?.key, pathname, session]);
+  }, [state.hydrated, state.setupComplete, hasNickname, navigation?.key, pathname, session]);
   // Ask for the connection PIN whenever the mixer requires it.
   const pinNeeded = !!state.pinPrompt;
   useEffect(() => {
@@ -87,6 +93,7 @@ function Navigation() {
       <Stack.Screen name="setup" options={{ headerShown: false, presentation: 'fullScreenModal', gestureEnabled: false }} />
       <Stack.Screen name="connect" options={sheetOptions} />
       <Stack.Screen name="pin" options={sheetOptions} />
+      <Stack.Screen name="nickname" options={{ ...sheetOptions, gestureEnabled: false, sheetGrabberVisible: false }} />
       <Stack.Screen name="templates" options={sheetOptions} />
       <Stack.Screen name="scan" options={{ presentation: 'fullScreenModal', headerShown: false }} />
       <Stack.Screen name="layout" options={{ title: 'Channel order', presentation: 'modal' }} />

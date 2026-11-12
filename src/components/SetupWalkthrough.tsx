@@ -16,7 +16,7 @@ import SetupList from './SetupList';
 import SetupPreview from './SetupPreview';
 
 const steps = [
-  { title: 'Set your nickname', body: 'This name identifies your connection to the mixer.', bullets: [] },
+  { title: 'Set your nickname', body: 'This name identifies your connection to the mixer. Others on your mix see it.', bullets: [] },
   { title: 'Connect to a mixer', body: 'Make sure you are on the correct Wi-Fi.', bullets: [] },
   { title: 'Choose a template (optional)', body: '', bullets: ['Open the … menu and tap Templates.', 'Choose a saved layout, or keep your own.', 'Templates never change desk levels.'] },
   { title: 'Adjust your mix', body: '', featured: 'Hold any fader to open a tall fader with longer travel for fine control.',
@@ -68,9 +68,9 @@ export default function SetupWalkthrough() {
         <View style={{ paddingHorizontal: 20, paddingTop: 20, gap: 10 }}>
           <Text accessibilityRole="header" style={{ color: theme.text, fontSize: 30, fontWeight: '700' }}>{current.title}</Text>
           {!!current.body && <Text style={{ color: theme.muted, fontSize: 17, lineHeight: 25 }}>{current.body}</Text>}
-          {step === 0 && <TextInput accessibilityLabel="Nickname" placeholder="Nickname (optional)" placeholderTextColor={theme.muted} value={state.settings.nickname}
+          {step === 0 && <TextInput accessibilityLabel="Nickname" placeholder="Nickname" placeholderTextColor={theme.muted} value={state.settings.nickname}
             onChangeText={nickname => session.setSettings({ nickname })} maxLength={80} autoComplete="name" autoCapitalize="words" autoCorrect={false} returnKeyType="next"
-            onSubmitEditing={() => { Keyboard.dismiss(); setStep(1); }}
+            onSubmitEditing={() => { if (!nickname) return; Keyboard.dismiss(); setStep(1); }}
             style={{ fontSize: 20, color: theme.text, paddingVertical: 14, marginTop: 6, borderBottomWidth: 1, borderBottomColor: theme.line }} />}
           {step === 1 && <View style={{ gap: 14, alignItems: 'flex-start', marginTop: 6 }}>
             <Text accessibilityLiveRegion="polite" style={{ color: mix.status === 'connected' ? theme.green : theme.muted, fontSize: 17 }}>
@@ -83,7 +83,7 @@ export default function SetupWalkthrough() {
         {current.bullets.length ? <SetupList items={current.bullets} featured={'featured' in current ? current.featured : undefined} /> : <View style={{ flex: 1 }} />}
       </Animated.View>
       <View style={{ paddingHorizontal: 20, paddingTop: 12, paddingBottom: 16, maxWidth: 600, width: '100%', alignSelf: 'center' }}>
-        <NativeButton title={next} prominent fullWidth disabled={finishing} onPress={() => {
+        <NativeButton title={next} prominent fullWidth disabled={finishing || (step === 0 && !nickname)} onPress={() => {
           Keyboard.dismiss();
           if (step < steps.length - 1) setStep(value => value + 1);
           else { setFinishing(true); void session.completeSetup().then(() => router.back()).finally(() => setFinishing(false)); }

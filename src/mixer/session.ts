@@ -126,6 +126,7 @@ export class MixerSession {
         haptics: settings.haptics !== false,
         nickname: typeof settings.nickname === 'string' ? settings.nickname.slice(0, 80) : '',
       } });
+      this.savedNickname = this.state.settings.nickname;
     } catch { this.patch({ message: 'Could not load device settings.' }); }
     this.patch({ hydrated: true });
   }
@@ -164,10 +165,20 @@ export class MixerSession {
     await this.persist('earsmixer.native.setup.v1', true);
     this.patch({ setupComplete: true });
   }
+  // The nickname is required. A field may be cleared while editing, but only a
+  // non-empty name is used or saved; restoreNickname() puts it back afterwards.
+  private savedNickname = '';
+  nickname() { return this.savedNickname.trim(); }
+  hasNickname() { return !!this.nickname(); }
   setSettings(settings: Partial<Settings>) {
     this.patch({ settings: { ...this.state.settings, ...settings } });
-    this.mixer.identify(this.state.settings.nickname.trim() || null);
-    void this.persist('earsmixer.native.settings.v1', this.state.settings);
+    if (this.state.settings.nickname.trim()) this.savedNickname = this.state.settings.nickname;
+    this.mixer.identify(this.nickname() || null);
+    void this.persist('earsmixer.native.settings.v1', { ...this.state.settings, nickname: this.savedNickname });
+  }
+  restoreNickname(): string {
+    if (!this.state.settings.nickname.trim() && this.savedNickname) this.patch({ settings: { ...this.state.settings, nickname: this.savedNickname } });
+    return this.state.settings.nickname;
   }
   async forget(url: string) {
     this.patch({ recent: this.state.recent.filter(item => item.url !== url) });
@@ -212,7 +223,7 @@ export class MixerSession {
     let response: Response;
     try {
       response = await this.fetcher(server + 'api/pair', { method: 'POST', headers: { 'Content-Type': 'application/json' }, signal: controller.signal,
-        body: JSON.stringify({ pin, device, name: this.state.settings.nickname.trim() || null }) });
+        body: JSON.stringify({ pin, device, name: this.nickname() || null }) });
     } catch { throw new Error('Could not reach the mixer. Check your Wi-Fi and try again.'); }
     finally { clearTimeout(timeout); }
     let body: any = {};
@@ -257,7 +268,7 @@ export class MixerSession {
       this.mixer.restoreValues(values);
       if (channels) this.mixer.restoreConfig(channels, preferences.selectedAux);
       this.mixer.selectAux(preferences.selectedAux);
-      this.mixer.identify(this.state.settings.nickname.trim() || null);
+      this.mixer.identify(this.nickname() || null);
       if (!this.suspended) this.mixer.connect(server, true);
       await this.persist('earsmixer.connections.v1', this.state.recent);
       if (attempt === this.attempt && server !== DEMO_URL) {
@@ -392,6 +403,7 @@ export class MixerSession {
     const keys = (await this.storage.getAllKeys()).filter(key => key.startsWith('earsmixer.'));
     await this.storage.multiRemove(keys);
     this.compared = '';
+    this.savedNickname = '';
     this.patch({ recentStates: {}, restorePrompt: null, selectedTemplate: null, setupComplete: false, server: null, lastServer: null, recent: [], settings: { appearance: 'system', nickname: '', haptics: true },
       preferences: emptyPreferences(), connecting: false, message: '', pinPrompt: null });
   }
@@ -406,7 +418,7 @@ export class MixerSession {
       if (this.state.restorePrompt) { this.suspended = false; return; }
       this.compared = '';
       if (this.suspended && this.state.server) {
-        this.mixer.identify(this.state.settings.nickname.trim() || null);
+        this.mixer.identify(this.nickname() || null);
         this.mixer.connect(this.state.server, true);
       } else if (this.mixer.state.status === 'connected') this.mixer.refresh();
       this.suspended = false;
