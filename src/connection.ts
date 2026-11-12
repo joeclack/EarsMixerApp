@@ -1,11 +1,5 @@
 export type SavedMixer = { url: string; lastConnected: number };
 
-// A scanned mixer code may carry the connection PIN after the address, as
-// http://192.168.1.100:8082/#pin=123456. Typed addresses never do.
-export function readMixerCode(input: string): { address: string; pin: string | null } {
-  const match = /^(.*?)#pin=(\d{6})$/.exec(input.trim());
-  return { address: normalizeMixerAddress(match ? match[1] : input), pin: match ? match[2] : null };
-}
 export function normalizeMixerAddress(input: string): string {
   const value = input.trim();
   if (!value || /\s/.test(value)) throw new Error('Enter your mixer’s IP address or hostname.');
