@@ -18,7 +18,8 @@ export default function Connect() {
   const theme = useTheme();
   const insets = useSafeAreaInsets();
   const [address, setAddress] = useState((!state.demo && state.server) || state.recent[0]?.url || '');
-  const [error, setError] = useState('');
+  // Opened after a failed attempt elsewhere (a scanned code), show why it failed.
+  const [error, setError] = useState(!state.server && !state.connecting ? state.message : '');
   const [mode, setMode] = useState('auto');
   const nearby = useNearbyMixers();
   const [resolving, setResolving] = useState(false);
