@@ -1,12 +1,30 @@
 appId: com.joeclack.earsmixerapp
 ---
+# Setup requires a nickname before Next is enabled. After a name is entered the
+# first-step CTA becomes "Hi, <name>"; later steps use Next, then Finish.
 - launchApp:
     clearState: true
-- tapOn: "Next"
-- tapOn: "Next"
-- tapOn: "Next"
-- tapOn: "Next"
-- tapOn: "Finish"
+- tapOn: "Nickname"
+- inputText: "Test"
+- hideKeyboard
+- tapOn:
+    text: "Hi, Test"
+    enabled: true
+- tapOn:
+    text: "Next"
+    enabled: true
+- tapOn:
+    text: "Next"
+    enabled: true
+- tapOn:
+    text: "Next"
+    enabled: true
+- tapOn:
+    text: "Next"
+    enabled: true
+- tapOn:
+    text: "Finish"
+    enabled: true
 - extendedWaitUntil:
     visible: "Select a server or enter its address."
     timeout: 30000
