@@ -78,13 +78,18 @@ function Navigation() {
     })();
     return () => controller.abort();
   }, [state.hydrated, state.setupComplete, hasNickname, navigation?.key, pathname, session]);
-  // Ask for the connection PIN whenever the mixer requires it.
+  // Ask for the connection PIN whenever the mixer requires it. The connect and
+  // scan screens close themselves once connected, which would take a PIN sheet
+  // opened above them with it, so wait for them to close first.
   const pinNeeded = !!state.pinPrompt;
+  const pinPresented = useRef(false);
   useEffect(() => {
-    if (pinNeeded && state.hydrated && navigation?.key && pathname !== '/pin') router.push('/pin');
+    if (!pinNeeded) { pinPresented.current = false; return; }
+    if (pinPresented.current || !state.hydrated || !navigation?.key || pathname === '/connect' || pathname === '/scan' || pathname === '/nickname') return;
     // Only a new request opens the sheet; closing it leaves the mixer's notice to reopen it.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [pinNeeded, state.hydrated, navigation?.key]);
+    pinPresented.current = true;
+    if (pathname !== '/pin') router.push('/pin');
+  }, [pinNeeded, state.hydrated, navigation?.key, pathname]);
   return <StartupCover.Provider value={covering}><LoadingTransition loading={covering} ready={state.hydrated}>{state.hydrated && <ThemeProvider value={theme.dark ? DarkTheme : DefaultTheme}>
     <StatusBar style={theme.dark ? 'light' : 'dark'} />
     <Stack screenOptions={{ contentStyle: { backgroundColor: theme.bg }, headerTintColor: theme.tint }}>
