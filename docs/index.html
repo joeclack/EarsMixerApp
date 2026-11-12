@@ -1,0 +1,172 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="dark light">
+<meta name="description" content="EarsMixer beta — control your own in-ear monitor mix from your phone. Join the TestFlight.">
+<title>EarsMixer — Beta</title>
+<link rel="icon" href="favicon.png" type="image/png">
+<link rel="apple-touch-icon" href="icon.png">
+<style>
+  :root {
+    --bg: #0c0d0f;
+    --panel: #131518;
+    --raised: #1a1d21;
+    --line: #262a30;
+    --text: #e6e8eb;
+    --muted: #98a1ab;
+    --accent: #45c9bd;
+    --accent-dim: #2a7f78;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: var(--bg); color: var(--text); font: 16px/1.6 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+  body {
+    min-height: 100vh;
+    background:
+      radial-gradient(ellipse 90% 50% at 50% -8%, #16343a 0%, transparent 55%),
+      var(--bg);
+  }
+  a { color: var(--accent); }
+
+  .wrap {
+    max-width: 640px;
+    margin: 0 auto;
+    padding: 56px 20px 80px;
+  }
+
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding-bottom: 28px;
+    border-bottom: 1px solid var(--line);
+    margin-bottom: 36px;
+  }
+  .brand img {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+  }
+  .brand span {
+    font-size: 22px;
+    font-weight: 650;
+    letter-spacing: -0.3px;
+  }
+  .beta {
+    display: inline-block;
+    margin-left: 10px;
+    padding: 2px 8px;
+    border: 1px solid var(--accent-dim);
+    border-radius: 999px;
+    color: var(--accent);
+    font-size: 11px;
+    font-weight: 650;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    vertical-align: middle;
+  }
+
+  h1 {
+    margin: 0 0 10px;
+    font-size: clamp(28px, 5vw, 36px);
+    letter-spacing: -0.4px;
+    line-height: 1.15;
+  }
+  .lede {
+    margin: 0 0 32px;
+    color: var(--muted);
+    font-size: 17px;
+  }
+
+  .stores {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-bottom: 36px;
+  }
+  .store {
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 18px;
+    border-radius: 10px;
+    border: 1px solid var(--line);
+    background: var(--raised);
+    color: var(--text);
+    text-decoration: none;
+    min-width: 188px;
+    transition: border-color 0.15s ease, background 0.15s ease;
+  }
+  .store:hover {
+    border-color: var(--accent-dim);
+    background: #1f242a;
+  }
+  .store svg { flex: 0 0 auto; }
+  .store .label { display: flex; flex-direction: column; line-height: 1.15; }
+  .store .label small { color: var(--muted); font-size: 11px; }
+  .store .label strong { font-size: 16px; font-weight: 650; }
+
+  .help {
+    padding: 16px 20px;
+    border: 1px solid var(--line);
+    border-left: 3px solid var(--accent);
+    border-radius: 4px;
+    background: var(--panel);
+  }
+  .help p { margin: 0; color: var(--muted); font-size: 15px; }
+  .help a { color: var(--accent); }
+
+  footer {
+    margin-top: 48px;
+    padding-top: 24px;
+    border-top: 1px solid var(--line);
+    color: var(--muted);
+    font-size: 14px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 16px;
+    justify-content: space-between;
+  }
+  footer nav { display: flex; flex-wrap: wrap; gap: 8px 16px; }
+  footer a { color: var(--muted); text-decoration: none; }
+  footer a:hover { color: var(--accent); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="brand">
+    <img src="icon.png" width="48" height="48" alt="">
+    <span>EarsMixer<span class="beta">Beta</span></span>
+  </header>
+
+  <h1>Your personal monitor mix, on your phone.</h1>
+  <p class="lede">EarsMixer is in beta. Connect to an EarsMixer server on the same Wi‑Fi as a DiGiCo desk and dial in your own in-ear mix — levels, pan, groups, and layouts. On iPhone, join the TestFlight to try it.</p>
+
+  <div class="stores">
+    <!-- Replace TESTFLIGHT_JOIN_CODE with the public link code from App Store Connect → TestFlight → Public Link. -->
+    <a class="store" id="testflight" href="https://testflight.apple.com/join/TESTFLIGHT_JOIN_CODE" rel="noopener">
+      <svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.22-1.98 1.08-3.13-1.05.04-2.31.7-3.06 1.58-.66.76-1.23 1.98-1.07 3.14 1.13.09 2.29-.57 3.05-1.59"/></svg>
+      <span class="label"><small>iPhone · Beta</small><strong>Join the TestFlight</strong></span>
+    </a>
+    <a class="store" href="https://play.google.com/store/apps/details?id=com.joeclack.earsmixerapp" rel="noopener">
+      <svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M3.609 1.814 13.792 12 3.61 22.186a.996.996 0 0 1-.237-.316A1.4 1.4 0 0 1 3 21.31V2.69c0-.34.1-.66.28-.93.1-.13.22-.24.329-.346m.91 21.532c.10.0.0.5.78.154l12.04-6.87-3.08-2.2-9.74 9.0m13.96-11.24-2.98 1.7 2.98 1.7c.8.46 1.21.22 1.21-.74V12.85c0-.96-.41-1.2-1.21-.744M5.3 23.5c.37 0 .7-.1 1.1-.33l10.2-5.82-2.68-1.91L4.52 22.9c.2.36.48.6.78.6"/></svg>
+      <span class="label"><small>Android · Beta</small><strong>Google Play</strong></span>
+    </a>
+  </div>
+
+  <div class="help">
+    <p>Need help getting connected? See <a href="support.html">Support</a>. Read the <a href="privacy.html">Privacy Policy</a>, or email <a href="mailto:earsmixer@duck.com">earsmixer@duck.com</a>.</p>
+  </div>
+
+  <footer>
+    <span>EarsMixer</span>
+    <nav aria-label="Footer">
+      <a href="support.html">Support</a>
+      <a href="privacy.html">Privacy</a>
+      <a href="https://github.com/joeclack/EarsMixerApp">GitHub</a>
+    </nav>
+  </footer>
+</div>
+</body>
+</html>
