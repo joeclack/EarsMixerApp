@@ -1,4 +1,4 @@
-import { useCallback, useLayoutEffect, useRef, useState, type PropsWithChildren } from 'react';
+import { useCallback, useLayoutEffect, useRef, useState, type ComponentRef, type PropsWithChildren } from 'react';
 import { StyleSheet, View, useWindowDimensions } from 'react-native';
 import Animated, { cancelAnimation, Easing, interpolate, ReduceMotion, useAnimatedStyle, useReducedMotion, useSharedValue, withTiming } from 'react-native-reanimated';
 import { scheduleOnRN } from 'react-native-worklets';
@@ -20,7 +20,7 @@ export default function FaderFocusTransition({ row, origin, onClose, children }:
   const progress = useSharedValue(0);
   const [retained, setRetained] = useState(row);
   const generation = useRef(0);
-  const root = useRef<View>(null);
+  const root = useRef<ComponentRef<typeof View>>(null);
   const [size, setSize] = useState({ width: 0, height: 0 });
   const window = useWindowDimensions();
   // This view's position in the window, for aligning the panel's background.

@@ -1,7 +1,10 @@
-import type { PropsWithChildren } from 'react';
-import { View } from 'react-native';
-import MaskedView from '@react-native-masked-view/masked-view';
+import type { ComponentType, PropsWithChildren, ReactElement } from 'react';
+import { View, type ViewProps } from 'react-native';
+import MaskedViewClass from '@react-native-masked-view/masked-view';
 import { LinearGradient } from 'expo-linear-gradient';
+
+// The package's class typings predate React 19's JSX types; the component is unchanged.
+const MaskedView = MaskedViewClass as unknown as ComponentType<ViewProps & { maskElement: ReactElement }>;
 
 export default function LandscapeFaderViewport({ enabled, children }: PropsWithChildren<{ enabled: boolean }>) {
   if (!enabled) return <View style={{ flex: 1 }}>{children}</View>;

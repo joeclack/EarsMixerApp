@@ -150,7 +150,8 @@ export class MixerSession {
     const preferences = templatePreferences(data.config, this.state.preferences.compact);
     this.mixer.cancelWrites();
     this.patch({ selectedTemplate: typeof data.name === 'string' && data.name.trim() && data.name.length <= 80 ? { id, name: data.name.trim() } : null });
-    this.preferences({ ...preferences, groupsByAux: this.state.preferences.groupsByAux, globalGroups: this.state.preferences.globalGroups });
+    // A template replaces the whole layout: order, hidden channels and groups.
+    this.preferences(preferences);
     await this.queue;
     if (server === this.state.server && attempt === this.attempt) this.notifySuccess('Layout applied: ' + (this.state.selectedTemplate?.name || 'Template'));
   }

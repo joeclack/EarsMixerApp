@@ -1,5 +1,4 @@
-import { ScrollView, Text, View, Pressable } from 'react-native';
-import { Host, Switch } from '@expo/ui';
+import { ScrollView, Switch, Text, View, Pressable } from 'react-native';
 import { useTheme } from '../theme';
 import { Icon, Section, Message } from './ui';
 import NativeButton from './NativeButton';
@@ -17,9 +16,9 @@ export default function ChannelOrder() {
         </View>
         {!!item.detail && <Text style={{ color: theme.muted, fontSize: 13 }}>{item.detail}</Text>}
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-          <Host matchContents colorScheme={theme.scheme} seedColor={theme.tint}>
-            <Switch accessibilityLabel={'Show ' + item.label} value={item.visible} onValueChange={visible => order.show(item.key, visible)} />
-          </Host>
+          {/* Web fallback: React Native's switch carries an accessibility label. */}
+          <Switch accessibilityLabel={'Show ' + item.label} value={item.visible} onValueChange={visible => order.show(item.key, visible)}
+            trackColor={{ true: theme.tint }} />
           {item.group && <NativeButton compact title="Edit" accessibilityLabel={'Edit ' + item.label + ' group'} onPress={() => order.edit(item.group!.id)} />}
           <View style={{ flex: 1 }} />
           {[-1, 1].map(direction => {
