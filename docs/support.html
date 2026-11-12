@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="dark light">
+<title>EarsMixer — Support</title>
+<style>
+  :root { --bg:#0c0d0f; --panel:#131518; --raised:#1a1d21; --line:#262a30; --text:#e6e8eb; --muted:#98a1ab; --accent:#45c9bd; }
+  * { box-sizing:border-box; }
+  html,body { margin:0; background:var(--bg); color:var(--text); font:16px/1.6 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif; }
+  .wrap { max-width:760px; margin:0 auto; padding:48px 20px 80px; }
+  header { display:flex; align-items:center; gap:12px; padding-bottom:24px; border-bottom:1px solid var(--line); margin-bottom:32px; }
+  header svg { color:var(--accent); flex:0 0 auto; }
+  header span { font-size:18px; font-weight:600; }
+  h1 { font-size:30px; letter-spacing:-0.3px; margin:0 0 4px; }
+  .lede { color:var(--muted); margin:0 0 32px; }
+  h2 { font-size:19px; margin:36px 0 10px; }
+  p,li { color:#d2d6db; }
+  a { color:var(--accent); }
+  ul { padding-left:20px; } li { margin:6px 0; }
+  .steps { list-style:none; padding:0; counter-reset:s; }
+  .steps li { position:relative; padding:12px 0 12px 44px; border-bottom:1px solid var(--line); }
+  .steps li::before { counter-increment:s; content:counter(s); position:absolute; left:0; top:12px; width:28px; height:28px; display:flex; align-items:center; justify-content:center; border-radius:6px; background:var(--raised); border:1px solid var(--line); color:var(--accent); font-weight:600; font-size:14px; }
+  .faq { border:1px solid var(--line); border-radius:6px; background:var(--panel); padding:4px 16px; margin-top:12px; }
+  .faq h3 { font-size:16px; margin:16px 0 4px; }
+  .faq p { margin:0 0 16px; color:var(--muted); font-size:15px; }
+  .contact { margin-top:28px; padding:16px 20px; border:1px solid var(--line); border-left:3px solid var(--accent); border-radius:4px; background:var(--panel); }
+  .ph { color:#e3b04b; font-weight:600; }
+  footer { margin-top:48px; padding-top:24px; border-top:1px solid var(--line); color:var(--muted); font-size:14px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <svg aria-hidden="true" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><line x1="5" y1="4" x2="5" y2="20"/><line x1="12" y1="4" x2="12" y2="20"/><line x1="19" y1="4" x2="19" y2="20"/><line x1="2.5" y1="9" x2="7.5" y2="9"/><line x1="9.5" y1="15" x2="14.5" y2="15"/><line x1="16.5" y1="7" x2="21.5" y2="7"/></svg>
+    <span>EarsMixer</span>
+  </header>
+
+  <h1>Support</h1>
+  <p class="lede">EarsMixer lets you control your own in-ear monitor mix from your phone, connected to a DiGiCo sound desk through an EarsMixer server on the same network.</p>
+
+  <h2>Before you start</h2>
+  <ul>
+    <li>Someone needs to be running the <strong>EarsMixer server</strong> (the desktop app) on the same Wi-Fi network as your phone.</li>
+    <li>Your phone must be on that same network — not on mobile data or a guest network.</li>
+    <li>If the server requires a PIN, ask the engineer for it.</li>
+  </ul>
+
+  <h2>Connecting</h2>
+  <ol class="steps">
+    <li>Open the app and choose your mixer, or scan the QR code shown in the EarsMixer server’s dashboard.</li>
+    <li>Enter the PIN if you are asked for one. You only do this once per mixer.</li>
+    <li>Set a nickname so the engineer knows which mix is yours.</li>
+    <li>Pick your AUX mix and adjust your channels.</li>
+  </ol>
+
+  <h2>Common questions</h2>
+  <div class="faq">
+    <h3>The app can’t find or reach the mixer</h3>
+    <p>Check that your phone and the server are on the same network, that the server is running, and that the address is correct. A firewall on the server’s computer can also block the connection.</p>
+    <h3>My PIN isn’t accepted</h3>
+    <p>The engineer may have changed it or signed devices out. Ask them for the current PIN and try again.</p>
+    <h3>It keeps asking for the PIN</h3>
+    <p>If the server’s PIN was changed, every device has to enter the new one. Enter it once more and you’ll stay signed in until it changes again.</p>
+    <h3>I was disconnected mid-use</h3>
+    <p>Brief network drops reconnect on their own. If it stays disconnected, re-open the app and check you’re still on the right network.</p>
+    <h3>Can I try it without a desk?</h3>
+    <p>Yes — the app includes a demo mode so you can explore the controls without a server.</p>
+  </div>
+
+  <div class="contact">
+    <strong>Still need help?</strong>
+    <p style="margin:6px 0 0; color:var(--muted);">Email <span class="ph">[SUPPORT EMAIL]</span> and we’ll get back to you. Read our <a href="privacy.html">Privacy Policy</a>.</p>
+  </div>
+
+  <footer>EarsMixer · Support</footer>
+</div>
+</body>
+</html>
