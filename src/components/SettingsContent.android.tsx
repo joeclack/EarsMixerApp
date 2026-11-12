@@ -20,7 +20,7 @@ export default function SettingsContent() {
   return <>
     <MaterialSection title="Mixer connection" symbol="wifi" footer="Tap the mixer to change it, scan a code or enter an address.">
       <MaterialItem title={state.demo ? 'Demo mode' : state.server ? new URL(state.server).host : 'Connect to a mixer'}
-        detail={state.demo ? 'Demo' : mix.status === 'connected' ? 'Connected' : mix.status === 'disconnected' ? 'Not connected' : 'Connecting…'}
+        detail={state.demo ? 'Demo' : mix.status === 'connected' ? 'Connected' : state.pinPrompt ? 'PIN needed' : mix.status === 'disconnected' ? 'Not connected' : 'Connecting…'}
         symbol={state.demo ? 'play_circle' : mix.status === 'connected' ? 'wifi' : 'wifi_off'} onPress={() => router.push('/connect')}
         trailing={<TextButton onClick={() => router.push('/connect')}><Text>{state.server ? 'Change' : 'Connect'}</Text></TextButton>} />
       {!state.demo && <MaterialItem title="Try demo" symbol="play_circle" onPress={() => void session.startDemo()} />}

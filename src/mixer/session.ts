@@ -13,11 +13,13 @@ export type SessionState = {
   recentStates: Record<string, SavedLevelState>; restorePrompt: { key: string; generation: number; saved: SavedLevelState } | null;
   selectedTemplate: MixerTemplate | null; hydrated: boolean; demo: boolean; setupComplete: boolean; lastServer: string | null; server: string | null; recent: SavedMixer[]; settings: Settings;
   preferences: Preferences; connecting: boolean; message: string;
+  // Set while the connected mixer is waiting for its connection PIN.
+  pinPrompt: { revoked: boolean } | null;
 };
 export class MixerSession {
   readonly mixer: MixerClient;
   state: SessionState = { confirmation: null, recentStates: {}, restorePrompt: null, selectedTemplate: null, hydrated: false, demo: false, setupComplete: false, lastServer: null, server: null, recent: [], settings: { appearance: 'system', nickname: '', haptics: true },
-    preferences: emptyPreferences(), connecting: false, message: '' };
+    preferences: emptyPreferences(), connecting: false, message: '', pinPrompt: null };
   private listeners = new Set<() => void>();
   private attempt = 0;
   private confirmationSequence = 0;
@@ -92,6 +94,7 @@ export class MixerSession {
   constructor(private storage: Storage, factory: (url: string) => Socket, private fetcher: typeof fetch = fetch) {
     this.mixer = new MixerClient(url => url === DEMO_URL.replace(/^http/, 'ws') ? createDemoSocket() : factory(url));
     this.mixer.onLevelEdit((aux, levels) => this.saveLevelState(aux, levels));
+    this.mixer.onAccessDenied(revoked => this.accessDenied(revoked));
     let previous: unknown = null;
     let revision = 0;
     this.mixer.subscribe(() => {
@@ -169,11 +172,63 @@ export class MixerSession {
     this.patch({ recent: this.state.recent.filter(item => item.url !== url) });
     await this.persist('earsmixer.connections.v1', this.state.recent);
   }
+  // A stable ID for this installation, so a mixer recognises the device when
+  // its IP address changes. It is an identifier rather than a secret: access
+  // comes from the token a mixer issues after its connection PIN is entered.
+  private async deviceId(): Promise<string> {
+    let saved: unknown = null;
+    try { saved = JSON.parse(await this.storage.getItem('earsmixer.native.device-id.v1') || 'null'); } catch {}
+    if (typeof saved === 'string' && /^[A-Za-z0-9-]{8,64}$/.test(saved)) return saved;
+    const bytes = new Uint8Array(16);
+    const random = (globalThis as { crypto?: { getRandomValues?(values: Uint8Array): unknown } }).crypto;
+    if (random?.getRandomValues) random.getRandomValues(bytes);
+    else for (let index = 0; index < bytes.length; index++) bytes[index] = Math.floor(Math.random() * 256);
+    const id = Array.from(bytes, byte => byte.toString(16).padStart(2, '0')).join('');
+    await this.persist('earsmixer.native.device-id.v1', id);
+    return id;
+  }
+  private async accessToken(server: string): Promise<string | null> {
+    try {
+      const token = JSON.parse(await this.storage.getItem('earsmixer.native.access:' + server) || 'null');
+      return typeof token === 'string' && /^[a-f0-9]{64}$/.test(token) ? token : null;
+    } catch { return null; }
+  }
+  private accessDenied(revoked: boolean) {
+    const server = this.state.server;
+    if (!server || this.state.demo) return;
+    // The saved token no longer works; forget it and ask for the PIN.
+    void this.persist('earsmixer.native.access:' + server, null);
+    void this.deviceId().then(device => { if (server === this.state.server) this.mixer.setAccess(device, null); });
+    this.patch({ pinPrompt: { revoked }, connecting: false });
+  }
+  // Pair this device using the mixer's connection PIN, then reconnect.
+  async pair(pin: string) {
+    const server = this.state.server;
+    if (!server || this.state.demo) return;
+    const device = await this.deviceId();
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 10000);
+    let response: Response;
+    try {
+      response = await this.fetcher(server + 'api/pair', { method: 'POST', headers: { 'Content-Type': 'application/json' }, signal: controller.signal,
+        body: JSON.stringify({ pin, device, name: this.state.settings.nickname.trim() || null }) });
+    } catch { throw new Error('Could not reach the mixer. Check your Wi-Fi and try again.'); }
+    finally { clearTimeout(timeout); }
+    let body: any = {};
+    try { body = await response.json(); } catch {}
+    if (!response.ok) throw new Error(typeof body?.error === 'string' && body.error.length <= 200 ? body.error : 'Could not check the PIN. Try again.');
+    if (server !== this.state.server) return;
+    const token = typeof body?.token === 'string' && /^[a-f0-9]{64}$/.test(body.token) ? body.token : null;
+    await this.persist('earsmixer.native.access:' + server, token);
+    this.mixer.setAccess(device, token);
+    this.patch({ pinPrompt: null });
+    if (!this.suspended) this.mixer.connect(server, true);
+  }
   startDemo() { return this.connect(DEMO_URL); }
   async connect(input: string) {
     const attempt = ++this.attempt;
     this.compared = '';
-    this.patch({ connecting: true, restorePrompt: null, message: '' });
+    this.patch({ connecting: true, restorePrompt: null, message: '', pinPrompt: null });
     try {
       await this.loadLevelStates();
       const server = input === DEMO_URL ? DEMO_URL : await probeMixer(input, { fetchImpl: this.fetcher });
@@ -187,7 +242,10 @@ export class MixerSession {
       try { values = JSON.parse(await this.storage.getItem("earsmixer.native.values:" + server) || "{}"); } catch {}
       let balances: unknown = {};
       try { balances = JSON.parse(await this.storage.getItem('earsmixer.native.group-balances:' + server) || '{}'); } catch {}
+      const device = server === DEMO_URL ? null : await this.deviceId();
+      const token = server === DEMO_URL ? null : await this.accessToken(server);
       if (attempt !== this.attempt) return;
+      this.mixer.setAccess(device, token);
       // Keep existing local guest layouts when upgrading. Never import account credentials.
       const preferences = readPreferences(raw.preferences) || readPreferences(raw.guest) || emptyPreferences();
       const selectedTemplate = typeof raw.template?.id === 'string' && /^[a-f0-9]{64}$/.test(raw.template.id) && typeof raw.template.name === 'string' && raw.template.name.length <= 80 ? { id: raw.template.id, name: raw.template.name } : null;
@@ -213,7 +271,7 @@ export class MixerSession {
     this.persistValues();
     if (forgetConnection && !this.state.demo) { this.patch({ lastServer: null }); void this.persist('earsmixer.native.last-server.v1', null); }
     ++this.attempt; this.mixer.disconnect();
-    this.patch({ confirmation: null, restorePrompt: null, selectedTemplate: null, server: null, demo: false, connecting: false, preferences: emptyPreferences(), message: '' });
+    this.patch({ confirmation: null, restorePrompt: null, selectedTemplate: null, server: null, demo: false, connecting: false, preferences: emptyPreferences(), message: '', pinPrompt: null });
   }
   setChannelHidden(channel: number, hidden: boolean) {
     this.setChannelsHidden([channel], hidden);
@@ -334,7 +392,7 @@ export class MixerSession {
     await this.storage.multiRemove(keys);
     this.compared = '';
     this.patch({ recentStates: {}, restorePrompt: null, selectedTemplate: null, setupComplete: false, server: null, lastServer: null, recent: [], settings: { appearance: 'system', nickname: '', haptics: true },
-      preferences: emptyPreferences(), connecting: false, message: '' });
+      preferences: emptyPreferences(), connecting: false, message: '', pinPrompt: null });
   }
   setLifecycle(state: string) {
     if ((state === 'inactive' || state === 'background') && this.state.confirmation) this.dismissConfirmation(this.state.confirmation.id);

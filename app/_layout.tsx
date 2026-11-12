@@ -59,6 +59,13 @@ function Navigation() {
     })();
     return () => controller.abort();
   }, [state.hydrated, state.setupComplete, navigation?.key, pathname, session]);
+  // Ask for the connection PIN whenever the mixer requires it.
+  const pinNeeded = !!state.pinPrompt;
+  useEffect(() => {
+    if (pinNeeded && state.hydrated && navigation?.key && pathname !== '/pin') router.push('/pin');
+    // Only a new request opens the sheet; closing it leaves the mixer's notice to reopen it.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pinNeeded, state.hydrated, navigation?.key]);
   return <LoadingTransition loading={!state.hydrated}>{state.hydrated && <ThemeProvider value={theme.dark ? DarkTheme : DefaultTheme}>
     <StatusBar style={theme.dark ? 'light' : 'dark'} />
     <Stack screenOptions={{ contentStyle: { backgroundColor: theme.bg }, headerTintColor: theme.tint }}>
@@ -66,6 +73,7 @@ function Navigation() {
       <Stack.Screen name="settings" options={{ title: 'Settings', headerBackTitle: 'Mixer' }} />
       <Stack.Screen name="setup" options={{ headerShown: false, presentation: 'fullScreenModal', gestureEnabled: false }} />
       <Stack.Screen name="connect" options={sheetOptions} />
+      <Stack.Screen name="pin" options={sheetOptions} />
       <Stack.Screen name="templates" options={sheetOptions} />
       <Stack.Screen name="scan" options={{ presentation: 'fullScreenModal', headerShown: false }} />
       <Stack.Screen name="layout" options={{ title: 'Channel order', presentation: 'modal' }} />

@@ -10,7 +10,7 @@ import { useTheme } from '../theme';
 export default function SettingsContent() {
   const { session, state, mix } = useSession(), theme = useTheme();
   // The mixer page has no connection control; Settings is the one place for it.
-  const status = state.demo ? 'Demo' : mix.status === 'connected' ? 'Connected' : mix.status === 'disconnected' ? 'Not connected' : 'Connecting…';
+  const status = state.demo ? 'Demo' : mix.status === 'connected' ? 'Connected' : state.pinPrompt ? 'PIN needed' : mix.status === 'disconnected' ? 'Not connected' : 'Connecting…';
   const statusColor = state.demo ? theme.orange : mix.status === 'connected' ? theme.green : mix.status === 'disconnected' ? theme.danger : theme.orange;
   const nickname = useNativeState(state.settings.nickname);
   const reset = useResetDeviceData(() => nickname.set(''));
