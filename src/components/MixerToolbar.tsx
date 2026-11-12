@@ -32,7 +32,7 @@ export default function MixerToolbar() {
       backgroundColor={Platform.OS === 'android' ? theme.panel : undefined}
       buttonContainerColor={Platform.OS === 'android' ? 'transparent' : undefined}>
     {/* On iOS the AUX is chosen from the leading selector. */}
-    {Platform.OS !== 'ios' && state.server && !!mix.config?.aux.length && <Stack.Toolbar.Menu icon={Platform.OS === 'ios' ? 'headphones' : require('../../assets/toolbar/headphones.png')}
+    {Platform.OS !== 'ios' && state.server && !!mix.config?.aux.length && <Stack.Toolbar.Menu icon={require('../../assets/toolbar/headphones.png')}
       accessibilityLabel={'Choose AUX, ' + label} disabled={mix.status !== 'connected'}>
       <Stack.Toolbar.Label>Choose AUX</Stack.Toolbar.Label>
       {mix.config.aux.map(aux => <Stack.Toolbar.MenuAction key={aux.channel} isOn={mix.aux === aux.channel}

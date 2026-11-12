@@ -105,6 +105,12 @@ export class MixerClient {
   private socket: Socket | null = null;
   private url: string | null = null;
   private username: string | null = null;
+  // Sent first on every connection, so the server can recognise this device
+  // and, when it requires a connection PIN, check the device has paired.
+  private access: { device: string | null; token: string | null } = { device: null, token: null };
+  private denied: ((revoked: boolean) => void) | null = null;
+  setAccess(device: string | null, token: string | null) { this.access = { device, token }; }
+  onAccessDenied(listener: (revoked: boolean) => void) { this.denied = listener; }
   private desiredAux: number | null = null;
   private listeners = new Set<() => void>();
   private controlListeners = new Set<() => void>();
@@ -173,7 +179,12 @@ export class MixerClient {
     const socket = this.socketFactory(this.url.replace(/^http/, 'ws'));
     this.socket = socket;
     this.timeout = setTimeout(() => { if (this.socket === socket && this.state.status !== 'connected') this.lost(socket); }, 10000);
-    socket.onopen = () => { if (this.socket === socket) { this.emit({ status: 'loading' }); this.send({ username: this.username }); } };
+    socket.onopen = () => {
+      if (this.socket !== socket) return;
+      this.emit({ status: 'loading' });
+      this.send({ auth: { ...this.access, name: this.username } });
+      this.send({ username: this.username });
+    };
     socket.onmessage = event => { if (this.socket === socket) this.receive(event.data); };
     socket.onclose = socket.onerror = () => this.lost(socket);
   }
@@ -312,6 +323,13 @@ export class MixerClient {
     let message: any;
     try { message = JSON.parse(String(raw)); } catch { return; }
     if (!message || typeof message !== 'object') return;
+    // The server needs the connection PIN, or signed this device out. Stop
+    // reconnecting; the session asks for the PIN and reconnects once paired.
+    if (message.auth === 'required' || message.auth === 'revoked') {
+      this.disconnect(true);
+      this.denied?.(message.auth === 'revoked');
+      return;
+    }
     if (message.presence) {
       const { aux, peers } = message.presence;
       if (aux !== this.state.aux || this.state.status !== 'connected' || !Array.isArray(peers)) return;

@@ -1,5 +1,5 @@
 import React from 'react';
-import { TextInput, View } from 'react-native';
+import { Text as PlainText, TextInput, View } from 'react-native';
 import { router } from 'expo-router';
 import Constants from 'expo-constants';
 import { SegmentedButton, SingleChoiceSegmentedButtonRow, Switch, Text, TextButton } from '@expo/ui/jetpack-compose';
@@ -17,10 +17,11 @@ const appearances = [{ value: 'system', label: 'System' }, { value: 'light', lab
 export default function SettingsContent() {
   const { session, state, mix } = useSession(), theme = useTheme();
   const reset = useResetDeviceData();
+  React.useEffect(() => () => { session.restoreNickname(); }, [session]);
   return <>
     <MaterialSection title="Mixer connection" symbol="wifi" footer="Tap the mixer to change it, scan a code or enter an address.">
       <MaterialItem title={state.demo ? 'Demo mode' : state.server ? new URL(state.server).host : 'Connect to a mixer'}
-        detail={state.demo ? 'Demo' : mix.status === 'connected' ? 'Connected' : mix.status === 'disconnected' ? 'Not connected' : 'Connecting…'}
+        detail={state.demo ? 'Demo' : mix.status === 'connected' ? 'Connected' : state.pinPrompt ? 'PIN needed' : mix.status === 'disconnected' ? 'Not connected' : 'Connecting…'}
         symbol={state.demo ? 'play_circle' : mix.status === 'connected' ? 'wifi' : 'wifi_off'} onPress={() => router.push('/connect')}
         trailing={<TextButton onClick={() => router.push('/connect')}><Text>{state.server ? 'Change' : 'Connect'}</Text></TextButton>} />
       {!state.demo && <MaterialItem title="Try demo" symbol="play_circle" onPress={() => void session.startDemo()} />}
@@ -31,9 +32,10 @@ export default function SettingsContent() {
       <MaterialSectionTitle title="This device" symbol="account_circle" />
       <HardwarePanel radius={12} style={{ paddingHorizontal: 16 }}>
         <TextInput accessibilityLabel="Nickname" placeholder="Nickname" placeholderTextColor={theme.muted} maxLength={80}
-          value={state.settings.nickname} onChangeText={nickname => session.setSettings({ nickname })}
+          value={state.settings.nickname} onChangeText={nickname => session.setSettings({ nickname })} onBlur={() => session.restoreNickname()}
           style={{ position: 'relative', color: theme.text, fontSize: 17, minHeight: 56, paddingVertical: 14 }} />
       </HardwarePanel>
+      {!state.settings.nickname.trim() && <PlainText style={{ color: theme.muted, fontSize: 13, marginTop: 8, marginHorizontal: 16 }}>A nickname is required. Others on your mix see it.</PlainText>}
       <Message error>{state.message}</Message>
     </View>
     <MaterialSection title="Appearance" symbol="contrast">

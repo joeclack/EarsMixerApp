@@ -19,7 +19,9 @@ const SUSTAINED_DROP_MS = 8000;
 // confirms briefly once the mixer is reachable again.
 export default function ConnectionNotice() {
   const { session, state, mix } = useSession(), theme = useTheme(), insets = useSafeAreaInsets();
-  const down = !!state.server && !state.demo && mix.status !== 'connected';
+  const pinNeeded = !!state.pinPrompt;
+  // Waiting for a PIN is not a lost connection.
+  const down = !!state.server && !state.demo && mix.status !== 'connected' && !pinNeeded;
   const [shown, setShown] = useState(false);
   const wasShown = useRef(false);
   useEffect(() => {
@@ -39,20 +41,25 @@ export default function ConnectionNotice() {
   // disconnected do not restart the timer.
   }, [down, session]);
   const progress = useSharedValue(0);
+  const visible = shown || pinNeeded;
   useEffect(() => {
-    progress.set(withTiming(shown ? 1 : 0, { duration: 200, easing: Easing.out(Easing.cubic), reduceMotion: ReduceMotion.System }));
-  }, [shown, progress]);
+    progress.set(withTiming(visible ? 1 : 0, { duration: 200, easing: Easing.out(Easing.cubic), reduceMotion: ReduceMotion.System }));
+  }, [visible, progress]);
   const animated = useAnimatedStyle(() => ({ opacity: progress.get(), transform: [{ translateY: (1 - progress.get()) * 8 }] }));
-  return <View pointerEvents={shown ? 'box-none' : 'none'} style={{ position: 'absolute', left: insets.left + 16, right: insets.right + 16,
+  return <View pointerEvents={visible ? 'box-none' : 'none'} style={{ position: 'absolute', left: insets.left + 16, right: insets.right + 16,
     bottom: insets.bottom + 16, alignItems: 'center', zIndex: 90 }}>
-    <Animated.View accessible={shown} accessibilityLiveRegion="assertive" style={[{ maxWidth: 440, width: '100%' }, animated]}>
+    <Animated.View accessible={visible} accessibilityLiveRegion="assertive" style={[{ maxWidth: 440, width: '100%' }, animated]}>
       <HardwarePanel radius={18} uniformBorder style={{ paddingLeft: 16, paddingRight: 8, paddingVertical: 10, flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-        <Icon name={{ ios: 'wifi.exclamationmark', android: 'wifi_off', web: 'wifi_off' }} size={22} color={theme.orange} />
+        <Icon name={pinNeeded ? { ios: 'lock', android: 'lock', web: 'lock' } : { ios: 'wifi.exclamationmark', android: 'wifi_off', web: 'wifi_off' }} size={22} color={theme.orange} />
         <View style={{ flex: 1, gap: 2 }}>
-          <Text style={{ color: theme.text, fontSize: 15, fontWeight: '600' }}>Lost connection to the mixer</Text>
-          <Text style={{ color: theme.muted, fontSize: 13, lineHeight: 18 }}>Check you're on the mixer's Wi-Fi. Reconnecting…</Text>
+          <Text style={{ color: theme.text, fontSize: 15, fontWeight: '600' }}>{pinNeeded ? 'This mixer needs a PIN' : 'Lost connection to the mixer'}</Text>
+          <Text style={{ color: theme.muted, fontSize: 13, lineHeight: 18 }}>
+            {pinNeeded ? (state.pinPrompt?.revoked ? 'This device was signed out. Enter the current PIN.' : 'Enter the connection PIN to control your mix.')
+              : "Check you're on the mixer's Wi-Fi. Reconnecting…"}
+          </Text>
         </View>
-        <NativeButton title="Settings" compact bordered onPress={() => router.push('/settings')} />
+        {pinNeeded ? <NativeButton title="Enter PIN" compact bordered onPress={() => router.push('/pin')} />
+          : <NativeButton title="Settings" compact bordered onPress={() => router.push('/settings')} />}
       </HardwarePanel>
     </Animated.View>
   </View>;

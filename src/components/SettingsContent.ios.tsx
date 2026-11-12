@@ -10,10 +10,11 @@ import { useTheme } from '../theme';
 export default function SettingsContent() {
   const { session, state, mix } = useSession(), theme = useTheme();
   // The mixer page has no connection control; Settings is the one place for it.
-  const status = state.demo ? 'Demo' : mix.status === 'connected' ? 'Connected' : mix.status === 'disconnected' ? 'Not connected' : 'Connecting…';
+  const status = state.demo ? 'Demo' : mix.status === 'connected' ? 'Connected' : state.pinPrompt ? 'PIN needed' : mix.status === 'disconnected' ? 'Not connected' : 'Connecting…';
   const statusColor = state.demo ? theme.orange : mix.status === 'connected' ? theme.green : mix.status === 'disconnected' ? theme.danger : theme.orange;
   const nickname = useNativeState(state.settings.nickname);
   const reset = useResetDeviceData(() => nickname.set(''));
+  React.useEffect(() => () => { session.restoreNickname(); }, [session]);
   return <Host style={{ flex: 1 }} colorScheme={theme.scheme} seedColor={theme.tint}>
     <Form modifiers={[scrollContentBackground('hidden')]}>
       <Section title="Mixer connection" symbol="wifi" footer="Tap the mixer to change it, scan a code or enter an address.">
@@ -33,7 +34,9 @@ export default function SettingsContent() {
         {state.server && <Button label="Disconnect" systemImage="xmark.circle" role="destructive" onPress={() => session.disconnect()} />}
       </Section>
       <Section title="This device" symbol="person.crop.circle">
-        <TextField placeholder="Nickname" text={nickname} maxLength={80} onTextChange={value => session.setSettings({ nickname: value })} />
+        <TextField placeholder="Nickname" text={nickname} maxLength={80} onTextChange={value => session.setSettings({ nickname: value })}
+          onFocusChange={focused => { if (!focused) nickname.set(session.restoreNickname()); }} />
+        {!state.settings.nickname.trim() && <Text modifiers={[foregroundStyle(theme.muted)]}>A nickname is required. Others on your mix see it.</Text>}
         {!!state.message && <Text>{state.message}</Text>}
       </Section>
       <Section title="Appearance" symbol="circle.lefthalf.filled">

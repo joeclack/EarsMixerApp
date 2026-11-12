@@ -25,6 +25,10 @@ test('demo provides 20 channels, local faders, AUXes and templates without netwo
     await session.applyTemplate(templates[1].id);
     assert.equal(session.state.preferences.channelOrder[0], 15);
     assert.equal(session.state.preferences.selectedAux, 2);
+    // Templates carry their own hidden channels and groups, replacing the phone's.
+    assert.deepEqual(session.state.preferences.hiddenByAux, { '2': [19, 20] });
+    assert.deepEqual(session.state.preferences.globalGroups.map(group => group.name), ['Drums']);
+    assert.deepEqual(session.state.preferences.groupsByAux['2'], [{ id: 2, name: 'Backing vocals', members: [16, 17] }]);
     assert.equal(session.state.recent.length, 0);
     assert.equal(session.state.lastServer, null);
   } finally { session.disconnect(); }
