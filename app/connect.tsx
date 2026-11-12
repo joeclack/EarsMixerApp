@@ -79,9 +79,9 @@ export default function Connect() {
           // Keep the web input above the panel's positioned decorative gradient.
           style={{ position: 'relative', flex: 1, color: theme.text, fontSize: 17, minHeight: 56, paddingVertical: 16 }} />
       </HardwarePanel>
-      <View style={{ flexDirection: 'row', gap: 10, flexWrap: 'wrap', marginTop: 5, marginBottom: 24 }}>
-        <NativeButton title={busy ? 'Connecting…' : 'Connect'} symbol="wifi" prominent disabled={busy || !address.trim()} onPress={() => void connect()} />
-        <NativeButton title="Scan code" bordered symbol="qrcode.viewfinder" disabled={busy} onPress={() => router.push('/scan')} />
+      <View style={{ gap: 10, marginTop: 14, marginBottom: 24 }}>
+        <NativeButton title={busy ? 'Connecting…' : 'Connect'} symbol="wifi" prominent fullWidth disabled={busy || !address.trim()} onPress={() => void connect()} />
+        <NativeButton title="Scan code" bordered fullWidth symbol="qrcode.viewfinder" disabled={busy} onPress={() => router.push('/scan')} />
       </View>
       {!!state.recent.length && <>
         <View style={{ marginBottom: 8 }}><PanelHeading title="Recent mixers" /></View>
