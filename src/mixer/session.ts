@@ -211,8 +211,16 @@ export class MixerSession {
     // The saved token no longer works; forget it and ask for the PIN.
     void this.persist('earsmixer.native.access:' + server, null);
     void this.deviceId().then(device => { if (server === this.state.server) this.mixer.setAccess(device, null); });
+    // A PIN scanned with the mixer's code is tried once before asking for it.
+    const scanned = this.scannedPin;
+    this.scannedPin = null;
+    if (scanned && scanned.server === server) {
+      void this.pair(scanned.pin).catch(() => { if (server === this.state.server) this.patch({ pinPrompt: { revoked }, connecting: false }); });
+      return;
+    }
     this.patch({ pinPrompt: { revoked }, connecting: false });
   }
+  private scannedPin: { server: string; pin: string } | null = null;
   // Pair this device using the mixer's connection PIN, then reconnect.
   async pair(pin: string) {
     const server = this.state.server;
@@ -237,8 +245,9 @@ export class MixerSession {
     if (!this.suspended) this.mixer.connect(server, true);
   }
   startDemo() { return this.connect(DEMO_URL); }
-  async connect(input: string) {
+  async connect(input: string, pin: string | null = null) {
     const attempt = ++this.attempt;
+    this.scannedPin = null;
     this.compared = '';
     this.patch({ connecting: true, restorePrompt: null, message: '', pinPrompt: null });
     try {
@@ -258,6 +267,7 @@ export class MixerSession {
       const token = server === DEMO_URL ? null : await this.accessToken(server);
       if (attempt !== this.attempt) return;
       this.mixer.setAccess(device, token);
+      if (pin && server !== DEMO_URL) this.scannedPin = { server, pin };
       // Keep existing local guest layouts when upgrading. Never import account credentials.
       const preferences = readPreferences(raw.preferences) || readPreferences(raw.guest) || emptyPreferences();
       const selectedTemplate = typeof raw.template?.id === 'string' && /^[a-f0-9]{64}$/.test(raw.template.id) && typeof raw.template.name === 'string' && raw.template.name.length <= 80 ? { id: raw.template.id, name: raw.template.name } : null;
