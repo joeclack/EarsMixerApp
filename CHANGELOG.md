@@ -1,15 +1,16 @@
 # Changelog
 
-## 0.20.0 - Fixed some UI layout bugs and refined
+## 0.20.0 — Setup walkthrough, connection and fader refinements
 
-- Fixed misaligned landscape toolbar when notch is on right side.
-- Changed the layout of the main toolbar on the Mixer page.
-- Re-ordered settings page. Moved the Connection menun item out of Mixer and accessible in Settings.
-- Connection toasts now show if the connection is lost.
-- Faders now use more neumorphism. 
-- Light mode colours enhanced. 
-- Android UI audited and added more native support. 
-- Added more walk-through screens in the setup of the app, showcasing the tall fader, giving the user a demo of how faders work
+- Give faders a soft neumorphic housing that rises out of the page, with a translucent edge, softer light-mode rim and an inlaid red pinstripe. Use the textured background in light mode too.
+- Rework the iOS mixer toolbar: a leading capsule shows and changes the current AUX, with options and settings grouped on the right. Fix the landscape rail misalignment when the notch is on the right.
+- Move the mixer connection into Settings, now the first section, with a clear status and Change action; remove recent states from Settings. Stack the connect sheet's Connect and Scan code buttons as full-width capsules.
+- Show a persistent notice when the mixer connection has been lost for 8 seconds, linking to Settings and confirming when it reconnects.
+- Make fader haptics follow handle movement on the UI thread, with simulated detents instead of value-based bursts.
+- Grow the tall fader out of the pressed bar, open it after a shorter 150 ms hold, and keep its background continuous with the header.
+- Hide faders while rotating until the new layout settles, then fade it in.
+- Redesign setup around feature previews and native numbered lists, add a Go landscape step, and feature the tall fader with draggable, holdable practice faders.
+- Rebuild Android settings, channel groups, group editing and channel order as native Material lists, and bring Android buttons and landscape rail controls in line with iOS.
 
 ## 0.19.0 — Landscape controls and refined fader interaction
 
