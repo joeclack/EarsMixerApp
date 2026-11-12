@@ -1,6 +1,6 @@
 import ConfirmationToast from '../src/components/ConfirmationToast';
 import LoadingTransition from '../src/components/LoadingTransition';
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Appearance, Platform } from 'react-native';
 import { Stack, ThemeProvider, DarkTheme, DefaultTheme, router, useRootNavigationState, usePathname } from 'expo-router';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
@@ -11,6 +11,7 @@ import { findStartupMixers, reachableMixer } from '../src/discovery/startup';
 import type { DiscoveryNative } from '../src/discovery/browser';
 import { useTheme } from '../src/theme';
 import { warmFaderArtwork } from '../src/components/faderArtwork';
+import { StartupCover, useMixerLoading } from '../src/components/MixerLoadingBoundary';
 
 const sheetOptions = {
   headerShown: false, presentation: (Platform.OS === 'web' ? 'modal' : 'formSheet') as 'modal' | 'formSheet',
@@ -25,10 +26,18 @@ function Navigation() {
   const prompted = useRef(false);
   const setupPresented = useRef(false);
   const pathname = usePathname();
+  // One loader covers startup: loading settings, then the first connection to
+  // the last mixer. Once it lifts, the mixer screen handles later reconnects.
+  const [starting, setStarting] = useState(true);
+  const mixerLoading = useMixerLoading();
+  const [startupDone, setStartupDone] = useState(false);
+  const covering = !startupDone && (!state.hydrated || starting || mixerLoading);
+  useEffect(() => { if (!covering) setStartupDone(true); }, [covering]);
   useEffect(() => {
     if (Platform.OS !== 'web') Appearance.setColorScheme(state.settings.appearance === 'system' ? 'unspecified' : state.settings.appearance);
   }, [state.settings.appearance]);
   useEffect(() => {
+    if (state.hydrated && (!state.setupComplete || !state.lastServer || session.state.server)) setStarting(false);
     if (!state.setupComplete) {
       prompted.current = false;
       if (state.hydrated && navigation?.key && !setupPresented.current) { setupPresented.current = true; router.push('/setup'); }
@@ -42,7 +51,11 @@ function Navigation() {
     void (async () => {
       if (session.state.server) return;
       if (session.state.lastServer) {
-        try { await session.connect(session.state.lastServer); if (session.state.server) return; } catch {}
+        const connecting = session.connect(session.state.lastServer);
+        // connect() marks the session as connecting synchronously, so the mixer
+        // loading state takes over from here without a gap.
+        setStarting(false);
+        try { await connecting; if (session.state.server) return; } catch {}
       }
       if (controller.signal.aborted || session.state.server || session.state.connecting) return;
       const native = Platform.OS === 'web' ? null : requireOptionalNativeModule<DiscoveryNative>('EarsMixerDiscovery');
@@ -66,7 +79,7 @@ function Navigation() {
     // Only a new request opens the sheet; closing it leaves the mixer's notice to reopen it.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pinNeeded, state.hydrated, navigation?.key]);
-  return <LoadingTransition loading={!state.hydrated}>{state.hydrated && <ThemeProvider value={theme.dark ? DarkTheme : DefaultTheme}>
+  return <StartupCover.Provider value={covering}><LoadingTransition loading={covering} ready={state.hydrated}>{state.hydrated && <ThemeProvider value={theme.dark ? DarkTheme : DefaultTheme}>
     <StatusBar style={theme.dark ? 'light' : 'dark'} />
     <Stack screenOptions={{ contentStyle: { backgroundColor: theme.bg }, headerTintColor: theme.tint }}>
       <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
@@ -81,7 +94,7 @@ function Navigation() {
       <Stack.Screen name="group" options={{ title: 'Edit group', headerBackTitle: 'Groups', presentation: 'card' }} />
       <Stack.Screen name="loading-preview" options={{ presentation: 'fullScreenModal', headerShown: false }} />
     </Stack>
-  </ThemeProvider>}</LoadingTransition>;
+  </ThemeProvider>}</LoadingTransition></StartupCover.Provider>;
 }
 export default function RootLayout() {
   useEffect(() => { void warmFaderArtwork(); }, []);
