@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.1.0 — First TestFlight beta
+
+- Reset the public app version to **0.1.0** for the first shared TestFlight / external beta. Earlier `0.x` entries below were local development only and were never published to testers or the stores.
+
 ## 0.20.0 — Setup walkthrough, connection and fader refinements
 
 - Give faders a soft neumorphic housing that rises out of the page, with a translucent edge, softer light-mode rim and an inlaid red pinstripe. Use the textured background in light mode too.
