@@ -89,7 +89,7 @@ export default function FaderFocusTransition({ row, origin, onClose, children }:
         {/* Size and place the background as the full window so its gradient
             and grain continue seamlessly from the screen behind the header. */}
         <View pointerEvents="none" style={{ position: 'absolute', left: -origin0.x, top: -origin0.y, width: window.width, height: window.height }}>
-          <AppBackground />
+          <AppBackground desk />
         </View>
         <Animated.View style={[StyleSheet.absoluteFill, faderStyle]}>
           <FocusedFader channel={retained.channel} label={retained.label} onClose={onClose} />

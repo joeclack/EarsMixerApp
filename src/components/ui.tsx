@@ -14,7 +14,7 @@ export function Icon({ name, size = 22, color }: { name: SymbolViewProps['name']
   const theme = useTheme();
   return <SymbolView name={name} size={size} tintColor={color || theme.tint} style={{ width: size, height: size }} />;
 }
-export function Page({ title, children, scroll = true, compactHeader = true, toolbar, hideHeader = false }: React.PropsWithChildren<{ title: string; scroll?: boolean; compactHeader?: boolean; toolbar?: React.ReactNode; hideHeader?: boolean }>) {
+export function Page({ title, children, scroll = true, compactHeader = true, toolbar, hideHeader = false, desk = false }: React.PropsWithChildren<{ title: string; scroll?: boolean; compactHeader?: boolean; toolbar?: React.ReactNode; hideHeader?: boolean; desk?: boolean }>) {
   const theme = useTheme();
   const { state } = useSession();
   const headerHeight = useHeaderHeight();
@@ -28,7 +28,7 @@ export function Page({ title, children, scroll = true, compactHeader = true, too
     headerStyle: { backgroundColor: 'transparent' },
 
   };
-  return <ScreenSurface>
+  return <ScreenSurface desk={desk}>
     <Stack.Screen options={options} />
     {!hideHeader && toolbar}
     {scroll ? <ScrollView contentInsetAdjustmentBehavior="automatic" keyboardShouldPersistTaps="handled" automaticallyAdjustKeyboardInsets

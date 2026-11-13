@@ -71,7 +71,7 @@ export default function Mixer() {
   // have their own side rail, leaving equal widths and travel for every member.
   const cardHeight = Math.max(108 + FADER_INSET * 2, bankHeight - topPadding - bottomPadding);
   const stripHeight = Math.max(FADER_INSET * 2, cardHeight - 108);
-  const renderSection = useCallback(({ item }: { item: MixerSection }) => {
+  const renderSection = useCallback(({ item, index }: { item: MixerSection; index: number }) => {
     const group = item.header;
     const grouped = !!group.members;
     const open = grouped && item.channels.length > 0;
@@ -88,8 +88,11 @@ export default function Mixer() {
       setExpanded(ids => ids.filter(id => id !== group.channel));
       if (session.state.settings.haptics) void Haptics.selectionAsync().catch(() => {});
     };
-    const renderFader = (channel: MixerRow) => <View key={channel.channel} testID={'channel-' + channel.channel}
-      style={landscape ? { width: grouped && !open ? 136 : 88, alignItems: 'center', gap: 8 } : { gap: 8 }}>
+    // Portrait rows share one desk recess, divided by fine lines.
+    const renderFader = (channel: MixerRow, position: number) => <View key={channel.channel} testID={'channel-' + channel.channel}
+      style={landscape ? { width: grouped && !open ? 136 : 88, alignItems: 'center', gap: 8 }
+        : { gap: 2, paddingTop: grouped && !open ? 0 : 10, paddingHorizontal: 14, paddingBottom: 4,
+          ...(position > 0 && { borderTopWidth: 1, borderTopColor: theme.deskDivider }) }}>
       {landscape ? grouped && !open ? <GroupExpandTarget label={group.label} onExpand={expand}>
         <FaderDisplay channel={channel.channel} label={channel.label} expandable />
       </GroupExpandTarget> : <FaderDisplay channel={channel.channel} label={channel.label} /> : !channel.members && <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 8 }}>
@@ -98,33 +101,34 @@ export default function Mixer() {
       </View>}
       <View style={landscape ? { width: 88, alignSelf: grouped && !open ? 'center' : 'flex-start' } : undefined}>
         {landscape ? <FaderHousing vertical><Fader channel={channel.channel} label={channel.label} vertical length={stripHeight} /></FaderHousing>
-          : <ExpandableFader channel={channel.channel} label={channel.label} onEnlarge={origin => {
+          : <ExpandableFader bare channel={channel.channel} label={channel.label} onEnlarge={origin => {
             session.mixer.cancelWrites(); setFocusOrigin(origin); setFocused(channel.channel);
           }} />}
       </View>
     </View>;
     return <View testID={grouped ? 'group-' + group.channel : undefined} style={{
       height: landscape ? cardHeight : undefined, width: landscape ? (grouped ? (open ? item.channels.length * (88 + 6) + 44 : 136) + 12 : 96) : undefined,
-      marginRight: landscape ? 8 : 0, marginBottom: landscape ? 0 : 16,
-      ...(grouped ? { borderWidth: 2, borderColor: theme.groupEdge, borderRadius: 16, backgroundColor: theme.groupSurface,
-        paddingHorizontal: landscape ? 4 : 10, paddingTop: landscape ? 4 : 0, paddingBottom: landscape ? 4 : 12 }
-        : landscape ? { paddingHorizontal: 4, paddingVertical: 6 } : {}),
+      marginRight: landscape ? 8 : 0,
+      ...(landscape ? grouped ? { borderWidth: 2, borderColor: theme.groupEdge, borderRadius: 16, backgroundColor: theme.groupSurface, padding: 4 }
+        : { paddingHorizontal: 4, paddingVertical: 6 }
+        : index > 0 ? { borderTopWidth: 1, borderTopColor: theme.deskDivider } : {}),
     }}>
-      {grouped && !landscape && (open ? <View style={{ minHeight: 48, paddingHorizontal: 6, gap: 8,
-        flexDirection: 'row', alignItems: 'center', borderBottomWidth: 1, borderBottomColor: theme.line, marginBottom: 10 }}>
+      {grouped && !landscape && (open ? <View style={{ minHeight: 48, paddingHorizontal: 20, gap: 8,
+        flexDirection: 'row', alignItems: 'center' }}>
         <Icon name={{ ios: 'link', android: 'link', web: 'link' }} size={14} />
         <Text numberOfLines={2} accessibilityRole="header" style={{ flex: 1, minWidth: 0, color: theme.text, fontSize: 15, fontWeight: '700' }}>{group.label}</Text>
         {canClose ? <CloseButton label={'Close ' + group.label + ' group'} onPress={close} />
           : <Text style={{ color: theme.muted, fontSize: 11 }}>Pan</Text>}
       </View> : <GroupExpandTarget label={group.label} onExpand={expand}>
-        <View style={{ minHeight: 48, paddingHorizontal: 6, gap: 8, flexDirection: 'row', alignItems: 'center', marginBottom: 10 }}>
+        <View style={{ minHeight: 48, paddingHorizontal: 20, paddingTop: 6, gap: 8, flexDirection: 'row', alignItems: 'center' }}>
           <Icon name={{ ios: 'link', android: 'link', web: 'link' }} size={14} />
           <Text numberOfLines={2} style={{ flex: 1, color: theme.text, fontSize: 15, fontWeight: '700' }}>{group.label}</Text>
           <FaderValue channel={group.channel} />
           <Icon name={{ ios: 'chevron.down', android: 'expand_more', web: 'expand_more' }} size={16} />
         </View>
       </GroupExpandTarget>)}
-      <View style={{ flexDirection: landscape ? 'row' : 'column', gap: landscape ? 6 : 16 }}>
+      <View style={{ flexDirection: landscape ? 'row' : 'column', gap: landscape ? 6 : 0,
+        ...(!landscape && open && { marginLeft: 14, borderLeftWidth: 2, borderLeftColor: theme.groupEdge, borderTopWidth: 1, borderTopColor: theme.deskDivider }) }}>
         {landscape && open && <View style={{ width: 44, height: cardHeight - 12, alignItems: 'center' }}>
           <View style={{ width: 44, height: 44, alignItems: 'center', justifyContent: 'center' }}>
             {canClose && <CloseButton label={'Close ' + group.label + ' group'} onPress={close} />}
@@ -136,11 +140,11 @@ export default function Mixer() {
             }}>{group.label}</Text>
           </View>
         </View>}
-        {(open ? item.channels : [group]).map(renderFader)}
+        {(open ? item.channels : [group]).map((channel, position) => renderFader(channel, position))}
       </View>
     </View>;
   }, [landscape, cardHeight, stripHeight, theme, mix.parameter, session, expanded]);
-  return <Page title={mix.config?.aux.find(aux => aux.channel === mix.aux)?.label || 'Mixer'} scroll={false} compactHeader hideHeader={landscape} toolbar={<MixerToolbar />}>
+  return <Page title={mix.config?.aux.find(aux => aux.channel === mix.aux)?.label || 'Mixer'} scroll={false} compactHeader hideHeader={landscape} toolbar={<MixerToolbar />} desk>
     <AuxPresence />
     {/* The plain opacity hides stale layout within the same commit; the
         animated layer then fades the settled layout in. */}
@@ -154,7 +158,14 @@ export default function Mixer() {
     <MixerLoadingBoundary>{!state.server ? <EmptyMixer /> : <FaderFocusTransition row={focusedRow} origin={focusOrigin} onClose={closeFocused}>
     <FlatList key={landscape ? 'strips' : 'rows'} horizontal={landscape} extraData={state.preferences}
       data={sections} renderItem={renderSection} keyExtractor={item => String(item.header.channel)} contentInsetAdjustmentBehavior="never"
-      contentContainerStyle={{ paddingTop: topPadding, ...(landscape ? { paddingLeft: 16, paddingRight: 16 } : { paddingLeft: 20, paddingRight: 20 }), paddingBottom: bottomPadding }} keyboardShouldPersistTaps="handled"
+      contentContainerStyle={landscape || !sections.length ? { paddingTop: topPadding, paddingLeft: landscape ? 16 : 20, paddingRight: landscape ? 16 : 20, paddingBottom: bottomPadding }
+        // One recess cut into the desk holds every portrait fader. It runs on
+        // past the screen edge while more channels remain below.
+        : { marginTop: topPadding, marginHorizontal: 12, marginBottom: bottomPadding, borderRadius: 14, overflow: 'hidden', backgroundColor: theme.deskWell,
+          ...(!theme.dark && { borderWidth: 1, borderColor: 'rgba(180,43,67,0.55)' }),
+          boxShadow: [{ inset: true, offsetX: 0, offsetY: 3, blurRadius: 6, color: theme.deskWellShadow },
+            { inset: true, offsetX: 0, offsetY: 0, blurRadius: 0, spreadDistance: 1, color: theme.deskWellEdge },
+            { offsetX: 0, offsetY: 1, blurRadius: 0, color: theme.deskLip }] }} keyboardShouldPersistTaps="handled"
       ListEmptyComponent={<View style={{ alignItems: 'center', paddingVertical: 40, gap: 12 }}>
         <Icon name={{ ios: 'eye.slash', android: 'visibility_off', web: 'visibility_off' }} size={34} color={theme.muted} />
         <Text style={{ color: theme.text, fontSize: 19, fontWeight: '600' }}>{hidden.length ? 'All channels hidden' : 'No channels'}</Text>
