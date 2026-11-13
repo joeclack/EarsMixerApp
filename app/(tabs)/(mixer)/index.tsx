@@ -115,8 +115,11 @@ export default function Mixer() {
             <Text numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.75} style={{ flexShrink: 1, color: theme.text, fontSize: 12, lineHeight: 16, fontWeight: '700', textAlign: 'center' }}>{group.label}</Text>
             <Icon name={{ ios: 'chevron.right', android: 'chevron_right', web: 'chevron_right' }} size={11} />
           </View>
-        </GroupExpandTarget> : <Text numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.75} style={{ width: STRIP_WIDTH - 8, height: NAME_ROW, color: theme.text, fontSize: 12, lineHeight: 16,
-          fontWeight: '600', textAlign: 'center' }}>{channel.label}</Text>}
+        </GroupExpandTarget> : <View style={{ width: STRIP_WIDTH - 8, height: NAME_ROW, alignItems: 'center', justifyContent: 'center' }}>
+          {/* Centred in the same row box as a group's name, so both sit on one line. */}
+          <Text numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.75} style={{ color: theme.text, fontSize: 12, lineHeight: 16,
+            fontWeight: '600', textAlign: 'center' }}>{channel.label}</Text>
+        </View>}
       </Animated.View>
       : <Animated.View key={channel.channel} testID={'channel-' + channel.channel} {...member}
         style={{ gap: 2, paddingTop: grouped && !open ? 0 : 10, paddingHorizontal: 14, paddingBottom: 4, ...divider(position) }}>
