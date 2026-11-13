@@ -17,6 +17,7 @@ export default function MixerToolbar() {
     <Stack.Toolbar.MenuAction key="pan" isOn={mix.parameter === 'pan'} onPress={() => session.mixer.setParameter('pan')}>Pan</Stack.Toolbar.MenuAction>,
   ];
   const otherActions = [
+    <Stack.Toolbar.MenuAction key="request" disabled={mix.status !== 'connected'} onPress={() => router.push('/request')}>Message the engineer</Stack.Toolbar.MenuAction>,
     <Stack.Toolbar.MenuAction key="templates" onPress={() => router.push('/templates')}>{state.selectedTemplate ? state.selectedTemplate.name + ': Templates' : 'Templates'}</Stack.Toolbar.MenuAction>,
     <Stack.Toolbar.MenuAction key="layout" onPress={() => router.push('/layout')}>Edit channels</Stack.Toolbar.MenuAction>,
     <Stack.Toolbar.MenuAction key="groups" onPress={() => router.push('/groups')}>Channel groups</Stack.Toolbar.MenuAction>,

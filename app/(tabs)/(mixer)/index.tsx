@@ -11,6 +11,7 @@ import { mixerRows, mixerSections, type MixerRow, type MixerSection } from '../.
 import { Page, EmptyMixer, Icon } from '../../../src/components/ui';
 import NativeButton from '../../../src/components/NativeButton';
 import Fader, { FaderValue } from '../../../src/components/Fader';
+import { LevelMuteToggle, MuteButton } from '../../../src/components/MuteButton';
 import GroupExpandTarget from '../../../src/components/GroupExpandTarget';
 import CloseButton from '../../../src/components/CloseButton';
 import { FADER_INSET } from '../../../src/components/faderGeometry';
@@ -107,7 +108,7 @@ export default function Mixer() {
     const renderFader = (channel: MixerRow, position: number) => landscape
       ? <Animated.View key={channel.channel} testID={'channel-' + channel.channel} {...member}
         style={{ width: STRIP_WIDTH, height: open ? cardHeight - 2 : cardHeight, alignItems: 'center', paddingVertical: STRIP_PADDING, gap: STRIP_GAP, ...divider(position) }}>
-        <View style={{ height: LEVEL_ROW, justifyContent: 'center' }}><FaderValue channel={channel.channel} /></View>
+        <View style={{ height: LEVEL_ROW, justifyContent: 'center' }}><LevelMuteToggle channel={channel.channel} label={channel.label} height={LEVEL_ROW} /></View>
         <Fader channel={channel.channel} label={channel.label} vertical length={open ? stripHeight - 2 : stripHeight} />
         {grouped && !open ? <GroupExpandTarget label={group.label} onExpand={expand}>
           <View style={{ width: STRIP_WIDTH - 8, height: NAME_ROW, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 3 }}>
@@ -125,6 +126,7 @@ export default function Mixer() {
         style={{ gap: 2, paddingTop: grouped && !open ? 0 : 10, paddingHorizontal: 4, paddingBottom: 4, ...divider(position) }}>
         {!channel.members && <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 12 }}>
           <Text numberOfLines={2} style={{ color: theme.text, fontSize: 15, fontWeight: '600', flex: 1 }}>{channel.label}</Text>
+          <MuteButton channel={channel.channel} label={channel.label} />
           <FaderValue channel={channel.channel} />
         </View>}
         <ExpandableFader bare channel={channel.channel} label={channel.label} onEnlarge={origin => {
@@ -146,6 +148,7 @@ export default function Mixer() {
         <View style={{ minHeight: 48, paddingHorizontal: 16, paddingTop: 6, gap: 8, flexDirection: 'row', alignItems: 'center' }}>
           <Icon name={{ ios: 'link', android: 'link', web: 'link' }} size={14} />
           <Text numberOfLines={2} style={{ flex: 1, color: theme.text, fontSize: 15, fontWeight: '700' }}>{group.label}</Text>
+          <MuteButton channel={group.channel} label={group.label} />
           <FaderValue channel={group.channel} />
           <Icon name={{ ios: 'chevron.down', android: 'expand_more', web: 'expand_more' }} size={16} />
         </View>

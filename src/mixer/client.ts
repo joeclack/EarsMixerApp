@@ -14,8 +14,17 @@ export type MixState = {
   status: 'disconnected' | 'connecting' | 'loading' | 'connected';
   config: MixerConfig | null; aux: number | null; parameter: Parameter;
   values: Record<number, number>; epoch: number;
+  /** Channels whose send to this AUX is off on the desk (muted in this mix). */
+  muted: Record<number, boolean>;
 };
-export type MixerControls = Omit<MixState, 'values'>;
+export type MixerControls = Omit<MixState, 'values' | 'muted'>;
+export const REQUEST_KINDS = [
+  { kind: 'more-me', label: 'More me' }, { kind: 'less-me', label: 'Less me' }, { kind: 'more-click', label: 'More click' },
+  { kind: 'talk', label: 'Talk to me' }, { kind: 'problem', label: 'Problem' },
+] as const;
+export type RequestKind = typeof REQUEST_KINDS[number]['kind'];
+/** A request this device sent to the engineer, and whether it was seen. */
+export type SentRequest = { id: number; kind: RequestKind | null; text: string; at: number; acknowledged: boolean };
 export type DragToken = { epoch: number; aux: number; channel: number; parameter: Parameter; members?: number[]; balance?: GroupBalance };
 export type ValueCache = Record<string, Record<number, number>>;
 export class MixerClient {
@@ -74,6 +83,51 @@ export class MixerClient {
     return Object.keys(applied).length === entries.length;
   }
   getValueCache() { return this.valueCache; }
+  /** Muted in this mix. A group is muted when every member is; unknown is not muted. */
+  isMuted(channel: number): boolean {
+    if (channel < 0) { const members = this.members(channel); return !!members?.length && members.every(id => this.state.muted[id] === true); }
+    return this.state.muted[channel] === true;
+  }
+  canMute(channel: number): boolean {
+    if (this.state.status !== 'connected' || !this.state.aux || this.socket?.readyState !== 1) return false;
+    const ids = channel < 0 ? this.members(channel) || [] : [channel];
+    return ids.length > 0 && ids.every(id => this.state.muted[id] !== undefined);
+  }
+  /** Turn the desk's send to this AUX off (muted) or on, keeping its level. A group mutes or unmutes every member. */
+  setMuted(channel: number, muted: boolean) {
+    if (!this.canMute(channel)) return false;
+    const aux = this.state.aux!, next = { ...this.state.muted };
+    for (const id of channel < 0 ? this.members(channel)! : [channel]) {
+      if (!this.send({ address: this.address(id, aux, 'on'), args: [muted ? 0 : 1] })) return false;
+      next[id] = muted;
+    }
+    this.emit({ muted: next });
+    return true;
+  }
+  // Requests to the engineer, newest first. Low-rate, kept outside MixState.
+  private requests: SentRequest[] = [];
+  private requestListeners = new Set<() => void>();
+  private requestFailed = false;
+  subscribeRequests = (fn: () => void) => { this.requestListeners.add(fn); return () => { this.requestListeners.delete(fn); }; };
+  requestsSnapshot = () => this.requests;
+  requestRejected() { return this.requestFailed; }
+  sendRequest(kind: RequestKind | null, text: string) {
+    const trimmed = text.trim().slice(0, 140);
+    if ((!kind && !trimmed) || this.state.status !== 'connected') return false;
+    return this.send({ request: { kind, text: trimmed } });
+  }
+  private receiveRequest(message: any) {
+    if (message.requestRejected) { this.requestFailed = true; this.requestListeners.forEach(fn => fn()); return; }
+    this.requestFailed = false;
+    const sent = message.requestSent, seen = message.requestAcknowledged;
+    if (sent && Number.isInteger(sent.id) && typeof sent.text === 'string') {
+      const kind = REQUEST_KINDS.some(entry => entry.kind === sent.kind) ? sent.kind as RequestKind : null;
+      this.requests = [{ id: sent.id, kind, text: sent.text.slice(0, 140), at: Number.isFinite(sent.at) ? sent.at : Date.now(), acknowledged: false }, ...this.requests].slice(0, 10);
+    } else if (seen && Number.isInteger(seen.id)) {
+      this.requests = this.requests.map(entry => entry.id === seen.id ? { ...entry, acknowledged: true } : entry);
+    } else return;
+    this.requestListeners.forEach(fn => fn());
+  }
   displayValue(channel: number): number | undefined {
     if (channel < 0) {
       const members = this.members(channel);
@@ -101,7 +155,7 @@ export class MixerClient {
     this.valueCache = { ...this.valueCache, [key]: { ...this.valueCache[key], [channel]: value } };
     this.cacheRevision++;
   }
-  state: MixState = { peers: [], status: 'disconnected', config: null, aux: null, parameter: 'level', values: {}, epoch: 0 };
+  state: MixState = { peers: [], status: 'disconnected', config: null, aux: null, parameter: 'level', values: {}, epoch: 0, muted: {} };
   private socket: Socket | null = null;
   private url: string | null = null;
   private username: string | null = null;
@@ -150,12 +204,12 @@ export class MixerClient {
   private controlListeners = new Set<() => void>();
   private controls: MixerControls = this.readControls();
   private channels = new Map<number, { snapshot: string; listeners: Set<() => void> }>();
-  private readControls(): MixerControls { const { values: _values, ...controls } = this.state; return controls; }
+  private readControls(): MixerControls { const { values: _values, muted: _muted, ...controls } = this.state; return controls; }
   controlsSnapshot = () => this.controls;
   subscribeControls = (fn: () => void) => { this.controlListeners.add(fn); return () => { this.controlListeners.delete(fn); }; };
   channelSnapshot(channel: number): string {
     const { status, epoch, aux, parameter, values } = this.state;
-    return [status, epoch, aux, parameter, values[channel], this.displayValue(channel),
+    return [status, epoch, aux, parameter, values[channel], this.displayValue(channel), this.isMuted(channel),
       ...(this.members(channel) || []).map(id => this.channelSnapshot(id))].join('|');
   }
   subscribeChannel(channel: number, fn: () => void) {
@@ -201,7 +255,7 @@ export class MixerClient {
     const socket = this.socket; this.socket = null;
     if (socket) { socket.onclose = socket.onerror = socket.onmessage = socket.onopen = null; socket.close(); }
     if (!preserveConfig) this.valueCache = {};
-    this.emit({ peers: [], status: 'disconnected', config: preserveConfig ? this.state.config : null, values: {}, aux: preserveConfig ? this.state.aux : null });
+    this.emit({ peers: [], status: 'disconnected', config: preserveConfig ? this.state.config : null, values: {}, muted: {}, aux: preserveConfig ? this.state.aux : null });
   }
   restoreConfig(config: MixerConfig, aux: number | null) {
     this.cancelWrites();
@@ -210,7 +264,7 @@ export class MixerClient {
   private open() {
     if (!this.url) return;
     this.liveLevels = {}; this.levelGeneration++;
-    this.emit({ peers: [], status: 'connecting', values: {} });
+    this.emit({ peers: [], status: 'connecting', values: {}, muted: {} });
     const socket = this.socketFactory(this.url.replace(/^http/, 'ws'));
     this.socket = socket;
     this.timeout = setTimeout(() => { if (this.socket === socket && this.state.status !== 'connected') this.lost(socket); }, 10000);
@@ -232,7 +286,7 @@ export class MixerClient {
     this.cancelWrites();
     this.liveLevels = {};
     this.clearMeters();
-    this.emit({ peers: [], status: this.url ? 'connecting' : 'disconnected', values: {} });
+    this.emit({ peers: [], status: this.url ? 'connecting' : 'disconnected', values: {}, muted: {} });
     if (this.url) this.retry = setTimeout(() => this.open(), Math.min(10000, 1000 * 2 ** this.attempt++));
   }
   private send(message: object) {
@@ -245,7 +299,7 @@ export class MixerClient {
     this.desiredAux = aux;
     const available = this.state.config?.aux || [];
     const selected = available.find(a => a.channel === aux)?.channel ?? available[0]?.channel ?? null;
-    if (selected !== this.state.aux) { this.liveLevels = {}; this.emit({ aux: selected, peers: [], values: {} }); this.refresh(); }
+    if (selected !== this.state.aux) { this.liveLevels = {}; this.emit({ aux: selected, peers: [], values: {}, muted: {} }); this.refresh(); }
   }
   setParameter(parameter: Parameter) {
     if (parameter !== this.state.parameter) { this.emit({ parameter, values: {} }); this.refresh(); }
@@ -289,6 +343,7 @@ export class MixerClient {
         if (channel) {
           this.send({ address: this.address(channel.channel) + '/?', args: [] });
           if (this.state.parameter !== 'level') this.send({ address: this.address(channel.channel, this.state.aux, 'level') + '/?', args: [] });
+          if (this.state.muted[channel.channel] === undefined) this.send({ address: this.address(channel.channel, this.state.aux, 'on') + '/?', args: [] });
           this.query = setTimeout(next, 12);
         } else if (attempt < 3 && this.state.config?.channels.some(c => this.state.values[c.channel] === undefined || this.liveLevels[c.channel] === undefined)) {
           this.query = setTimeout(() => query(attempt + 1), 1000);
@@ -298,7 +353,7 @@ export class MixerClient {
     };
     query(0);
   }
-  private address(channel: number, aux = this.state.aux, parameter = this.state.parameter) {
+  private address(channel: number, aux = this.state.aux, parameter: Parameter | 'on' = this.state.parameter) {
     return '/Input_Channels/' + channel + '/Aux_Send/' + aux + '/send_' + parameter;
   }
   beginDrag(channel: number): DragToken | null {
@@ -367,6 +422,7 @@ export class MixerClient {
       return;
     }
     if (message.meters) { this.receiveMeters(message.meters); return; }
+    if (message.requestSent || message.requestAcknowledged || message.requestRejected) { this.receiveRequest(message); return; }
     if (message.presence) {
       const { aux, peers } = message.presence;
       if (aux !== this.state.aux || this.state.status !== 'connected' || !Array.isArray(peers)) return;
@@ -388,7 +444,7 @@ export class MixerClient {
       this.cancelWrites();
       const aux = config.aux.find(a => a.channel === this.desiredAux)?.channel ?? config.aux[0]?.channel ?? null;
       this.clearMeters();
-      this.emit({ peers: [], config, status: 'connected', aux, values: {} }); this.refresh();
+      this.emit({ peers: [], config, status: 'connected', aux, values: {}, muted: {} }); this.refresh();
       // Ask for meters only when the server has them. The app disconnects in
       // the background, which also ends the stream.
       if (config.meters) this.send({ meters: true });
@@ -399,6 +455,14 @@ export class MixerClient {
     const config = this.state.config;
     if (message.address === '/SnapshotName' && config) {
       this.emit({ config: { ...config, snapshot: String(message.args[0] || '') } }); return;
+    }
+    const on = /^\/Input_Channels\/(\d+)\/Aux_Send\/(\d+)\/send_on$/.exec(message.address);
+    if (on) {
+      const channel = Number(on[1]), value = message.args[0];
+      if (Number(on[2]) !== this.state.aux || !config?.channels.some(c => c.channel === channel) || !(value === 0 || value === 1 || typeof value === 'boolean')) return;
+      const muted = !value;
+      if (this.state.muted[channel] !== muted) this.emit({ muted: { ...this.state.muted, [channel]: muted } });
+      return;
     }
     const match = /^\/Input_Channels\/(\d+)\/Aux_Send\/(\d+)\/send_(level|pan)$/.exec(message.address);
     if (match) {

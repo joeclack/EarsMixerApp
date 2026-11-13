@@ -16,6 +16,7 @@ export function demoTemplate(id: string) {
 export function createDemoSocket(): Socket {
   let closed = false;
   let meterTimer: ReturnType<typeof setInterval> | null = null;
+  let requestId = 0;
   const values = new Map<string, number>();
   const deliver = (message: object) => queueMicrotask(() => { if (!closed) socket.onmessage?.({ data: JSON.stringify(message) }); });
   const socket: Socket = {
@@ -28,11 +29,18 @@ export function createDemoSocket(): Socket {
         meterTimer = setInterval(() => deliver({ meters: { kind: 'simulated', levels: names.map((_, index) => [index + 1, simulatedLevel(index + 1, Date.now())]) } }), 66);
         return;
       }
-      const match = /^\/Input_Channels\/(\d+)\/Aux_Send\/(\d+)\/send_(level|pan)(\/\?)?$/.exec(message.address || '');
+      // The demo engineer sees every request a few seconds after it is sent.
+      if (message.request) {
+        const id = ++requestId, at = Date.now();
+        deliver({ requestSent: { id, kind: message.request.kind ?? null, text: String(message.request.text || ''), at } });
+        setTimeout(() => deliver({ requestAcknowledged: { id } }), 3000);
+        return;
+      }
+      const match = /^\/Input_Channels\/(\d+)\/Aux_Send\/(\d+)\/send_(level|pan|on)(\/\?)?$/.exec(message.address || '');
       if (!match || +match[1] < 1 || +match[1] > 20 || +match[2] < 1 || +match[2] > 4) return;
       const address = message.address.replace(/\/\?$/, '');
       if (!match[4] && Number.isFinite(message.args?.[0])) values.set(address, message.args[0]);
-      const value = values.get(address) ?? (match[3] === 'pan' ? 0.5 : -28 + ((+match[1] * 7 + +match[2] * 3) % 25));
+      const value = values.get(address) ?? (match[3] === 'pan' ? 0.5 : match[3] === 'on' ? 1 : -28 + ((+match[1] * 7 + +match[2] * 3) % 25));
       deliver({ address, args: [value] });
     },
   };

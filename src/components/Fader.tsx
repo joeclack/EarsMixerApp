@@ -23,6 +23,7 @@ export default memo(function Fader({ channel, label, vertical = false, length = 
   const { session, mix } = useFaderSession(channel);
   const [width, setWidth] = useState(0);
   const ready = session.mixer.canDrag(channel);
+  const muted = session.mixer.isMuted(channel);
   const position = session.mixer.position(channel);
   const thumb = useSharedValue(position);
   const start = useSharedValue(position);
@@ -178,7 +179,8 @@ export default memo(function Fader({ channel, label, vertical = false, length = 
     <View pointerEvents="none" style={vertical
       ? { position: 'absolute', top: inset, bottom: inset, left: FADER_TRACK_CENTER * size - 4, width: 8, borderRadius: 4, backgroundColor: '#010709', justifyContent: 'flex-end' }
       : { position: 'absolute', left: inset, right: inset, top: 24, height: 8, borderRadius: 4, backgroundColor: '#010709' }}>
-      <Animated.View style={[vertical ? { width: 8 } : { height: 8 }, { borderRadius: 4, backgroundColor: FADER_LIGHT,
+      {/* A muted send keeps its level; its light dims to show it is off in this mix. */}
+      <Animated.View style={[vertical ? { width: 8 } : { height: 8 }, { opacity: muted ? 0.25 : 1, borderRadius: 4, backgroundColor: FADER_LIGHT,
         boxShadow: [{ offsetX: 0, offsetY: 0, blurRadius: 6, spreadDistance: 1, color: '#12E6B970' }] }, fillStyle]}>
         <LinearGradient pointerEvents="none" colors={['#048E7B', '#1BEABD', '#7CFFE2', '#13D9AF']}
           locations={[0, 0.3, 0.6, 1]} start={vertical ? { x: 0, y: 0.5 } : { x: 0.5, y: 0 }}
