@@ -16,5 +16,13 @@ export function useTheme() {
     consoleRed: '#B42B43', consoleMark: '#A82B40', consoleFace: '#E1DDC9',
     consoleGradient: ['#BCAD8D', '#F2EBD5', '#D3C7A8'] as const,
     consoleRim: '#FFF9E3', consoleShadow: '#5A422D66',
+    // The mixer's desk: one panel with every fader set into a recess cut into it.
+    deskBg: dark ? '#0B1015' : '#E6DFC8',
+    deskGradient: dark ? ['#1C2A33', '#141F26', '#0F181E'] as const : ['#F2ECD8', '#E6DFC8', '#D9D0B4'] as const,
+    deskWell: dark ? 'rgba(7,16,21,0.94)' : 'rgba(222,213,186,0.92)',
+    deskWellShadow: dark ? 'rgba(0,0,0,0.8)' : 'rgba(90,66,45,0.35)',
+    deskWellEdge: dark ? 'rgba(0,0,0,0.6)' : 'rgba(90,66,45,0.18)',
+    deskLip: dark ? 'rgba(160,200,215,0.08)' : 'rgba(255,255,255,0.7)',
+    deskDivider: dark ? 'rgba(132,155,165,0.14)' : 'rgba(180,43,67,0.22)',
   }), [dark]);
 }

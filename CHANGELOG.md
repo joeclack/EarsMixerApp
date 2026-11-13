@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.2.0 — Faders set into the desk
+
+- In portrait, every fader now sits in one recess cut into the desk instead of its own raised housing, with fine lines between channels. The recess runs on past the bottom of the screen while more channels remain.
+- Groups are rows inside the recess: a collapsed group shows its header and group fader; an open group's members follow with an accent line down the left.
+- Each fader track is a slot cut through the panel.
+- The mixer screen uses the desk as its background; in light mode it is the cream console colour. Other screens are unchanged, and landscape keeps its separate strips.
+
 ## 0.1.0 — First TestFlight beta
 
 - Reset the public app version to **0.1.0** for the first shared TestFlight / external beta. Earlier `0.x` entries below were local development only and were never published to testers or the stores.

@@ -168,7 +168,11 @@ export default memo(function Fader({ channel, label, vertical = false, length = 
   }, [ready, travel, vertical, mix.epoch, thumb, start, active, lastDispatch, sampled, origin, begin, update, finish, enlarge, scale, reducedMotion, detents]);
   const thumbStyle = useAnimatedStyle(() => ({ transform: vertical ? [{ translateY: travel * (1 - thumb.value) }] : [{ translateX: travel * thumb.value }] }));
   const fillStyle = useAnimatedStyle(() => vertical ? { height: travel * thumb.value } : { width: travel * thumb.value });
+  const theme = useTheme();
   return <GestureDetector gesture={enlarge}><View onLayout={vertical ? undefined : event => setWidth(event.nativeEvent.layout.width)} style={{ height: vertical ? length : 56, width: vertical ? 80 * size : undefined, alignSelf: vertical ? 'center' : undefined }}>
+    {/* A slot cut through the panel, shaded at its top edge with a lit lower lip. */}
+    {!vertical && <View pointerEvents="none" style={{ position: 'absolute', left: inset - 4, right: inset - 4, top: 22, height: 12, borderRadius: 6, backgroundColor: '#010709',
+      boxShadow: [{ inset: true, offsetX: 0, offsetY: 2, blurRadius: 2, color: 'rgba(0,0,0,0.9)' }, { offsetX: 0, offsetY: 1, blurRadius: 0, color: theme.deskLip }] }} />}
     <View pointerEvents="none" style={vertical
       ? { position: 'absolute', top: inset, bottom: inset, left: FADER_TRACK_CENTER * size - 4, width: 8, borderRadius: 4, backgroundColor: '#010709', justifyContent: 'flex-end' }
       : { position: 'absolute', left: inset, right: inset, top: 24, height: 8, borderRadius: 4, backgroundColor: '#010709' }}>
