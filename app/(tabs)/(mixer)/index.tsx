@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
-import Animated, { cancelAnimation, Easing, ReduceMotion, useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
-import { FlatList, Text, View, useWindowDimensions } from 'react-native';
+import Animated, { cancelAnimation, Easing, FadeIn, FadeOut, LinearTransition, ReduceMotion, useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
+import { Text, View, useWindowDimensions } from 'react-native';
 import { router, useFocusEffect } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
@@ -27,8 +27,14 @@ import { useStableMixerLayout } from '../../../src/components/useStableMixerLayo
 import LandscapeFaderViewport from '../../../src/components/LandscapeFaderViewport';
 
 // Landscape strip geometry: the level row above the fader and the name row below.
-const STRIP_WIDTH = 96, STRIP_PADDING = 6, STRIP_GAP = 6, LEVEL_ROW = 20, NAME_ROW = 32;
+// Names are one line so the fader keeps as much height as possible.
+const STRIP_WIDTH = 96, STRIP_PADDING = 4, STRIP_GAP = 2, LEVEL_ROW = 20, NAME_ROW = 18;
 const STRIP_CHROME = STRIP_PADDING * 2 + STRIP_GAP * 2 + LEVEL_ROW + NAME_ROW;
+// Opening or closing a group slides it open or shut, pushing the channels
+// after it along; its members fade in as they are uncovered.
+const groupSlide = LinearTransition.duration(280).easing(Easing.out(Easing.cubic)).reduceMotion(ReduceMotion.System);
+const memberIn = FadeIn.duration(220).reduceMotion(ReduceMotion.System);
+const memberOut = FadeOut.duration(140).reduceMotion(ReduceMotion.System);
 
 export default function Mixer() {
   const { session, state, mix } = useSession();
@@ -68,7 +74,8 @@ export default function Mixer() {
   const focusedRow = !landscape && focused !== null ? sections.flatMap(section => [section.header, ...section.channels]).find(row => row.channel === focused) : undefined;
   const closeFocused = () => { session.mixer.cancelWrites(); setFocused(null); };
   const topPadding = landscape ? insets.top + 12 : 20;
-  const bottomPadding = insets.bottom + (landscape ? 12 : 20);
+  // In landscape the one-line names sit just above the home indicator.
+  const bottomPadding = landscape ? Math.max(6, insets.bottom - 10) : insets.bottom + 20;
   // Each landscape strip has three rows: its level, the fader, and its name.
   // The fader takes all the height the level and name rows leave. An open
   // group's name and close control have their own side rail, leaving equal
@@ -96,21 +103,22 @@ export default function Mixer() {
     // strips in landscape.
     const divider = (position: number) => position > 0 && (landscape
       ? { borderLeftWidth: 1, borderLeftColor: theme.deskDivider } : { borderTopWidth: 1, borderTopColor: theme.deskDivider });
+    const member = open ? { entering: memberIn, exiting: memberOut } : {};
     const renderFader = (channel: MixerRow, position: number) => landscape
-      ? <View key={channel.channel} testID={'channel-' + channel.channel}
+      ? <Animated.View key={channel.channel} testID={'channel-' + channel.channel} {...member}
         style={{ width: STRIP_WIDTH, height: open ? cardHeight - 2 : cardHeight, alignItems: 'center', paddingVertical: STRIP_PADDING, gap: STRIP_GAP, ...divider(position) }}>
         <View style={{ height: LEVEL_ROW, justifyContent: 'center' }}><FaderValue channel={channel.channel} /></View>
         <Fader channel={channel.channel} label={channel.label} vertical length={open ? stripHeight - 2 : stripHeight} />
         {grouped && !open ? <GroupExpandTarget label={group.label} onExpand={expand}>
           <View style={{ width: STRIP_WIDTH - 8, height: NAME_ROW, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 3 }}>
             <Icon name={{ ios: 'link', android: 'link', web: 'link' }} size={11} />
-            <Text numberOfLines={2} style={{ flexShrink: 1, color: theme.text, fontSize: 12, lineHeight: 15, fontWeight: '700', textAlign: 'center' }}>{group.label}</Text>
+            <Text numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.75} style={{ flexShrink: 1, color: theme.text, fontSize: 12, lineHeight: 16, fontWeight: '700', textAlign: 'center' }}>{group.label}</Text>
             <Icon name={{ ios: 'chevron.right', android: 'chevron_right', web: 'chevron_right' }} size={11} />
           </View>
-        </GroupExpandTarget> : <Text numberOfLines={2} style={{ width: STRIP_WIDTH - 8, height: NAME_ROW, color: theme.text, fontSize: 12, lineHeight: 15,
-          fontWeight: '600', textAlign: 'center', textAlignVertical: 'center' }}>{channel.label}</Text>}
-      </View>
-      : <View key={channel.channel} testID={'channel-' + channel.channel}
+        </GroupExpandTarget> : <Text numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.75} style={{ width: STRIP_WIDTH - 8, height: NAME_ROW, color: theme.text, fontSize: 12, lineHeight: 16,
+          fontWeight: '600', textAlign: 'center' }}>{channel.label}</Text>}
+      </Animated.View>
+      : <Animated.View key={channel.channel} testID={'channel-' + channel.channel} {...member}
         style={{ gap: 2, paddingTop: grouped && !open ? 0 : 10, paddingHorizontal: 14, paddingBottom: 4, ...divider(position) }}>
         {!channel.members && <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 8 }}>
           <Text numberOfLines={2} style={{ color: theme.text, fontSize: 15, fontWeight: '600', flex: 1 }}>{channel.label}</Text>
@@ -119,9 +127,10 @@ export default function Mixer() {
         <ExpandableFader bare channel={channel.channel} label={channel.label} onEnlarge={origin => {
           session.mixer.cancelWrites(); setFocusOrigin(origin); setFocused(channel.channel);
         }} />
-      </View>;
-    return <View testID={grouped ? 'group-' + group.channel : undefined} style={{
-      height: landscape ? cardHeight : undefined, width: landscape ? (open ? item.channels.length * STRIP_WIDTH + 44 : STRIP_WIDTH) : undefined,
+      </Animated.View>;
+    // The section resizes with a slide; clipping it reveals or covers its members.
+    return <Animated.View layout={groupSlide} testID={grouped ? 'group-' + group.channel : undefined} style={{
+      overflow: grouped ? 'hidden' : undefined, height: landscape ? cardHeight : undefined, width: landscape ? (open ? item.channels.length * STRIP_WIDTH + 44 : STRIP_WIDTH) : undefined,
       ...divider(index),
     }}>
       {grouped && !landscape && (open ? <View style={{ minHeight: 48, paddingHorizontal: 20, gap: 8,
@@ -154,7 +163,7 @@ export default function Mixer() {
         </View>}
         {(open ? item.channels : [group]).map((channel, position) => renderFader(channel, position))}
       </View>
-    </View>;
+    </Animated.View>;
   }, [landscape, cardHeight, stripHeight, theme, mix.parameter, session, expanded]);
   return <Page title={mix.config?.aux.find(aux => aux.channel === mix.aux)?.label || 'Mixer'} scroll={false} compactHeader hideHeader={landscape} toolbar={<MixerToolbar />} desk>
     <AuxPresence />
@@ -168,7 +177,7 @@ export default function Mixer() {
     <View onLayout={event => setBankHeight(event.nativeEvent.layout.height)} style={{ flex: 1, minWidth: 0, overflow: landscape ? 'hidden' : 'visible' }}>
     <LandscapeFaderViewport enabled={landscape}>
     <MixerLoadingBoundary>{!state.server ? <EmptyMixer /> : <FaderFocusTransition row={focusedRow} origin={focusOrigin} onClose={closeFocused}>
-    <FlatList key={landscape ? 'strips' : 'rows'} horizontal={landscape} extraData={state.preferences}
+    <Animated.FlatList itemLayoutAnimation={groupSlide} key={landscape ? 'strips' : 'rows'} horizontal={landscape} extraData={state.preferences}
       data={sections} renderItem={renderSection} keyExtractor={item => String(item.header.channel)} contentInsetAdjustmentBehavior="never"
       // Portrait faders sit straight on the desk, divided by fine lines.
       contentContainerStyle={{ paddingTop: topPadding, paddingLeft: landscape ? 16 : 6, paddingRight: landscape ? 16 : 6, paddingBottom: bottomPadding }} keyboardShouldPersistTaps="handled"
