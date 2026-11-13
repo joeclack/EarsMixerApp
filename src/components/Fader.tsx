@@ -5,7 +5,6 @@ import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import { scheduleOnRN, scheduleOnUI } from 'react-native-worklets';
 import FaderHandleSurface from './FaderHandleSurface';
 import { LinearGradient } from 'expo-linear-gradient';
-import { LcdReadout } from './ConsoleDetails';
 import { FADER_CAP_HEIGHT, FADER_CAP_WIDTH, FADER_INSET, FADER_TRACK_CENTER, FADER_LIGHT } from './faderGeometry';
 import { useDetentHaptics } from '../mixer/dragHaptics';
 import * as Haptics from 'expo-haptics';
@@ -171,8 +170,10 @@ export default memo(function Fader({ channel, label, vertical = false, length = 
   const theme = useTheme();
   return <GestureDetector gesture={enlarge}><View onLayout={vertical ? undefined : event => setWidth(event.nativeEvent.layout.width)} style={{ height: vertical ? length : 56, width: vertical ? 80 * size : undefined, alignSelf: vertical ? 'center' : undefined }}>
     {/* A slot cut through the panel, shaded at its top edge with a lit lower lip. */}
-    {!vertical && <View pointerEvents="none" style={{ position: 'absolute', left: inset - 4, right: inset - 4, top: 22, height: 12, borderRadius: 6, backgroundColor: '#010709',
-      boxShadow: [{ inset: true, offsetX: 0, offsetY: 2, blurRadius: 2, color: 'rgba(0,0,0,0.9)' }, { offsetX: 0, offsetY: 1, blurRadius: 0, color: theme.deskLip }] }} />}
+    <View pointerEvents="none" style={[vertical
+      ? { position: 'absolute', top: inset - 4, bottom: inset - 4, left: FADER_TRACK_CENTER * size - 6, width: 12 }
+      : { position: 'absolute', left: inset - 4, right: inset - 4, top: 22, height: 12 }, { borderRadius: 6, backgroundColor: '#010709',
+      boxShadow: [{ inset: true, offsetX: 0, offsetY: 2, blurRadius: 2, color: 'rgba(0,0,0,0.9)' }, { offsetX: 0, offsetY: 1, blurRadius: 0, color: theme.deskLip }] }]} />
     <View pointerEvents="none" style={vertical
       ? { position: 'absolute', top: inset, bottom: inset, left: FADER_TRACK_CENTER * size - 4, width: 8, borderRadius: 4, backgroundColor: '#010709', justifyContent: 'flex-end' }
       : { position: 'absolute', left: inset, right: inset, top: 24, height: 8, borderRadius: 4, backgroundColor: '#010709' }}>
@@ -203,10 +204,12 @@ export default memo(function Fader({ channel, label, vertical = false, length = 
   </View></GestureDetector>;
 });
 
+// The level as plain text beside or above its fader.
 export const FaderValue = memo(function FaderValue({ channel }: { channel: number }) {
   const { session, mix } = useFaderSession(channel);
+  const theme = useTheme();
   const value = levelText(session.mixer.displayValue(channel), mix.parameter);
-  return <View accessible accessibilityLabel={value}><LcdReadout>{value}</LcdReadout></View>;
+  return <Text accessibilityLabel={value} numberOfLines={1} style={{ color: theme.muted, fontSize: 13, lineHeight: 18, fontWeight: '500', fontVariant: ['tabular-nums'] }}>{value}</Text>;
 });
 
 
