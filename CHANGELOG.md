@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.2.1 — Faders straight on the desk
+
+- In portrait, faders now sit straight on the desk with fine lines between channels, without the recess around them. Groups, fader slots and the desk background are unchanged.
+
 ## 0.2.0 — Faders set into the desk
 
 - In portrait, every fader now sits in one recess cut into the desk instead of its own raised housing, with fine lines between channels. The recess runs on past the bottom of the screen while more channels remain.
