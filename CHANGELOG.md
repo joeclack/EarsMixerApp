@@ -3,6 +3,7 @@
 ## 0.4.0 — Taller landscape faders, sliding groups
 
 - Give landscape faders more height: channel names are one line (shrinking slightly to fit long names) and sit just above the home indicator, with tighter spacing around the level and name. Group names now sit on the same line as channel names.
+- Widen portrait faders to nearly the full screen width, leaving a small margin at each side.
 - Opening or closing a group slides it open or shut, pushing the channels after it along (or down, in portrait) while its members fade in or out. Follows the system Reduce Motion setting.
 
 ## 0.3.0 — Landscape on the desk, plain levels

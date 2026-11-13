@@ -122,8 +122,8 @@ export default function Mixer() {
         </View>}
       </Animated.View>
       : <Animated.View key={channel.channel} testID={'channel-' + channel.channel} {...member}
-        style={{ gap: 2, paddingTop: grouped && !open ? 0 : 10, paddingHorizontal: 14, paddingBottom: 4, ...divider(position) }}>
-        {!channel.members && <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 8 }}>
+        style={{ gap: 2, paddingTop: grouped && !open ? 0 : 10, paddingHorizontal: 4, paddingBottom: 4, ...divider(position) }}>
+        {!channel.members && <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 12 }}>
           <Text numberOfLines={2} style={{ color: theme.text, fontSize: 15, fontWeight: '600', flex: 1 }}>{channel.label}</Text>
           <FaderValue channel={channel.channel} />
         </View>}
@@ -136,14 +136,14 @@ export default function Mixer() {
       overflow: grouped ? 'hidden' : undefined, height: landscape ? cardHeight : undefined, width: landscape ? (open ? item.channels.length * STRIP_WIDTH + 44 : STRIP_WIDTH) : undefined,
       ...divider(index),
     }}>
-      {grouped && !landscape && (open ? <View style={{ minHeight: 48, paddingHorizontal: 20, gap: 8,
+      {grouped && !landscape && (open ? <View style={{ minHeight: 48, paddingHorizontal: 16, gap: 8,
         flexDirection: 'row', alignItems: 'center' }}>
         <Icon name={{ ios: 'link', android: 'link', web: 'link' }} size={14} />
         <Text numberOfLines={2} accessibilityRole="header" style={{ flex: 1, minWidth: 0, color: theme.text, fontSize: 15, fontWeight: '700' }}>{group.label}</Text>
         {canClose ? <CloseButton label={'Close ' + group.label + ' group'} onPress={close} />
           : <Text style={{ color: theme.muted, fontSize: 11 }}>Pan</Text>}
       </View> : <GroupExpandTarget label={group.label} onExpand={expand}>
-        <View style={{ minHeight: 48, paddingHorizontal: 20, paddingTop: 6, gap: 8, flexDirection: 'row', alignItems: 'center' }}>
+        <View style={{ minHeight: 48, paddingHorizontal: 16, paddingTop: 6, gap: 8, flexDirection: 'row', alignItems: 'center' }}>
           <Icon name={{ ios: 'link', android: 'link', web: 'link' }} size={14} />
           <Text numberOfLines={2} style={{ flex: 1, color: theme.text, fontSize: 15, fontWeight: '700' }}>{group.label}</Text>
           <FaderValue channel={group.channel} />
@@ -152,7 +152,7 @@ export default function Mixer() {
       </GroupExpandTarget>)}
       <View style={{ flexDirection: landscape ? 'row' : 'column',
         ...(open && (landscape ? { borderTopWidth: 2, borderTopColor: theme.groupEdge }
-          : { marginLeft: 14, borderLeftWidth: 2, borderLeftColor: theme.groupEdge, borderTopWidth: 1, borderTopColor: theme.deskDivider })) }}>
+          : { marginLeft: 8, borderLeftWidth: 2, borderLeftColor: theme.groupEdge, borderTopWidth: 1, borderTopColor: theme.deskDivider })) }}>
         {landscape && open && <View style={{ width: 44, height: cardHeight - 2, alignItems: 'center', paddingTop: STRIP_PADDING }}>
           <View style={{ width: 44, height: 44, alignItems: 'center', justifyContent: 'center' }}>
             {canClose && <CloseButton label={'Close ' + group.label + ' group'} onPress={close} />}
@@ -183,7 +183,7 @@ export default function Mixer() {
     <Animated.FlatList itemLayoutAnimation={groupSlide} key={landscape ? 'strips' : 'rows'} horizontal={landscape} extraData={state.preferences}
       data={sections} renderItem={renderSection} keyExtractor={item => String(item.header.channel)} contentInsetAdjustmentBehavior="never"
       // Portrait faders sit straight on the desk, divided by fine lines.
-      contentContainerStyle={{ paddingTop: topPadding, paddingLeft: landscape ? 16 : 6, paddingRight: landscape ? 16 : 6, paddingBottom: bottomPadding }} keyboardShouldPersistTaps="handled"
+      contentContainerStyle={{ paddingTop: topPadding, paddingLeft: landscape ? 16 : 4, paddingRight: landscape ? 16 : 4, paddingBottom: bottomPadding }} keyboardShouldPersistTaps="handled"
       ListEmptyComponent={<View style={{ alignItems: 'center', paddingVertical: 40, gap: 12 }}>
         <Icon name={{ ios: 'eye.slash', android: 'visibility_off', web: 'visibility_off' }} size={34} color={theme.muted} />
         <Text style={{ color: theme.text, fontSize: 19, fontWeight: '600' }}>{hidden.length ? 'All channels hidden' : 'No channels'}</Text>
