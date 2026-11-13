@@ -2,8 +2,8 @@
 
 ## 0.2.0 — Faders set into the desk
 
-- In portrait, every fader now sits in one recess cut into the desk instead of its own raised housing, with fine lines between channels. The recess runs on past the bottom of the screen while more channels remain.
-- Groups are rows inside the recess: a collapsed group shows its header and group fader; an open group's members follow with an accent line down the left.
+- In portrait, faders sit straight on the desk instead of each in its own raised housing, with fine lines between channels.
+- Groups are rows on the desk: a collapsed group shows its header and group fader; an open group's members follow with an accent line down the left.
 - Each fader track is a slot cut through the panel.
 - The mixer screen uses the desk as its background; in light mode it is the cream console colour. Other screens are unchanged, and landscape keeps its separate strips.
 
