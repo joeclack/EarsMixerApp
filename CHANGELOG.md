@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.4.1 — Wider portrait faders
+
+- Widen portrait faders to nearly the full screen width, leaving a small margin at each side. Names and group headers stay aligned.
+
 ## 0.4.0 — Taller landscape faders, sliding groups
 
 - Give landscape faders more height: channel names are one line (shrinking slightly to fit long names) and sit just above the home indicator, with tighter spacing around the level and name. Group names now sit on the same line as channel names.
