@@ -1,4 +1,6 @@
-import { Text, View, useWindowDimensions } from 'react-native';
+import { Pressable, Text, View, useWindowDimensions } from 'react-native';
+import { router } from 'expo-router';
+import { Icon } from './ui';
 import { useSession } from '../mixer/context';
 import { useTheme } from '../theme';
 import LandscapeAuxPicker from './LandscapeAuxPicker';
@@ -18,5 +20,10 @@ export default function LandscapeMixerToolbar({ top, bottom }: { top: number; bo
     {height - top - bottom >= 320 && !!selected && <Text numberOfLines={3} style={{ width: 60, color: theme.muted, fontSize: 11, textAlign: 'center', lineHeight: 15 }}>{selected.label}</Text>}
     <LandscapeFaderActions parameter={mix.parameter} disabled={!state.server} offDisabled={!state.server || mix.status !== 'connected' || !mix.aux}
       onModeChange={mode => session.mixer.setParameter(mode)} onAllOff={setAllLevelsOff} />
+    <Pressable accessibilityRole="button" accessibilityLabel="Message the engineer" disabled={mix.status !== 'connected'} onPress={() => router.push('/request')}
+      style={({ pressed }) => ({ width: 52, height: 52, borderRadius: 26, alignItems: 'center', justifyContent: 'center',
+        backgroundColor: theme.secondary, opacity: mix.status !== 'connected' ? 0.5 : pressed ? 0.7 : 1 })}>
+      <Icon name={{ ios: 'bubble.left.fill', android: 'chat', web: 'chat' }} size={20} color={theme.tint} />
+    </Pressable>
   </View>;
 }

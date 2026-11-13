@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.6.0 — Mute in my mix, message the engineer
+
+- Mute a channel in your own mix. In portrait, each row has a mute button beside its level; in landscape, tap the level above a strip. Muting turns the desk's send to your AUX off and keeps its level, so unmuting restores it exactly; the engineer sees it on the desk and everyone on the same mix sees it muted. A muted fader's light dims. A group's mute mutes all its members. Needs EarsMixer 1.12.0.
+- Message the engineer from the mixer's options menu, or the new button in the landscape rail: one tap sends More me, Less me, More click, Talk to me or Problem, optionally with a short message, or send a message on its own. Your sent requests show when the engineer has seen them.
+- The in-app demo supports both; its engineer sees requests after a few seconds.
+
 ## 0.5.0 — Signal meters
 
 - Show a thin signal meter beside each channel's fader slot, in portrait and landscape, when the server provides meters. It rises quickly and falls slowly, turns amber then red near the top, and shows a red clip mark that holds briefly. Groups have no meter of their own.
