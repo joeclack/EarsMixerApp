@@ -158,14 +158,8 @@ export default function Mixer() {
     <MixerLoadingBoundary>{!state.server ? <EmptyMixer /> : <FaderFocusTransition row={focusedRow} origin={focusOrigin} onClose={closeFocused}>
     <FlatList key={landscape ? 'strips' : 'rows'} horizontal={landscape} extraData={state.preferences}
       data={sections} renderItem={renderSection} keyExtractor={item => String(item.header.channel)} contentInsetAdjustmentBehavior="never"
-      contentContainerStyle={landscape || !sections.length ? { paddingTop: topPadding, paddingLeft: landscape ? 16 : 20, paddingRight: landscape ? 16 : 20, paddingBottom: bottomPadding }
-        // One recess cut into the desk holds every portrait fader. It runs on
-        // past the screen edge while more channels remain below.
-        : { marginTop: topPadding, marginHorizontal: 12, marginBottom: bottomPadding, borderRadius: 14, overflow: 'hidden', backgroundColor: theme.deskWell,
-          ...(!theme.dark && { borderWidth: 1, borderColor: 'rgba(180,43,67,0.55)' }),
-          boxShadow: [{ inset: true, offsetX: 0, offsetY: 3, blurRadius: 6, color: theme.deskWellShadow },
-            { inset: true, offsetX: 0, offsetY: 0, blurRadius: 0, spreadDistance: 1, color: theme.deskWellEdge },
-            { offsetX: 0, offsetY: 1, blurRadius: 0, color: theme.deskLip }] }} keyboardShouldPersistTaps="handled"
+      // Portrait faders sit straight on the desk, divided by fine lines.
+      contentContainerStyle={{ paddingTop: topPadding, paddingLeft: landscape ? 16 : 6, paddingRight: landscape ? 16 : 6, paddingBottom: bottomPadding }} keyboardShouldPersistTaps="handled"
       ListEmptyComponent={<View style={{ alignItems: 'center', paddingVertical: 40, gap: 12 }}>
         <Icon name={{ ios: 'eye.slash', android: 'visibility_off', web: 'visibility_off' }} size={34} color={theme.muted} />
         <Text style={{ color: theme.text, fontSize: 19, fontWeight: '600' }}>{hidden.length ? 'All channels hidden' : 'No channels'}</Text>
