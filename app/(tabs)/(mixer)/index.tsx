@@ -186,7 +186,7 @@ export default function Mixer() {
       contentContainerStyle={{ paddingTop: topPadding, paddingLeft: landscape ? 16 : 4, paddingRight: landscape ? 16 : 4, paddingBottom: bottomPadding }} keyboardShouldPersistTaps="handled"
       // Demo meters are labelled so they are never mistaken for the desk's signal.
       ListHeaderComponent={!landscape && mix.config?.meters === 'simulated' && sections.length ? <Text style={{ color: theme.muted, fontSize: 11, paddingHorizontal: 16, paddingBottom: 6 }}>
-        Signal meters are simulated</Text> : null}
+        Signal meters are simulated</Text> : undefined}
       ListEmptyComponent={<View style={{ alignItems: 'center', paddingVertical: 40, gap: 12 }}>
         <Icon name={{ ios: 'eye.slash', android: 'visibility_off', web: 'visibility_off' }} size={34} color={theme.muted} />
         <Text style={{ color: theme.text, fontSize: 19, fontWeight: '600' }}>{hidden.length ? 'All channels hidden' : 'No channels'}</Text>
