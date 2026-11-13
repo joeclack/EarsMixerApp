@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.5.0 — Signal meters
+
+- Show a thin signal meter beside each channel's fader slot, in portrait and landscape, when the server provides meters. It rises quickly and falls slowly, turns amber then red near the top, and shows a red clip mark that holds briefly. Groups have no meter of their own.
+- Meters only appear while readings arrive: they empty when readings stop, when the connection drops, and are never shown from cached values. Readings bypass the mixer's React state and animate on the UI thread, so fader response is unaffected.
+- The server demo (`npm run dev`, EarsMixer 1.11.0) and the in-app demo stream simulated signals, labelled "Signal meters are simulated". Real DiGiCo meters will follow once the console's meter addresses are confirmed.
+
 ## 0.4.1 — Wider portrait faders
 
 - Widen portrait faders to nearly the full screen width, leaving a small margin at each side. Names and group headers stay aligned.

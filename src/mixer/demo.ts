@@ -15,14 +15,19 @@ export function demoTemplate(id: string) {
 // Implements the same protocol locally. No WebSocket or HTTP connection exists.
 export function createDemoSocket(): Socket {
   let closed = false;
+  let meterTimer: ReturnType<typeof setInterval> | null = null;
   const values = new Map<string, number>();
   const deliver = (message: object) => queueMicrotask(() => { if (!closed) socket.onmessage?.({ data: JSON.stringify(message) }); });
   const socket: Socket = {
     readyState: 0, onopen: null, onclose: null, onerror: null, onmessage: null,
-    close() { closed = true; socket.readyState = 3; },
+    close() { closed = true; socket.readyState = 3; if (meterTimer) clearInterval(meterTimer); meterTimer = null; },
     send(raw) {
       if (closed) return;
       const message = JSON.parse(raw);
+      if (message.meters === true && !meterTimer) {
+        meterTimer = setInterval(() => deliver({ meters: { kind: 'simulated', levels: names.map((_, index) => [index + 1, simulatedLevel(index + 1, Date.now())]) } }), 66);
+        return;
+      }
       const match = /^\/Input_Channels\/(\d+)\/Aux_Send\/(\d+)\/send_(level|pan)(\/\?)?$/.exec(message.address || '');
       if (!match || +match[1] < 1 || +match[1] > 20 || +match[2] < 1 || +match[2] > 4) return;
       const address = message.address.replace(/\/\?$/, '');
@@ -35,7 +40,19 @@ export function createDemoSocket(): Socket {
     if (closed) return;
     socket.readyState = 1; socket.onopen?.();
     deliver({ config: { channels: names.map((label, index) => ({ channel: index + 1, label, order: index + 1 })),
-      aux: ['Drums', 'Vocals', 'Guitar', 'Keys'].map((label, index) => ({ channel: index + 1, label, colour: '#48D8C4', stereo: true })), snapshot: 'Demo' } });
+      aux: ['Drums', 'Vocals', 'Guitar', 'Keys'].map((label, index) => ({ channel: index + 1, label, colour: '#48D8C4', stereo: true })), snapshot: 'Demo', meters: 'simulated' } });
   }, 0);
   return socket;
+}
+
+// Simulated signal for the demo's meters: drums on a 120 bpm grid and gently
+// moving sustained sources. Always reported as simulated, never as a desk's.
+function simulatedLevel(channel: number, time: number): number | null {
+  const beat = (time / 500) % 4, sinceBeat = (beat % 1) * 500, wobble = Math.sin(time / 37 + channel * 1.7) * 1.5;
+  if (channel === 1) return Math.round((-6 - sinceBeat / 18 + wobble) * 10) / 10;
+  if (channel === 2) return Math.floor(beat) % 2 === 1 ? Math.round((-8 - sinceBeat / 16 + wobble) * 10) / 10 : null;
+  if (channel === 3) return Math.round((-22 - ((time / 250) % 1) * 18 + wobble) * 10) / 10;
+  if (channel >= 19) return null;
+  const db = -24 + ((channel * 7) % 10) + Math.sin(time / 900 + channel) * 5 + wobble;
+  return Math.max(-60, Math.round(db * 10) / 10);
 }
