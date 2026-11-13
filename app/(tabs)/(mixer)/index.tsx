@@ -11,8 +11,6 @@ import { mixerRows, mixerSections, type MixerRow, type MixerSection } from '../.
 import { Page, EmptyMixer, Icon } from '../../../src/components/ui';
 import NativeButton from '../../../src/components/NativeButton';
 import Fader, { FaderValue } from '../../../src/components/Fader';
-import FaderHousing from '../../../src/components/FaderHousing';
-import FaderDisplay from '../../../src/components/FaderDisplay';
 import GroupExpandTarget from '../../../src/components/GroupExpandTarget';
 import CloseButton from '../../../src/components/CloseButton';
 import { FADER_INSET } from '../../../src/components/faderGeometry';
@@ -27,6 +25,10 @@ import ExpandableFader from '../../../src/components/ExpandableFader';
 import type { FaderOrigin } from '../../../src/components/ExpandableFader';
 import { useStableMixerLayout } from '../../../src/components/useStableMixerLayout';
 import LandscapeFaderViewport from '../../../src/components/LandscapeFaderViewport';
+
+// Landscape strip geometry: the level row above the fader and the name row below.
+const STRIP_WIDTH = 96, STRIP_PADDING = 6, STRIP_GAP = 6, LEVEL_ROW = 20, NAME_ROW = 32;
+const STRIP_CHROME = STRIP_PADDING * 2 + STRIP_GAP * 2 + LEVEL_ROW + NAME_ROW;
 
 export default function Mixer() {
   const { session, state, mix } = useSession();
@@ -67,10 +69,12 @@ export default function Mixer() {
   const closeFocused = () => { session.mixer.cancelWrites(); setFocused(null); };
   const topPadding = landscape ? insets.top + 12 : 20;
   const bottomPadding = insets.bottom + (landscape ? 12 : 20);
-  // Every landscape strip starts at its LCD. The group's name and close control
-  // have their own side rail, leaving equal widths and travel for every member.
-  const cardHeight = Math.max(108 + FADER_INSET * 2, bankHeight - topPadding - bottomPadding);
-  const stripHeight = Math.max(FADER_INSET * 2, cardHeight - 108);
+  // Each landscape strip has three rows: its level, the fader, and its name.
+  // The fader takes all the height the level and name rows leave. An open
+  // group's name and close control have their own side rail, leaving equal
+  // widths and travel for every member.
+  const cardHeight = Math.max(STRIP_CHROME + FADER_INSET * 2, bankHeight - topPadding - bottomPadding);
+  const stripHeight = Math.max(FADER_INSET * 2, cardHeight - STRIP_CHROME);
   const renderSection = useCallback(({ item, index }: { item: MixerSection; index: number }) => {
     const group = item.header;
     const grouped = !!group.members;
@@ -88,30 +92,37 @@ export default function Mixer() {
       setExpanded(ids => ids.filter(id => id !== group.channel));
       if (session.state.settings.haptics) void Haptics.selectionAsync().catch(() => {});
     };
-    // Portrait rows share one desk recess, divided by fine lines.
-    const renderFader = (channel: MixerRow, position: number) => <View key={channel.channel} testID={'channel-' + channel.channel}
-      style={landscape ? { width: grouped && !open ? 136 : 88, alignItems: 'center', gap: 8 }
-        : { gap: 2, paddingTop: grouped && !open ? 0 : 10, paddingHorizontal: 14, paddingBottom: 4,
-          ...(position > 0 && { borderTopWidth: 1, borderTopColor: theme.deskDivider }) }}>
-      {landscape ? grouped && !open ? <GroupExpandTarget label={group.label} onExpand={expand}>
-        <FaderDisplay channel={channel.channel} label={channel.label} expandable />
-      </GroupExpandTarget> : <FaderDisplay channel={channel.channel} label={channel.label} /> : !channel.members && <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 8 }}>
-        <Text numberOfLines={2} style={{ color: theme.text, fontSize: 15, fontWeight: '600', flex: 1 }}>{channel.label}</Text>
-        <FaderValue channel={channel.channel} />
-      </View>}
-      <View style={landscape ? { width: 88, alignSelf: grouped && !open ? 'center' : 'flex-start' } : undefined}>
-        {landscape ? <FaderHousing vertical><Fader channel={channel.channel} label={channel.label} vertical length={stripHeight} /></FaderHousing>
-          : <ExpandableFader bare channel={channel.channel} label={channel.label} onEnlarge={origin => {
-            session.mixer.cancelWrites(); setFocusOrigin(origin); setFocused(channel.channel);
-          }} />}
+    // Faders sit straight on the desk, divided by fine lines: rows in portrait,
+    // strips in landscape.
+    const divider = (position: number) => position > 0 && (landscape
+      ? { borderLeftWidth: 1, borderLeftColor: theme.deskDivider } : { borderTopWidth: 1, borderTopColor: theme.deskDivider });
+    const renderFader = (channel: MixerRow, position: number) => landscape
+      ? <View key={channel.channel} testID={'channel-' + channel.channel}
+        style={{ width: STRIP_WIDTH, height: open ? cardHeight - 2 : cardHeight, alignItems: 'center', paddingVertical: STRIP_PADDING, gap: STRIP_GAP, ...divider(position) }}>
+        <View style={{ height: LEVEL_ROW, justifyContent: 'center' }}><FaderValue channel={channel.channel} /></View>
+        <Fader channel={channel.channel} label={channel.label} vertical length={open ? stripHeight - 2 : stripHeight} />
+        {grouped && !open ? <GroupExpandTarget label={group.label} onExpand={expand}>
+          <View style={{ width: STRIP_WIDTH - 8, height: NAME_ROW, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 3 }}>
+            <Icon name={{ ios: 'link', android: 'link', web: 'link' }} size={11} />
+            <Text numberOfLines={2} style={{ flexShrink: 1, color: theme.text, fontSize: 12, lineHeight: 15, fontWeight: '700', textAlign: 'center' }}>{group.label}</Text>
+            <Icon name={{ ios: 'chevron.right', android: 'chevron_right', web: 'chevron_right' }} size={11} />
+          </View>
+        </GroupExpandTarget> : <Text numberOfLines={2} style={{ width: STRIP_WIDTH - 8, height: NAME_ROW, color: theme.text, fontSize: 12, lineHeight: 15,
+          fontWeight: '600', textAlign: 'center', textAlignVertical: 'center' }}>{channel.label}</Text>}
       </View>
-    </View>;
+      : <View key={channel.channel} testID={'channel-' + channel.channel}
+        style={{ gap: 2, paddingTop: grouped && !open ? 0 : 10, paddingHorizontal: 14, paddingBottom: 4, ...divider(position) }}>
+        {!channel.members && <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 8 }}>
+          <Text numberOfLines={2} style={{ color: theme.text, fontSize: 15, fontWeight: '600', flex: 1 }}>{channel.label}</Text>
+          <FaderValue channel={channel.channel} />
+        </View>}
+        <ExpandableFader bare channel={channel.channel} label={channel.label} onEnlarge={origin => {
+          session.mixer.cancelWrites(); setFocusOrigin(origin); setFocused(channel.channel);
+        }} />
+      </View>;
     return <View testID={grouped ? 'group-' + group.channel : undefined} style={{
-      height: landscape ? cardHeight : undefined, width: landscape ? (grouped ? (open ? item.channels.length * (88 + 6) + 44 : 136) + 12 : 96) : undefined,
-      marginRight: landscape ? 8 : 0,
-      ...(landscape ? grouped ? { borderWidth: 2, borderColor: theme.groupEdge, borderRadius: 16, backgroundColor: theme.groupSurface, padding: 4 }
-        : { paddingHorizontal: 4, paddingVertical: 6 }
-        : index > 0 ? { borderTopWidth: 1, borderTopColor: theme.deskDivider } : {}),
+      height: landscape ? cardHeight : undefined, width: landscape ? (open ? item.channels.length * STRIP_WIDTH + 44 : STRIP_WIDTH) : undefined,
+      ...divider(index),
     }}>
       {grouped && !landscape && (open ? <View style={{ minHeight: 48, paddingHorizontal: 20, gap: 8,
         flexDirection: 'row', alignItems: 'center' }}>
@@ -127,9 +138,10 @@ export default function Mixer() {
           <Icon name={{ ios: 'chevron.down', android: 'expand_more', web: 'expand_more' }} size={16} />
         </View>
       </GroupExpandTarget>)}
-      <View style={{ flexDirection: landscape ? 'row' : 'column', gap: landscape ? 6 : 0,
-        ...(!landscape && open && { marginLeft: 14, borderLeftWidth: 2, borderLeftColor: theme.groupEdge, borderTopWidth: 1, borderTopColor: theme.deskDivider }) }}>
-        {landscape && open && <View style={{ width: 44, height: cardHeight - 12, alignItems: 'center' }}>
+      <View style={{ flexDirection: landscape ? 'row' : 'column',
+        ...(open && (landscape ? { borderTopWidth: 2, borderTopColor: theme.groupEdge }
+          : { marginLeft: 14, borderLeftWidth: 2, borderLeftColor: theme.groupEdge, borderTopWidth: 1, borderTopColor: theme.deskDivider })) }}>
+        {landscape && open && <View style={{ width: 44, height: cardHeight - 2, alignItems: 'center', paddingTop: STRIP_PADDING }}>
           <View style={{ width: 44, height: 44, alignItems: 'center', justifyContent: 'center' }}>
             {canClose && <CloseButton label={'Close ' + group.label + ' group'} onPress={close} />}
           </View>

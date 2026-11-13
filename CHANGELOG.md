@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.3.0 — Landscape on the desk, plain levels
+
+- Landscape faders now sit straight on the desk like portrait, as strips divided by fine lines, with no housings or group cards. Each strip has three rows: its level at the top, the fader in the middle taking all the remaining height, and its name at the bottom. A closed group's name has a chevron to open it; an open group keeps its side rail and gets an accent line along the top.
+- Each vertical fader track is a slot cut through the panel.
+- Show the level as plain text instead of in a small display, in both orientations.
+
 ## 0.2.1 — Faders straight on the desk
 
 - In portrait, faders now sit straight on the desk with fine lines between channels, without the recess around them. Groups, fader slots and the desk background are unchanged.
