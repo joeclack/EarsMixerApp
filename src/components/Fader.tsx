@@ -211,11 +211,11 @@ export default memo(function Fader({ channel, label, vertical = false, length = 
 });
 
 // The level as plain text beside or above its fader.
-export const FaderValue = memo(function FaderValue({ channel }: { channel: number }) {
+export const FaderValue = memo(function FaderValue({ channel, size = 13 }: { channel: number; size?: number }) {
   const { session, mix } = useFaderSession(channel);
   const theme = useTheme();
   const value = levelText(session.mixer.displayValue(channel), mix.parameter);
-  return <Text accessibilityLabel={value} numberOfLines={1} style={{ color: theme.muted, fontSize: 13, lineHeight: 18, fontWeight: '500', fontVariant: ['tabular-nums'] }}>{value}</Text>;
+  return <Text accessibilityLabel={value} numberOfLines={1} style={{ color: theme.muted, fontSize: size, lineHeight: Math.round(size * 1.38), fontWeight: '500', fontVariant: ['tabular-nums'] }}>{value}</Text>;
 });
 
 

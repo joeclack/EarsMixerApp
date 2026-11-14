@@ -1,5 +1,6 @@
 import React from 'react';
 import { useResetDeviceData } from './useResetDeviceData';
+import { useClearSavedLevels } from './useClearSavedLevels';
 import ProfileCard from './ProfileCard';
 import { Text, View, Switch, Platform } from 'react-native';
 import { router } from 'expo-router';
@@ -11,6 +12,7 @@ import Segmented from './Segmented';
 export default function SettingsContent() {
   const { session, state, mix } = useSession(), theme = useTheme();
   const reset = useResetDeviceData();
+  const clearLevels = useClearSavedLevels();
   return <>
     <Section title="Mixer connection" symbol={{ ios: 'wifi', android: 'wifi', web: 'wifi' }} footer="Tap the mixer to change it, scan a code or enter an address.">
       <Row title={state.demo ? 'Demo mode' : state.server ? new URL(state.server).host : 'Connect to a mixer'}
@@ -27,7 +29,13 @@ export default function SettingsContent() {
         onChange={value => session.setSettings({ appearance: value as 'system' | 'light' | 'dark' })} /></View></Section>
     <Section title="Mixer" symbol={{ ios: 'slider.horizontal.3', android: 'tune', web: 'tune' }}>
       <Row title="Haptic feedback"><Switch accessibilityLabel="Haptic feedback" value={state.settings.haptics} onValueChange={haptics => session.setSettings({ haptics })} /></Row>
+      <Row title="Show signal meters"><Switch accessibilityLabel="Show signal meters" value={state.settings.showMeters} onValueChange={showMeters => session.setSettings({ showMeters })} /></Row>
+      <Row title="Show dB values"><Switch accessibilityLabel="Show dB values" value={state.settings.showLevels} onValueChange={showLevels => session.setSettings({ showLevels })} /></Row>
+      <View style={{ padding: 12 }}><Segmented label="Text size" value={state.settings.textSize}
+        options={[{ value: 'standard', label: 'Standard' }, { value: 'large', label: 'Large' }, { value: 'larger', label: 'Larger' }]}
+        onChange={value => session.setSettings({ textSize: value as 'standard' | 'large' | 'larger' })} /></View>
       <Row title="Edit channels" onPress={() => router.push('/layout')} />
+      <Row title="Clear saved levels" destructive onPress={clearLevels} />
     </Section>
     <Section><Row title="Reset device data" destructive onPress={reset.confirm} /></Section>
     <Section title="Developer tools" symbol={{ ios: 'wrench.and.screwdriver', android: 'build', web: 'build' }}>

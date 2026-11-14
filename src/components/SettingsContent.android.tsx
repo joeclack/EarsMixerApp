@@ -5,6 +5,7 @@ import Constants from 'expo-constants';
 import { SegmentedButton, SingleChoiceSegmentedButtonRow, Switch, Text, TextButton } from '@expo/ui/jetpack-compose';
 import { fillMaxWidth, padding, semantics } from '@expo/ui/jetpack-compose/modifiers';
 import { useResetDeviceData } from './useResetDeviceData';
+import { useClearSavedLevels } from './useClearSavedLevels';
 import { useSession } from '../mixer/context';
 import { useTheme } from '../theme';
 import { Message } from './ui';
@@ -12,11 +13,13 @@ import HardwarePanel from './HardwarePanel';
 import { MaterialItem, MaterialSection, MaterialSectionTitle } from './MaterialList.android';
 
 const appearances = [{ value: 'system', label: 'System' }, { value: 'light', label: 'Light' }, { value: 'dark', label: 'Dark' }] as const;
+const textSizes = [{ value: 'standard', label: 'Standard' }, { value: 'large', label: 'Large' }, { value: 'larger', label: 'Larger' }] as const;
 
 // Native Material settings in the console palette, mirroring the iOS form.
 export default function SettingsContent() {
   const { session, state, mix } = useSession(), theme = useTheme();
   const reset = useResetDeviceData();
+  const clearLevels = useClearSavedLevels();
   React.useEffect(() => () => { session.restoreNickname(); }, [session]);
   return <>
     <MaterialSection title="Mixer connection" symbol="wifi" footer="Tap the mixer to change it, scan a code or enter an address.">
@@ -50,7 +53,22 @@ export default function SettingsContent() {
       <MaterialItem title="Haptic feedback" symbol="vibration" onPress={() => session.setSettings({ haptics: !state.settings.haptics })}
         trailing={<Switch value={state.settings.haptics} onCheckedChange={haptics => session.setSettings({ haptics })}
           modifiers={[semantics({ contentDescription: 'Haptic feedback' })]} />} />
+      <MaterialItem title="Show signal meters" symbol="graphic_eq" onPress={() => session.setSettings({ showMeters: !state.settings.showMeters })}
+        trailing={<Switch value={state.settings.showMeters} onCheckedChange={showMeters => session.setSettings({ showMeters })}
+          modifiers={[semantics({ contentDescription: 'Show signal meters' })]} />} />
+      <MaterialItem title="Show dB values" symbol="tag" onPress={() => session.setSettings({ showLevels: !state.settings.showLevels })}
+        trailing={<Switch value={state.settings.showLevels} onCheckedChange={showLevels => session.setSettings({ showLevels })}
+          modifiers={[semantics({ contentDescription: 'Show dB values' })]} />} />
       <MaterialItem title="Edit channels" symbol="reorder" onPress={() => router.push('/layout')} />
+      <MaterialItem title="Clear saved levels" symbol="history" destructive onPress={clearLevels} />
+    </MaterialSection>
+    <MaterialSection title="Text size" symbol="format_size">
+      <SingleChoiceSegmentedButtonRow modifiers={[fillMaxWidth(), padding(16, 12, 16, 12)]}>
+        {textSizes.map(option => <SegmentedButton key={option.value} selected={state.settings.textSize === option.value}
+          onClick={() => session.setSettings({ textSize: option.value })}>
+          <SegmentedButton.Label><Text>{option.label}</Text></SegmentedButton.Label>
+        </SegmentedButton>)}
+      </SingleChoiceSegmentedButtonRow>
     </MaterialSection>
     <MaterialSection>
       <MaterialItem title="Reset device data" symbol="delete_forever" destructive onPress={reset.confirm} />

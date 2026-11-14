@@ -21,7 +21,8 @@ export default function MixerToolbar() {
     <Stack.Toolbar.MenuAction key="templates" onPress={() => router.push('/templates')}>{state.selectedTemplate ? state.selectedTemplate.name + ': Templates' : 'Templates'}</Stack.Toolbar.MenuAction>,
     <Stack.Toolbar.MenuAction key="layout" onPress={() => router.push('/layout')}>Edit channels</Stack.Toolbar.MenuAction>,
     <Stack.Toolbar.MenuAction key="groups" onPress={() => router.push('/groups')}>Channel groups</Stack.Toolbar.MenuAction>,
-    <Stack.Toolbar.MenuAction key="off" destructive disabled={mix.status !== 'connected' || !mix.aux} onPress={setAllLevelsOff}>Set all levels to off</Stack.Toolbar.MenuAction>,
+    <Stack.Toolbar.MenuAction key="lock" isOn={mix.locked} onPress={() => session.mixer.setLocked(!mix.locked)}>Lock faders</Stack.Toolbar.MenuAction>,
+    <Stack.Toolbar.MenuAction key="off" destructive disabled={mix.status !== 'connected' || !mix.aux || mix.locked} onPress={setAllLevelsOff}>Set all levels to off</Stack.Toolbar.MenuAction>,
   ];
   return <>
     <Stack.Toolbar placement="left">

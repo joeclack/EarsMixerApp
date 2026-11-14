@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.8.0 — Lock faders, display settings
+
+- Lock faders from the mixer's options menu (beside Channel groups) or the lock button in the landscape rail. While locked, faders, the tall fader and MUTE keys ignore touches and Set all levels to off is unavailable; a "Faders locked · Unlock" bar shows at the top in portrait. The lock lasts until you unlock or restart the app.
+- New Mixer settings: Show signal meters (turning it off stops the meter stream), Show dB values (hiding them in landscape gives the fader more height), and Text size (Standard, Large, Larger) for channel names and levels.
+- Clear saved levels in Settings forgets the levels this phone saved for each mixer and AUX. Desk levels do not change.
+
 ## 0.7.0 — Live meters, typed messages
 
 - Show live signal meters from the desk when the server reads them (EarsMixer 1.13.0 and later). The "Signal meters are simulated" note still appears only for simulated meters.
