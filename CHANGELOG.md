@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.10.0 — iPad fader mode button
+
+- On iPad, Fader mode (Level or Pan) has its own toolbar button beside the options menu instead of sitting inside it.
+
 ## 0.9.0 — iPad top toolbar
 
 - On iPad in landscape, the mixer keeps the portrait toolbar at the top (AUX selector, options and Settings) instead of the side rail, giving the rail's width to the faders. iPhone landscape still uses the side rail.

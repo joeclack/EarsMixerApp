@@ -12,6 +12,7 @@ export default function MixerToolbar() {
   const setAllLevelsOff = useSetAllLevelsOff();
   const selected = mix.config?.aux.find(aux => aux.channel === mix.aux);
   const label = selected?.label || 'Choose mix';
+  const pad = Platform.OS === 'ios' && Platform.isPad;
   const modeActions = [
     <Stack.Toolbar.MenuAction key="level" isOn={mix.parameter === 'level'} onPress={() => session.mixer.setParameter('level')}>Level</Stack.Toolbar.MenuAction>,
     <Stack.Toolbar.MenuAction key="pan" isOn={mix.parameter === 'pan'} onPress={() => session.mixer.setParameter('pan')}>Pan</Stack.Toolbar.MenuAction>,
@@ -41,9 +42,14 @@ export default function MixerToolbar() {
         onPress={() => session.preferences({ selectedAux: aux.channel })}>{aux.label}</Stack.Toolbar.MenuAction>)}
     </Stack.Toolbar.Menu>}
     {/* Mixer options and Settings share one glass group, leaving room for a long AUX name. */}
+    {/* iPad has room for Fader mode as its own toolbar item. */}
+    {pad && state.server && <Stack.Toolbar.Menu icon="slider.horizontal.3" accessibilityLabel={'Fader mode, ' + (mix.parameter === 'pan' ? 'Pan' : 'Level')}>
+      <Stack.Toolbar.Label>Fader mode</Stack.Toolbar.Label>
+      {modeActions}
+    </Stack.Toolbar.Menu>}
     {state.server && <Stack.Toolbar.Menu icon={Platform.OS === 'ios' ? 'ellipsis' : require('../../assets/toolbar/more.png')} accessibilityLabel="Mixer options">
       <Stack.Toolbar.Label>Options</Stack.Toolbar.Label>
-      {Platform.OS === 'android' ? modeActions : <Stack.Toolbar.Menu inline title="Fader mode" icon="slider.horizontal.3">
+      {pad ? null : Platform.OS === 'android' ? modeActions : <Stack.Toolbar.Menu inline title="Fader mode" icon="slider.horizontal.3">
         {modeActions}
       </Stack.Toolbar.Menu>}
       {Platform.OS === 'android' ? <Stack.Toolbar.Menu inline title="Options">
