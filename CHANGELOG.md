@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.16.1 — Template page wording
+
+- The last setup page is now titled Start with a template and suggests picking a pre-made template to get started quickly.
+
 ## 0.16.0 — Setup button haptic
 
 - The Next and Finish buttons in setup give a light tap when Haptic feedback is on.
