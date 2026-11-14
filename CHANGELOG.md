@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.12.1 — No haptics setting on iPad
+
+- Hide the Haptic feedback setting on iPad, which has no haptic engine.
+
 ## 0.12.0 — Simpler landscape rail
 
 - Remove the Message the engineer button from the phone landscape side rail. Message the engineer is still in the mixer's options menu in portrait.
