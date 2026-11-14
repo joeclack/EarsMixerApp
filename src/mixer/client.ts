@@ -209,7 +209,9 @@ export class MixerClient {
   subscribeControls = (fn: () => void) => { this.controlListeners.add(fn); return () => { this.controlListeners.delete(fn); }; };
   channelSnapshot(channel: number): string {
     const { status, epoch, aux, parameter, values } = this.state;
-    return [status, epoch, aux, parameter, values[channel], this.displayValue(channel), this.isMuted(channel),
+    // Mute state and whether it is known yet both redraw the row, so the MUTE
+    // key appears as soon as the desk reports the send, not on the next move.
+    return [status, epoch, aux, parameter, values[channel], this.displayValue(channel), this.isMuted(channel), this.canMute(channel),
       ...(this.members(channel) || []).map(id => this.channelSnapshot(id))].join('|');
   }
   subscribeChannel(channel: number, fn: () => void) {
