@@ -80,7 +80,15 @@ export class MixerSession {
   resolveLevelRestore(prompt: NonNullable<SessionState['restorePrompt']>, restore: boolean) {
     if (this.state.restorePrompt !== prompt) return;
     this.patch({ restorePrompt: null });
-    if (restore && this.state.server === prompt.saved.server && this.mixer.state.aux === prompt.saved.aux && this.mixer.levelGeneration === prompt.generation) {
+    // Keeping the desk levels forgets this AUX's saved levels, so the prompt
+    // does not offer them again.
+    if (!restore) {
+      const { [prompt.key]: _forgotten, ...recentStates } = this.state.recentStates;
+      this.patch({ recentStates });
+      void this.persist('earsmixer.native.level-states.v1', recentStates);
+      return;
+    }
+    if (this.state.server === prompt.saved.server && this.mixer.state.aux === prompt.saved.aux && this.mixer.levelGeneration === prompt.generation) {
       if (this.mixer.restoreLevels(prompt.saved.aux, prompt.saved.levels)) this.notifySuccess('Saved levels loaded');
       else this.patch({ message: 'Could not restore all levels. Check the mixer connection.' });
     }

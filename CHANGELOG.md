@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.11.1 — Keep desk levels forgets saved levels
+
+- Choosing Keep desk levels when asked to load saved levels now forgets the levels saved for that AUX, so you are not asked again about the same levels.
+
 ## 0.11.0 — iPad lock and off buttons
 
 - On iPad, Lock faders and Set all levels to off have their own toolbar buttons beside Fader mode instead of sitting in the options menu. The lock button shows as selected while faders are locked.
