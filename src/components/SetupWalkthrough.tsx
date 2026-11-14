@@ -1,4 +1,3 @@
-import ScreenSurface from './ScreenSurface';
 import Animated, { FadeIn, ReduceMotion } from 'react-native-reanimated';
 import { useEffect, useState } from 'react';
 import { Keyboard, KeyboardAvoidingView, Platform, Text, TextInput, View } from 'react-native';
@@ -49,7 +48,7 @@ export default function SetupWalkthrough() {
   const next = step === steps.length - 1 ? 'Finish' : step === 0 && nickname ? 'Hi, ' + nickname : 'Next';
   // Reference layout: Back and progress on top, a preview of the feature, the
   // title and short text, a native numbered list, then one full-width action.
-  return <ScreenSurface><SafeAreaView edges={['top', 'bottom', 'left', 'right']} style={{ flex: 1 }}>
+  return <SafeAreaView edges={['top', 'bottom', 'left', 'right']} style={{ flex: 1, backgroundColor: theme.bg }}>
     <View style={{ height: 52, paddingHorizontal: 12, flexDirection: 'row', alignItems: 'center', maxWidth: 600, width: '100%', alignSelf: 'center' }}>
       <View style={{ flex: 1, alignItems: 'flex-start' }}>
         {step > 0 && <NativeButton title="Back" symbol="chevron.left" disabled={finishing} onPress={() => setStep(value => value - 1)} />}
@@ -92,5 +91,5 @@ export default function SetupWalkthrough() {
         }} />
       </View>
     </KeyboardAvoidingView>
-  </SafeAreaView></ScreenSurface>;
+  </SafeAreaView>;
 }

@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.15.2 — Plain setup background
+
+- The setup walkthrough uses a plain background instead of the gradient and grain texture.
+
 ## 0.15.1 — Simpler setup pages
 
 - The nickname and connection pages no longer show a picture.
