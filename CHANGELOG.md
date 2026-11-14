@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.15.1 — Simpler setup pages
+
+- The nickname and connection pages no longer show a picture.
+- The last setup page drops the Create group button and keeps Choose template.
+
 ## 0.15.0 — Shorter setup
 
 - The setup walkthrough is now four pages: nickname, connection, portrait or landscape, and templates and groups.

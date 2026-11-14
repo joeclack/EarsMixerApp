@@ -61,9 +61,9 @@ export default function SetupWalkthrough() {
     </View>
     <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <Animated.View key={step} entering={FadeIn.duration(160).reduceMotion(ReduceMotion.System)} style={{ flex: 1, maxWidth: 600, width: '100%', alignSelf: 'center' }}>
-        <View style={{ flexGrow: 0, flexShrink: 1, height: current.bullets.length ? 230 : 280, minHeight: 0, overflow: 'hidden' }}>
-          <SetupPreview step={step} nickname={state.settings.nickname} />
-        </View>
+        {step >= 2 && <View style={{ flexGrow: 0, flexShrink: 1, height: 230, minHeight: 0, overflow: 'hidden' }}>
+          <SetupPreview step={step} />
+        </View>}
         <View style={{ paddingHorizontal: 20, paddingTop: 20, gap: 10 }}>
           <Text accessibilityRole="header" style={{ color: theme.text, fontSize: 30, fontWeight: '700' }}>{current.title}</Text>
           {!!current.body && <Text style={{ color: theme.muted, fontSize: 17, lineHeight: 25 }}>{current.body}</Text>}
@@ -77,9 +77,8 @@ export default function SetupWalkthrough() {
             </Text>
             <NativeButton title={state.server ? 'Change mixer' : 'Connect'} bordered onPress={() => router.push('/connect')} />
           </View>}
-          {step === 3 && mix.status === 'connected' && <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginTop: 6 }}>
+          {step === 3 && mix.status === 'connected' && <View style={{ alignItems: 'flex-start', marginTop: 6 }}>
             <NativeButton title="Choose template" bordered onPress={() => router.push('/templates')} />
-            <NativeButton title="Create group" bordered onPress={() => router.push('/groups')} />
           </View>}
           <Message error>{state.message}</Message>
         </View>

@@ -6,60 +6,15 @@ import { hardwarePalette } from './hardwarePalette';
 import { Engraved } from './ConsoleDetails';
 import { Icon } from './ui';
 
-// Small static previews of the real interface for each setup step, hidden
-// from assistive technologies.
-export default memo(function SetupPreview({ step, nickname }: { step: number; nickname: string }) {
-  const preview = [<Presence key={0} nickname={nickname} />, <Connect key={1} />, <Views key={2} />, <Templates key={3} />][step];
+// Small static previews of the real interface for the later setup steps,
+// hidden from assistive technologies. The nickname and connection steps have none.
+export default memo(function SetupPreview({ step }: { step: number }) {
+  const preview = step === 2 ? <Views /> : step === 3 ? <Templates /> : null;
   return <View pointerEvents="none" accessible={false} accessibilityElementsHidden importantForAccessibility="no-hide-descendants"
     style={{ flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 28 }}>
     <View style={{ width: '100%', maxWidth: 340 }}>{preview}</View>
   </View>;
 });
-
-function Card({ children }: { children: ReactNode }) {
-  return <HardwarePanel radius={22} style={{ padding: 16, gap: 12 }}>{children}</HardwarePanel>;
-}
-
-function Chip({ label, you = false }: { label: string; you?: boolean }) {
-  const theme = useTheme();
-  return <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 10, height: 30, borderRadius: 15,
-    backgroundColor: you ? theme.tint : theme.secondary }}>
-    <Icon name={{ ios: 'person.fill', android: 'person', web: 'person' }} size={12} color={you ? '#FFFFFF' : theme.muted} />
-    <Text numberOfLines={1} style={{ maxWidth: 120, fontSize: 14, fontWeight: '600', color: you ? '#FFFFFF' : theme.text }}>{label}</Text>
-  </View>;
-}
-
-// How your nickname appears to others on the same mix.
-function Presence({ nickname }: { nickname: string }) {
-  const theme = useTheme();
-  return <Card>
-    <View style={{ gap: 2 }}>
-      <Engraved size={9}>Monitor mix</Engraved>
-      <Text style={{ color: theme.text, fontSize: 20, fontWeight: '700' }}>Drums IEM</Text>
-    </View>
-    <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-      <Chip label={nickname.trim() || 'You'} you /><Chip label="Sam" /><Chip label="Alex" />
-    </View>
-  </Card>;
-}
-
-function MixerRow({ name, host, last = false }: { name: string; host: string; last?: boolean }) {
-  const theme = useTheme();
-  return <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 10, borderBottomWidth: last ? 0 : 1, borderBottomColor: theme.line }}>
-    <View style={{ flex: 1 }}>
-      <Text style={{ color: theme.text, fontSize: 16 }}>{name}</Text>
-      <Text style={{ color: theme.muted, fontSize: 12, marginTop: 2 }}>{host}</Text>
-    </View>
-    <Icon name={{ ios: 'chevron.right', android: 'chevron_right', web: 'chevron_right' }} size={12} color={theme.muted} />
-  </View>;
-}
-
-function Connect() {
-  return <Card>
-    <Engraved>Nearby mixers</Engraved>
-    <View><MixerRow name="FOH Rack" host="192.168.1.100:8082" /><MixerRow name="Monitor World" host="192.168.1.120:8082" last /></View>
-  </Card>;
-}
 
 // Saved layouts fanned out like a stack of cards.
 function Templates() {
