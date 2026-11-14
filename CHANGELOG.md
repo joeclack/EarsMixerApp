@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.13.0 — No tall fader
+
+- Remove hold-to-open tall fader from the portrait mixer. Holding a fader no longer lifts it or opens a full-screen fader; drag the handle as usual.
+- The setup walkthrough no longer teaches the hold, and its practice faders are drag-only.
+
 ## 0.12.1 — No haptics setting on iPad
 
 - Hide the Haptic feedback setting on iPad, which has no haptic engine.

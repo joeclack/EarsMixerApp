@@ -1,11 +1,6 @@
-import { memo, useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
-import { Image, Modal, Platform, Text, View } from 'react-native';
-import Animated, { cancelAnimation, Easing, useAnimatedStyle, useReducedMotion, useSharedValue, withDelay, withRepeat, withSequence, withSpring, withTiming, type SharedValue } from 'react-native-reanimated';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import * as Haptics from 'expo-haptics';
-import AppBackground from './AppBackground';
-import CloseButton from './CloseButton';
-import { HOLD_DELAY, HOLD_LIFT, HOLD_SCALE } from './Fader';
+import { memo, useCallback, useMemo, useState, type ReactNode } from 'react';
+import { Image, Text, View } from 'react-native';
+import Animated, { useAnimatedStyle, useSharedValue, type SharedValue } from 'react-native-reanimated';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import { scheduleOnRN } from 'react-native-worklets';
 import { useSession } from '../mixer/context';
@@ -96,7 +91,7 @@ function Templates() {
   </View>;
 }
 
-// One practice channel's level, shared by its bar and its tall fader. It is
+// One practice channel's level, shown by its practice bar. It is
 // local to setup and never reaches the mixer.
 type PracticeChannel = { label: string; position: SharedValue<number>; db: number; setDb(db: number): void };
 function usePracticeChannel(label: string, initialDb: number): PracticeChannel {
@@ -145,51 +140,11 @@ function PracticeHandle({ vertical, size = 1, style }: { vertical: boolean; size
   </Animated.View>;
 }
 
-// A practice bar with the same hold-to-open as the mixer: holding the bar
-// (not the handle) lifts it and opens the tall practice fader.
-function PracticeFader({ channel, onEnlarge, demo = false }: { channel: PracticeChannel; onEnlarge(): void; demo?: boolean }) {
-  const theme = useTheme(), { session } = useSession();
+// A practice bar the user can drag; it never sends anything to a desk.
+function PracticeFader({ channel }: { channel: PracticeChannel }) {
+  const theme = useTheme();
   const [track, setTrack] = useState(0);
   const { pan, step } = usePracticeDrag(channel, track, false);
-  const lift = useSharedValue(1);
-  const holdAllowed = useSharedValue(false);
-  const reducedMotion = useReducedMotion();
-  // Until first touched, a demo bar gently repeats the hold lift to show it can be held.
-  const [demoing, setDemoing] = useState(demo);
-  const stopDemo = useCallback(() => setDemoing(false), []);
-  useEffect(() => {
-    if (!demoing || reducedMotion) return;
-    lift.set(withRepeat(withSequence(withDelay(1200, withTiming(HOLD_SCALE, { duration: HOLD_LIFT * 2, easing: Easing.out(Easing.quad) })),
-      withTiming(1, { duration: 320, easing: Easing.inOut(Easing.quad) })), -1));
-    return () => { cancelAnimation(lift); lift.set(1); };
-  }, [demoing, reducedMotion, lift]);
-  const opened = useCallback(() => {
-    if (session.state.settings.haptics) void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy).catch(() => {});
-    onEnlarge();
-  }, [session, onEnlarge]);
-  // Touches within the handle's span drag instead of opening.
-  const onHandle = useCallback((x: number) => {
-    'worklet';
-    const centre = FADER_CAP_HEIGHT / 2 + track * channel.position.get();
-    return Math.abs(x - centre) <= FADER_CAP_HEIGHT / 2 + 4;
-  }, [track, channel.position]);
-  const hold = useMemo(() => Gesture.LongPress().minDuration(HOLD_DELAY + HOLD_LIFT).maxDistance(3).onBegin(event => {
-    'worklet';
-    scheduleOnRN(stopDemo);
-    cancelAnimation(lift); lift.set(1);
-    holdAllowed.set(!onHandle(event.x));
-    if (!holdAllowed.get() || reducedMotion) return;
-    lift.set(withDelay(HOLD_DELAY, withTiming(HOLD_SCALE, { duration: HOLD_LIFT, easing: Easing.out(Easing.quad) })));
-  }).onStart(() => {
-    'worklet';
-    if (holdAllowed.get()) scheduleOnRN(opened);
-  }).onFinalize(() => {
-    'worklet';
-    holdAllowed.set(false);
-    lift.set(reducedMotion ? 1 : withSpring(1, { duration: 200, dampingRatio: 0.7 }));
-  }), [lift, holdAllowed, onHandle, opened, reducedMotion, stopDemo]);
-  const gesture = useMemo(() => Gesture.Simultaneous(pan, hold), [pan, hold]);
-  const liftStyle = useAnimatedStyle(() => ({ transform: [{ scale: lift.get() }] }));
   const thumbStyle = useAnimatedStyle(() => ({ transform: [{ translateX: track * channel.position.get() }] }));
   const fillStyle = useAnimatedStyle(() => ({ width: track * channel.position.get() }));
   const text = levelText(channel.db, 'level');
@@ -198,12 +153,11 @@ function PracticeFader({ channel, onEnlarge, demo = false }: { channel: Practice
       <Text style={{ flex: 1, color: theme.text, fontSize: 15, fontWeight: '600' }}>{channel.label}</Text>
       <LcdReadout>{text}</LcdReadout>
     </View>
-    <Animated.View style={liftStyle}><FaderHousing vertical={false}>
-      <GestureDetector gesture={gesture}>
+    <FaderHousing vertical={false}>
+      <GestureDetector gesture={pan}>
         <View accessible accessibilityRole="adjustable" accessibilityLabel={channel.label + ' practice fader'} accessibilityValue={{ text }}
-          accessibilityHint="Touch and hold to open a full-screen practice fader"
-          accessibilityActions={[{ name: 'increment' }, { name: 'decrement' }, { name: 'expand', label: 'Open full-screen fader' }]}
-          onAccessibilityAction={event => event.nativeEvent.actionName === 'expand' ? opened() : step(event.nativeEvent.actionName === 'increment')}
+          accessibilityActions={[{ name: 'increment' }, { name: 'decrement' }]}
+          onAccessibilityAction={event => step(event.nativeEvent.actionName === 'increment')}
           style={{ height: 56, justifyContent: 'center' }}>
           <View onLayout={event => setTrack(event.nativeEvent.layout.width)} style={{ marginHorizontal: FADER_CAP_HEIGHT / 2, height: 6, justifyContent: 'center' }}>
             <View style={{ height: 6, borderRadius: 3, backgroundColor: '#000000' }} />
@@ -212,70 +166,14 @@ function PracticeFader({ channel, onEnlarge, demo = false }: { channel: Practice
           </View>
         </View>
       </GestureDetector>
-    </FaderHousing></Animated.View>
-  </View>;
-}
-
-// The tall practice fader, shown over the setup screen like the mixer's.
-function PracticeFocus({ channel, onClose }: { channel: PracticeChannel; onClose(): void }) {
-  const theme = useTheme(), insets = useSafeAreaInsets();
-  const [height, setHeight] = useState(0);
-  const size = 1.6, inset = FADER_CAP_HEIGHT * size / 2 + 6;
-  const track = Math.max(0, height - inset * 2);
-  const { pan, step } = usePracticeDrag(channel, track, true);
-  const thumbStyle = useAnimatedStyle(() => ({ transform: [{ translateY: track * (1 - channel.position.get()) }] }));
-  const fillStyle = useAnimatedStyle(() => ({ height: track * channel.position.get() }));
-  const text = levelText(channel.db, 'level');
-  return <View style={{ flex: 1, paddingTop: insets.top + 12, paddingBottom: insets.bottom + 12, paddingHorizontal: 20, gap: 16 }}>
-    <AppBackground />
-    <View style={{ alignSelf: 'center', width: 88 * size }}>
-      <View style={{ borderRadius: 8, padding: 4, backgroundColor: '#071921', borderWidth: 1, borderColor: '#497886' }}>
-        <View style={{ borderRadius: 4, paddingVertical: 8, alignItems: 'center', backgroundColor: '#81E9E5', borderWidth: 1, borderColor: '#ADFFEF' }}>
-          <Text style={{ color: '#07343D', fontSize: 17, fontWeight: '700' }}>{channel.label}</Text>
-          <Text style={{ color: '#07343D', fontSize: 22, fontWeight: '700', fontVariant: ['tabular-nums'], fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace' }}>{text}</Text>
-        </View>
-      </View>
-    </View>
-    <View onLayout={event => setHeight(event.nativeEvent.layout.height - 24)} style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
-      {height > 0 && <FaderHousing vertical size={size}>
-        <GestureDetector gesture={pan}>
-          <View accessible accessibilityRole="adjustable" accessibilityLabel={channel.label + ' practice fader'} accessibilityValue={{ text }}
-            accessibilityActions={[{ name: 'increment' }, { name: 'decrement' }]}
-            onAccessibilityAction={event => step(event.nativeEvent.actionName === 'increment')}
-            style={{ height, width: 80 * size, alignItems: 'center' }}>
-            <View style={{ position: 'absolute', top: inset, bottom: inset, width: 8, borderRadius: 4, backgroundColor: '#010709', justifyContent: 'flex-end' }}>
-              <Animated.View style={[{ width: 8, borderRadius: 4, backgroundColor: theme.dark ? '#48D8C4' : '#7EEBD0' }, fillStyle]} />
-            </View>
-            <View style={{ position: 'absolute', top: inset, left: 40 * size }}>
-              <PracticeHandle vertical size={size} style={thumbStyle} />
-            </View>
-          </View>
-        </GestureDetector>
-      </FaderHousing>}
-    </View>
-    <View style={{ alignItems: 'center' }}><CloseButton label="Close full-screen practice fader" onPress={onClose} /></View>
-  </View>;
-}
-
-// A highlighted pointer to the tall fader, the step's headline feature.
-function TallFaderCallout() {
-  const theme = useTheme();
-  return <View style={{ alignSelf: 'center', flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 14, height: 34, borderRadius: 17,
-    backgroundColor: theme.tint + '22', borderWidth: 1, borderColor: theme.tint + '66' }}>
-    <Icon name={{ ios: 'hand.tap', android: 'touch_app', web: 'touch_app' }} size={16} />
-    <Text style={{ color: theme.tint, fontSize: 14, fontWeight: '700' }}>Hold a fader for the tall view</Text>
+    </FaderHousing>
   </View>;
 }
 
 function Adjust() {
   const channels = [usePracticeChannel('Keys', -6), usePracticeChannel('Click', 2.4)];
-  const [focused, setFocused] = useState<number | null>(null);
   return <View style={{ gap: 14 }}>
-    <TallFaderCallout />
-    {channels.map((channel, index) => <PracticeFader key={channel.label} channel={channel} demo={index === 1} onEnlarge={() => setFocused(index)} />)}
-    <Modal visible={focused !== null} animationType="fade" transparent statusBarTranslucent onRequestClose={() => setFocused(null)}>
-      {focused !== null && <PracticeFocus channel={channels[focused]} onClose={() => setFocused(null)} />}
-    </Modal>
+    {channels.map(channel => <PracticeFader key={channel.label} channel={channel} />)}
   </View>;
 }
 

@@ -22,9 +22,6 @@ import ConnectionNotice from '../../../src/components/ConnectionNotice';
 import MixerLoadingBoundary from '../../../src/components/MixerLoadingBoundary';
 import { useLandscapeEdgePadding } from '../../../src/components/useLandscapeEdgePadding';
 import LandscapeMixerToolbar from '../../../src/components/LandscapeMixerToolbar';
-import FaderFocusTransition from '../../../src/components/FaderFocusTransition';
-import ExpandableFader from '../../../src/components/ExpandableFader';
-import type { FaderOrigin } from '../../../src/components/ExpandableFader';
 import { useStableMixerLayout } from '../../../src/components/useStableMixerLayout';
 import LandscapeFaderViewport from '../../../src/components/LandscapeFaderViewport';
 
@@ -67,9 +64,6 @@ export default function Mixer() {
   const revealStyle = useAnimatedStyle(() => ({ opacity: reveal.get() }));
   useEffect(() => { session.mixer.cancelWrites(); }, [landscape, session]);
   const [expanded, setExpanded] = useState<number[]>([]);
-  const [focused, setFocused] = useState<number | null>(null);
-  const [focusOrigin, setFocusOrigin] = useState<FaderOrigin>();
-  useEffect(() => { setFocused(null); }, [state.server, mix.aux, mix.parameter, landscape]);
   useEffect(() => { setExpanded([]); }, [state.server, mix.aux, state.preferences.groupsByAux, state.preferences.globalGroups]);
   useFocusEffect(useCallback(() => {
     if (session.mixer.state.status === 'connected') session.mixer.refresh();
@@ -78,8 +72,6 @@ export default function Mixer() {
   const hidden = hiddenChannels(mix.config, state.preferences, mix.aux);
   const sections = useMemo(() => mixerSections(mixerRows(mix.config, state.preferences, mix.aux, expanded, mix.parameter === 'pan')),
     [mix.config, mix.aux, mix.parameter, expanded, state.preferences]);
-  const focusedRow = !landscape && focused !== null ? sections.flatMap(section => [section.header, ...section.channels]).find(row => row.channel === focused) : undefined;
-  const closeFocused = () => { session.mixer.cancelWrites(); setFocused(null); };
   const topPadding = sideRail ? insets.top + 12 : 20;
   // In landscape the one-line names sit just above the home indicator.
   const bottomPadding = landscape ? Math.max(6, insets.bottom - 10) : insets.bottom + 20;
@@ -139,9 +131,7 @@ export default function Mixer() {
           <MuteKey channel={channel.channel} label={channel.label} width={56} height={24} />
           {showLevels && <View style={{ minWidth: 60 * textScale, alignItems: 'flex-end' }}><FaderValue channel={channel.channel} size={13 * textScale} /></View>}
         </View>}
-        <ExpandableFader bare channel={channel.channel} label={channel.label} onEnlarge={origin => {
-          session.mixer.cancelWrites(); setFocusOrigin(origin); setFocused(channel.channel);
-        }} />
+        <Fader channel={channel.channel} label={channel.label} />
       </Animated.View>;
     // The section resizes with a slide; clipping it reveals or covers its members.
     return <Animated.View layout={groupSlide} testID={grouped ? 'group-' + group.channel : undefined} style={{
@@ -192,7 +182,7 @@ export default function Mixer() {
     {sideRail && <LandscapeMixerToolbar top={topPadding} bottom={bottomPadding} />}
     <View onLayout={event => setBankHeight(event.nativeEvent.layout.height)} style={{ flex: 1, minWidth: 0, overflow: landscape ? 'hidden' : 'visible' }}>
     <LandscapeFaderViewport enabled={landscape}>
-    <MixerLoadingBoundary>{!state.server ? <EmptyMixer /> : <FaderFocusTransition row={focusedRow} origin={focusOrigin} onClose={closeFocused}>
+    <MixerLoadingBoundary>{!state.server ? <EmptyMixer /> : <View style={{ flex: 1 }}>
     <Animated.FlatList itemLayoutAnimation={groupSlide} key={landscape ? 'strips' : 'rows'} horizontal={landscape} extraData={[state.preferences, state.settings]}
       data={sections} renderItem={renderSection} keyExtractor={item => String(item.header.channel)} contentInsetAdjustmentBehavior="never"
       // Portrait faders sit straight on the desk, divided by fine lines.
@@ -215,7 +205,7 @@ export default function Mixer() {
         <Text style={{ color: theme.text, fontSize: 19, fontWeight: '600' }}>{hidden.length ? 'All channels hidden' : 'No channels'}</Text>
         <Text style={{ color: theme.muted, textAlign: 'center', lineHeight: 22 }}>{hidden.length ? 'Use Edit to show channels.' : 'Check the server’s desk connection.'}</Text>
         {hidden.length > 0 && <NativeButton title="Edit channels" onPress={() => router.push('/layout')} />}
-      </View>} /></FaderFocusTransition>}</MixerLoadingBoundary>
+      </View>} /></View>}</MixerLoadingBoundary>
     </LandscapeFaderViewport>
     </View>
     </View>
