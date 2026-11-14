@@ -4,6 +4,7 @@
 
 - Show live signal meters from the desk when the server reads them (EarsMixer 1.13.0 and later). The "Signal meters are simulated" note still appears only for simulated meters.
 - Message the engineer is now a typed message only (up to 140 characters); the quick request buttons are gone. Sent messages still show when the engineer has seen them.
+- Fix MUTE keys staying hidden until a fader was moved: they now appear as soon as the desk reports each send's state.
 
 ## 0.6.1 — MUTE keys
 
