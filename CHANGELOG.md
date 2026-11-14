@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.15.3 — One-line orientation step
+
+- The portrait or landscape setup page is a single line of explanation under its picture, with no list.
+
 ## 0.15.2 — Plain setup background
 
 - The setup walkthrough uses a plain background instead of the gradient and grain texture.

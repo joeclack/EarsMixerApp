@@ -17,8 +17,7 @@ import SetupPreview from './SetupPreview';
 const steps = [
   { title: 'Set your nickname', body: 'This name identifies your connection to the mixer. Others on your mix see it.', bullets: [] },
   { title: 'Connect to a mixer', body: 'Make sure you are on the correct Wi-Fi.', bullets: [] },
-  { title: 'Portrait or landscape', body: 'Hold your phone either way. The mixer follows.',
-    bullets: ['Portrait: a list of faders. Tap the mix name to choose your AUX.', 'Landscape: vertical faders like the desk, with a side rail for AUX and Level or Pan.', 'Drag a handle to adjust.'] },
+  { title: 'Portrait or landscape', body: 'Hold your phone upright for a list of faders, or turn it sideways for faders like the desk.', bullets: [] },
   { title: 'Templates and groups', body: 'Both are optional and live in the … menu.',
     bullets: ['Templates load a saved layout. They never change desk levels.', 'Channel groups gather channels under one name.', 'Layouts save automatically on this phone.'] },
 ];
