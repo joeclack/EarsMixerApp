@@ -13,6 +13,7 @@ export default function MixerToolbar() {
   const selected = mix.config?.aux.find(aux => aux.channel === mix.aux);
   const label = selected?.label || 'Choose mix';
   const pad = Platform.OS === 'ios' && Platform.isPad;
+  const offDisabled = mix.status !== 'connected' || !mix.aux || mix.locked;
   const modeActions = [
     <Stack.Toolbar.MenuAction key="level" isOn={mix.parameter === 'level'} onPress={() => session.mixer.setParameter('level')}>Level</Stack.Toolbar.MenuAction>,
     <Stack.Toolbar.MenuAction key="pan" isOn={mix.parameter === 'pan'} onPress={() => session.mixer.setParameter('pan')}>Pan</Stack.Toolbar.MenuAction>,
@@ -22,8 +23,11 @@ export default function MixerToolbar() {
     <Stack.Toolbar.MenuAction key="templates" onPress={() => router.push('/templates')}>{state.selectedTemplate ? state.selectedTemplate.name + ': Templates' : 'Templates'}</Stack.Toolbar.MenuAction>,
     <Stack.Toolbar.MenuAction key="layout" onPress={() => router.push('/layout')}>Edit channels</Stack.Toolbar.MenuAction>,
     <Stack.Toolbar.MenuAction key="groups" onPress={() => router.push('/groups')}>Channel groups</Stack.Toolbar.MenuAction>,
-    <Stack.Toolbar.MenuAction key="lock" isOn={mix.locked} onPress={() => session.mixer.setLocked(!mix.locked)}>Lock faders</Stack.Toolbar.MenuAction>,
-    <Stack.Toolbar.MenuAction key="off" destructive disabled={mix.status !== 'connected' || !mix.aux || mix.locked} onPress={setAllLevelsOff}>Set all levels to off</Stack.Toolbar.MenuAction>,
+    // iPad shows Lock and Set all levels to off as their own toolbar buttons.
+    ...(pad ? [] : [
+      <Stack.Toolbar.MenuAction key="lock" isOn={mix.locked} onPress={() => session.mixer.setLocked(!mix.locked)}>Lock faders</Stack.Toolbar.MenuAction>,
+      <Stack.Toolbar.MenuAction key="off" destructive disabled={offDisabled} onPress={setAllLevelsOff}>Set all levels to off</Stack.Toolbar.MenuAction>,
+    ]),
   ];
   return <>
     <Stack.Toolbar placement="left">
@@ -47,6 +51,10 @@ export default function MixerToolbar() {
       <Stack.Toolbar.Label>Fader mode</Stack.Toolbar.Label>
       {modeActions}
     </Stack.Toolbar.Menu>}
+    {pad && state.server && <Stack.Toolbar.Button icon={mix.locked ? 'lock.fill' : 'lock.open'} selected={mix.locked}
+      accessibilityLabel={mix.locked ? 'Unlock faders' : 'Lock faders'} onPress={() => session.mixer.setLocked(!mix.locked)} />}
+    {pad && state.server && <Stack.Toolbar.Button icon="infinity" tintColor={theme.danger} accessibilityLabel="Set all levels to off"
+      disabled={offDisabled} onPress={setAllLevelsOff} />}
     {state.server && <Stack.Toolbar.Menu icon={Platform.OS === 'ios' ? 'ellipsis' : require('../../assets/toolbar/more.png')} accessibilityLabel="Mixer options">
       <Stack.Toolbar.Label>Options</Stack.Toolbar.Label>
       {pad ? null : Platform.OS === 'android' ? modeActions : <Stack.Toolbar.Menu inline title="Fader mode" icon="slider.horizontal.3">

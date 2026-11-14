@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.11.0 — iPad lock and off buttons
+
+- On iPad, Lock faders and Set all levels to off have their own toolbar buttons beside Fader mode instead of sitting in the options menu. The lock button shows as selected while faders are locked.
+
 ## 0.10.0 — iPad fader mode button
 
 - On iPad, Fader mode (Level or Pan) has its own toolbar button beside the options menu instead of sitting inside it.
