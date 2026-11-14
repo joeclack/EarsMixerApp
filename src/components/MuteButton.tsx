@@ -14,8 +14,9 @@ export const MuteKey = memo(function MuteKey({ channel, label, width = 64, heigh
   const { session } = useFaderSession(channel);
   const mixer = session.mixer;
   const muted = mixer.isMuted(channel), available = mixer.canMute(channel);
-  // Keep the space so rows don't shift once the state arrives.
-  if (!available && !muted) return <View style={{ width, height }} />;
+  // Keep the space so rows don't shift once the state arrives. While faders are
+  // locked the key stays visible but dimmed and does nothing.
+  if (!mixer.muteKnown(channel)) return <View style={{ width, height }} />;
   const toggle = () => {
     if (!mixer.setMuted(channel, !muted)) return;
     if (session.state.settings.haptics) void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => {});
@@ -28,7 +29,7 @@ export const MuteKey = memo(function MuteKey({ channel, label, width = 64, heigh
       borderWidth: 1.5, borderColor: muted ? MUTE_RED : theme.dark ? '#4A5761' : '#8A8270',
       backgroundColor: muted ? MUTE_RED : theme.dark ? 'rgba(0,0,0,0.35)' : 'rgba(255,255,255,0.35)',
       boxShadow: muted ? [{ offsetX: 0, offsetY: 0, blurRadius: 8, color: 'rgba(255,69,58,0.55)' }] : undefined,
-      opacity: pressed ? 0.7 : 1 })}>
+      opacity: !available ? 0.5 : pressed ? 0.7 : 1 })}>
     <Text style={{ color: muted ? '#FFFFFF' : theme.muted, fontSize: 11, fontWeight: '800', letterSpacing: 1.2 }}>MUTE</Text>
   </Pressable>;
 });

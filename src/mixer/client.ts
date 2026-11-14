@@ -16,6 +16,8 @@ export type MixState = {
   values: Record<number, number>; epoch: number;
   /** Channels whose send to this AUX is off on the desk (muted in this mix). */
   muted: Record<number, boolean>;
+  /** Faders and mutes ignore touches while locked, so a pocket or a bump changes nothing. */
+  locked: boolean;
 };
 export type MixerControls = Omit<MixState, 'values' | 'muted'>;
 export const REQUEST_KINDS = [
@@ -52,9 +54,10 @@ export class MixerClient {
     }
   }
   private members(channel: number) { return channel < 0 ? [...this.globalGroups, ...(this.groups[String(this.state.aux)] || [])].find(group => -group.id === channel)?.members : undefined; }
+  setLocked(locked: boolean) { if (locked !== this.state.locked) { if (locked) this.cancelWrites(); this.emit({ locked }); } }
   canDrag(channel: number): boolean {
     const members = this.members(channel);
-    return this.state.status === 'connected' && !!this.state.aux && this.socket?.readyState === 1 &&
+    return !this.state.locked && this.state.status === 'connected' && !!this.state.aux && this.socket?.readyState === 1 &&
       (channel < 0 ? this.state.parameter === 'level' && !!members && members.every(id => this.canDrag(id)) :
         this.state.values[channel] !== undefined && !!this.state.config?.channels.some(c => c.channel === channel));
   }
@@ -88,7 +91,13 @@ export class MixerClient {
     if (channel < 0) { const members = this.members(channel); return !!members?.length && members.every(id => this.state.muted[id] === true); }
     return this.state.muted[channel] === true;
   }
+  /** Whether the desk has reported this send's on/off state (for a group, every member's). */
+  muteKnown(channel: number): boolean {
+    const ids = channel < 0 ? this.members(channel) || [] : [channel];
+    return ids.length > 0 && ids.every(id => this.state.muted[id] !== undefined);
+  }
   canMute(channel: number): boolean {
+    if (this.state.locked) return false;
     if (this.state.status !== 'connected' || !this.state.aux || this.socket?.readyState !== 1) return false;
     const ids = channel < 0 ? this.members(channel) || [] : [channel];
     return ids.length > 0 && ids.every(id => this.state.muted[id] !== undefined);
@@ -155,7 +164,7 @@ export class MixerClient {
     this.valueCache = { ...this.valueCache, [key]: { ...this.valueCache[key], [channel]: value } };
     this.cacheRevision++;
   }
-  state: MixState = { peers: [], status: 'disconnected', config: null, aux: null, parameter: 'level', values: {}, epoch: 0, muted: {} };
+  state: MixState = { peers: [], status: 'disconnected', config: null, aux: null, parameter: 'level', values: {}, epoch: 0, muted: {}, locked: false };
   private socket: Socket | null = null;
   private url: string | null = null;
   private username: string | null = null;
@@ -172,6 +181,14 @@ export class MixerClient {
   private meterReadings = new Map<number, number | null>();
   private meterListeners = new Map<number, Set<(db: number | null) => void>>();
   private meterExpiry: ReturnType<typeof setTimeout> | null = null;
+  private metersWanted = true;
+  /** Turning meters off in Settings stops the stream rather than hiding it. */
+  setMetersWanted(wanted: boolean) {
+    if (wanted === this.metersWanted) return;
+    this.metersWanted = wanted;
+    if (!wanted) this.clearMeters();
+    if (this.state.config?.meters && this.state.status === 'connected') this.send({ meters: wanted });
+  }
   onMeter(channel: number, fn: (db: number | null) => void) {
     let set = this.meterListeners.get(channel);
     if (!set) this.meterListeners.set(channel, set = new Set());
@@ -211,7 +228,7 @@ export class MixerClient {
     const { status, epoch, aux, parameter, values } = this.state;
     // Mute state and whether it is known yet both redraw the row, so the MUTE
     // key appears as soon as the desk reports the send, not on the next move.
-    return [status, epoch, aux, parameter, values[channel], this.displayValue(channel), this.isMuted(channel), this.canMute(channel),
+    return [status, epoch, aux, parameter, values[channel], this.displayValue(channel), this.isMuted(channel), this.canMute(channel), this.state.locked,
       ...(this.members(channel) || []).map(id => this.channelSnapshot(id))].join('|');
   }
   subscribeChannel(channel: number, fn: () => void) {
@@ -233,7 +250,7 @@ export class MixerClient {
     this.state = { ...this.state, ...update };
     const changed = this.controls.status !== this.state.status || this.controls.config !== this.state.config ||
       this.controls.aux !== this.state.aux || this.controls.parameter !== this.state.parameter ||
-      this.controls.epoch !== this.state.epoch || this.controls.peers !== this.state.peers;
+      this.controls.epoch !== this.state.epoch || this.controls.peers !== this.state.peers || this.controls.locked !== this.state.locked;
     if (changed) this.controls = this.readControls();
     // Deliver positions before React's page/store subscribers. No polling or debounce.
     for (const [channel, entry] of this.channels) {
@@ -308,7 +325,7 @@ export class MixerClient {
   }
   setAllLevelsOff(expectedAux: number | null): boolean {
     const { aux, config } = this.state;
-    if (!aux || aux !== expectedAux || !config || this.state.status !== 'connected' || this.socket?.readyState !== 1) return false;
+    if (this.state.locked || !aux || aux !== expectedAux || !config || this.state.status !== 'connected' || this.socket?.readyState !== 1) return false;
     // Cancel older drag sends first so they cannot restore a level after setting sends to off.
     this.cancelWrites();
     const values = { ...this.state.values };
@@ -449,7 +466,7 @@ export class MixerClient {
       this.emit({ peers: [], config, status: 'connected', aux, values: {}, muted: {} }); this.refresh();
       // Ask for meters only when the server has them. The app disconnects in
       // the background, which also ends the stream.
-      if (config.meters) this.send({ meters: true });
+      if (config.meters && this.metersWanted) this.send({ meters: true });
       return;
     }
     if (!Array.isArray(message.args) || typeof message.address !== 'string') return;

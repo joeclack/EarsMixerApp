@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import Animated, { cancelAnimation, Easing, FadeIn, FadeOut, LinearTransition, ReduceMotion, useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
-import { Text, View, useWindowDimensions } from 'react-native';
+import { Pressable, Text, View, useWindowDimensions } from 'react-native';
+import { TEXT_SCALE } from '../../../src/mixer/session';
 import { router, useFocusEffect } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
@@ -31,7 +32,8 @@ import LandscapeFaderViewport from '../../../src/components/LandscapeFaderViewpo
 // Names are one line so the fader keeps as much height as possible.
 // Top to bottom: a MUTE key, the level, the fader and the name.
 const STRIP_WIDTH = 96, STRIP_PADDING = 4, STRIP_GAP = 2, MUTE_ROW = 26, LEVEL_ROW = 18, NAME_ROW = 18;
-const STRIP_CHROME = STRIP_PADDING * 2 + STRIP_GAP * 3 + MUTE_ROW + LEVEL_ROW + NAME_ROW;
+// Text size grows the level and name rows; hiding levels gives their row to the fader.
+const stripChrome = (levelRow: number, nameRow: number) => STRIP_PADDING * 2 + STRIP_GAP * (levelRow ? 3 : 2) + MUTE_ROW + levelRow + nameRow;
 // Opening or closing a group slides it open or shut, pushing the channels
 // after it along; its members fade in as they are uncovered.
 const groupSlide = LinearTransition.duration(280).easing(Easing.out(Easing.cubic)).reduceMotion(ReduceMotion.System);
@@ -82,8 +84,11 @@ export default function Mixer() {
   // The fader takes all the height the level and name rows leave. An open
   // group's name and close control have their own side rail, leaving equal
   // widths and travel for every member.
-  const cardHeight = Math.max(STRIP_CHROME + FADER_INSET * 2, bankHeight - topPadding - bottomPadding);
-  const stripHeight = Math.max(FADER_INSET * 2, cardHeight - STRIP_CHROME);
+  const textScale = TEXT_SCALE[state.settings.textSize], showLevels = state.settings.showLevels;
+  const levelRow = showLevels ? Math.round(LEVEL_ROW * textScale) : 0, nameRow = Math.round(NAME_ROW * textScale);
+  const chrome = stripChrome(levelRow, nameRow);
+  const cardHeight = Math.max(chrome + FADER_INSET * 2, bankHeight - topPadding - bottomPadding);
+  const stripHeight = Math.max(FADER_INSET * 2, cardHeight - chrome);
   const renderSection = useCallback(({ item, index }: { item: MixerSection; index: number }) => {
     const group = item.header;
     const grouped = !!group.members;
@@ -110,26 +115,26 @@ export default function Mixer() {
       ? <Animated.View key={channel.channel} testID={'channel-' + channel.channel} {...member}
         style={{ width: STRIP_WIDTH, height: open ? cardHeight - 2 : cardHeight, alignItems: 'center', paddingVertical: STRIP_PADDING, gap: STRIP_GAP, ...divider(position) }}>
         <MuteKey channel={channel.channel} label={channel.label} width={68} height={MUTE_ROW} />
-        <View style={{ height: LEVEL_ROW, justifyContent: 'center' }}><FaderValue channel={channel.channel} /></View>
+        {showLevels && <View style={{ height: levelRow, justifyContent: 'center' }}><FaderValue channel={channel.channel} size={13 * textScale} /></View>}
         <Fader channel={channel.channel} label={channel.label} vertical length={open ? stripHeight - 2 : stripHeight} />
         {grouped && !open ? <GroupExpandTarget label={group.label} onExpand={expand}>
-          <View style={{ width: STRIP_WIDTH - 8, height: NAME_ROW, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 3 }}>
+          <View style={{ width: STRIP_WIDTH - 8, height: nameRow, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 3 }}>
             <Icon name={{ ios: 'link', android: 'link', web: 'link' }} size={11} />
-            <Text numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.75} style={{ flexShrink: 1, color: theme.text, fontSize: 12, lineHeight: 16, fontWeight: '700', textAlign: 'center' }}>{group.label}</Text>
+            <Text numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.75} style={{ flexShrink: 1, color: theme.text, fontSize: 12 * textScale, lineHeight: 16 * textScale, fontWeight: '700', textAlign: 'center' }}>{group.label}</Text>
             <Icon name={{ ios: 'chevron.right', android: 'chevron_right', web: 'chevron_right' }} size={11} />
           </View>
-        </GroupExpandTarget> : <View style={{ width: STRIP_WIDTH - 8, height: NAME_ROW, alignItems: 'center', justifyContent: 'center' }}>
+        </GroupExpandTarget> : <View style={{ width: STRIP_WIDTH - 8, height: nameRow, alignItems: 'center', justifyContent: 'center' }}>
           {/* Centred in the same row box as a group's name, so both sit on one line. */}
-          <Text numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.75} style={{ color: theme.text, fontSize: 12, lineHeight: 16,
+          <Text numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.75} style={{ color: theme.text, fontSize: 12 * textScale, lineHeight: 16 * textScale,
             fontWeight: '600', textAlign: 'center' }}>{channel.label}</Text>
         </View>}
       </Animated.View>
       : <Animated.View key={channel.channel} testID={'channel-' + channel.channel} {...member}
         style={{ gap: 2, paddingTop: grouped && !open ? 0 : 10, paddingHorizontal: 4, paddingBottom: 4, ...divider(position) }}>
         {!channel.members && <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 12 }}>
-          <Text numberOfLines={2} style={{ color: theme.text, fontSize: 15, fontWeight: '600', flex: 1 }}>{channel.label}</Text>
+          <Text numberOfLines={2} style={{ color: theme.text, fontSize: 15 * textScale, fontWeight: '600', flex: 1 }}>{channel.label}</Text>
           <MuteKey channel={channel.channel} label={channel.label} width={56} height={24} />
-          <View style={{ minWidth: 60, alignItems: 'flex-end' }}><FaderValue channel={channel.channel} /></View>
+          {showLevels && <View style={{ minWidth: 60 * textScale, alignItems: 'flex-end' }}><FaderValue channel={channel.channel} size={13 * textScale} /></View>}
         </View>}
         <ExpandableFader bare channel={channel.channel} label={channel.label} onEnlarge={origin => {
           session.mixer.cancelWrites(); setFocusOrigin(origin); setFocused(channel.channel);
@@ -143,15 +148,15 @@ export default function Mixer() {
       {grouped && !landscape && (open ? <View style={{ minHeight: 48, paddingHorizontal: 16, gap: 8,
         flexDirection: 'row', alignItems: 'center' }}>
         <Icon name={{ ios: 'link', android: 'link', web: 'link' }} size={14} />
-        <Text numberOfLines={2} accessibilityRole="header" style={{ flex: 1, minWidth: 0, color: theme.text, fontSize: 15, fontWeight: '700' }}>{group.label}</Text>
+        <Text numberOfLines={2} accessibilityRole="header" style={{ flex: 1, minWidth: 0, color: theme.text, fontSize: 15 * textScale, fontWeight: '700' }}>{group.label}</Text>
         {canClose ? <CloseButton label={'Close ' + group.label + ' group'} onPress={close} />
           : <Text style={{ color: theme.muted, fontSize: 11 }}>Pan</Text>}
       </View> : <GroupExpandTarget label={group.label} onExpand={expand}>
         <View style={{ minHeight: 48, paddingHorizontal: 16, paddingTop: 6, gap: 8, flexDirection: 'row', alignItems: 'center' }}>
           <Icon name={{ ios: 'link', android: 'link', web: 'link' }} size={14} />
-          <Text numberOfLines={2} style={{ flex: 1, color: theme.text, fontSize: 15, fontWeight: '700' }}>{group.label}</Text>
+          <Text numberOfLines={2} style={{ flex: 1, color: theme.text, fontSize: 15 * textScale, fontWeight: '700' }}>{group.label}</Text>
           <MuteKey channel={group.channel} label={group.label} width={56} height={24} />
-          <View style={{ minWidth: 60, alignItems: 'flex-end' }}><FaderValue channel={group.channel} /></View>
+          {showLevels && <View style={{ minWidth: 60 * textScale, alignItems: 'flex-end' }}><FaderValue channel={group.channel} size={13 * textScale} /></View>}
           <Icon name={{ ios: 'chevron.down', android: 'expand_more', web: 'expand_more' }} size={16} />
         </View>
       </GroupExpandTarget>)}
@@ -172,7 +177,7 @@ export default function Mixer() {
         {(open ? item.channels : [group]).map((channel, position) => renderFader(channel, position))}
       </View>
     </Animated.View>;
-  }, [landscape, cardHeight, stripHeight, theme, mix.parameter, session, expanded]);
+  }, [landscape, cardHeight, stripHeight, theme, mix.parameter, session, expanded, textScale, showLevels, levelRow, nameRow]);
   return <Page title={mix.config?.aux.find(aux => aux.channel === mix.aux)?.label || 'Mixer'} scroll={false} compactHeader hideHeader={landscape} toolbar={<MixerToolbar />} desk>
     <AuxPresence />
     {/* The plain opacity hides stale layout within the same commit; the
@@ -185,13 +190,23 @@ export default function Mixer() {
     <View onLayout={event => setBankHeight(event.nativeEvent.layout.height)} style={{ flex: 1, minWidth: 0, overflow: landscape ? 'hidden' : 'visible' }}>
     <LandscapeFaderViewport enabled={landscape}>
     <MixerLoadingBoundary>{!state.server ? <EmptyMixer /> : <FaderFocusTransition row={focusedRow} origin={focusOrigin} onClose={closeFocused}>
-    <Animated.FlatList itemLayoutAnimation={groupSlide} key={landscape ? 'strips' : 'rows'} horizontal={landscape} extraData={state.preferences}
+    <Animated.FlatList itemLayoutAnimation={groupSlide} key={landscape ? 'strips' : 'rows'} horizontal={landscape} extraData={[state.preferences, state.settings]}
       data={sections} renderItem={renderSection} keyExtractor={item => String(item.header.channel)} contentInsetAdjustmentBehavior="never"
       // Portrait faders sit straight on the desk, divided by fine lines.
       contentContainerStyle={{ paddingTop: topPadding, paddingLeft: landscape ? 16 : 4, paddingRight: landscape ? 16 : 4, paddingBottom: bottomPadding }} keyboardShouldPersistTaps="handled"
       // Demo meters are labelled so they are never mistaken for the desk's signal.
-      ListHeaderComponent={!landscape && mix.config?.meters === 'simulated' && sections.length ? <Text style={{ color: theme.muted, fontSize: 11, paddingHorizontal: 16, paddingBottom: 6 }}>
-        Signal meters are simulated</Text> : undefined}
+      ListHeaderComponent={!landscape && sections.length && (mix.locked || (mix.config?.meters === 'simulated' && state.settings.showMeters)) ? <View style={{ paddingHorizontal: 12, paddingBottom: 6, gap: 6 }}>
+        {/* While locked, a bar says so and unlocks with a tap, so a locked mixer is never a mystery. */}
+        {mix.locked && <Pressable accessibilityRole="button" accessibilityLabel="Faders locked. Unlock faders" onPress={() => session.mixer.setLocked(false)}
+          style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 8, minHeight: 44, paddingHorizontal: 12, borderRadius: 10,
+            backgroundColor: theme.secondary, opacity: pressed ? 0.7 : 1 })}>
+          <Icon name={{ ios: 'lock.fill', android: 'lock', web: 'lock' }} size={15} color={theme.tint} />
+          <Text style={{ flex: 1, color: theme.text, fontSize: 15, fontWeight: '600' }}>Faders locked</Text>
+          <Text style={{ color: theme.tint, fontSize: 15, fontWeight: '600' }}>Unlock</Text>
+        </Pressable>}
+        {/* Demo meters are labelled so they are never mistaken for the desk's signal. */}
+        {mix.config?.meters === 'simulated' && state.settings.showMeters && <Text style={{ color: theme.muted, fontSize: 11, paddingHorizontal: 4 }}>Signal meters are simulated</Text>}
+      </View> : undefined}
       ListEmptyComponent={<View style={{ alignItems: 'center', paddingVertical: 40, gap: 12 }}>
         <Icon name={{ ios: 'eye.slash', android: 'visibility_off', web: 'visibility_off' }} size={34} color={theme.muted} />
         <Text style={{ color: theme.text, fontSize: 19, fontWeight: '600' }}>{hidden.length ? 'All channels hidden' : 'No channels'}</Text>

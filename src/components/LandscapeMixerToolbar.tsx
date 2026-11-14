@@ -18,8 +18,13 @@ export default function LandscapeMixerToolbar({ top, bottom }: { top: number; bo
     <LandscapeAuxPicker auxes={auxes} selected={mix.aux} disabled={!state.server || !auxes.length || mix.status !== 'connected'}
       onChange={selectedAux => session.preferences({ selectedAux })} />
     {height - top - bottom >= 320 && !!selected && <Text numberOfLines={3} style={{ width: 60, color: theme.muted, fontSize: 11, textAlign: 'center', lineHeight: 15 }}>{selected.label}</Text>}
-    <LandscapeFaderActions parameter={mix.parameter} disabled={!state.server} offDisabled={!state.server || mix.status !== 'connected' || !mix.aux}
+    <LandscapeFaderActions parameter={mix.parameter} disabled={!state.server} offDisabled={!state.server || mix.status !== 'connected' || !mix.aux || mix.locked}
       onModeChange={mode => session.mixer.setParameter(mode)} onAllOff={setAllLevelsOff} />
+    <Pressable accessibilityRole="switch" accessibilityLabel="Lock faders" accessibilityState={{ checked: mix.locked }} onPress={() => session.mixer.setLocked(!mix.locked)}
+      style={({ pressed }) => ({ width: 52, height: 52, borderRadius: 26, alignItems: 'center', justifyContent: 'center',
+        backgroundColor: mix.locked ? theme.tint : theme.secondary, opacity: pressed ? 0.7 : 1 })}>
+      <Icon name={{ ios: mix.locked ? 'lock.fill' : 'lock.open', android: mix.locked ? 'lock' : 'lock_open', web: mix.locked ? 'lock' : 'lock_open' }} size={20} color={mix.locked ? theme.panel : theme.tint} />
+    </Pressable>
     <Pressable accessibilityRole="button" accessibilityLabel="Message the engineer" disabled={mix.status !== 'connected'} onPress={() => router.push('/request')}
       style={({ pressed }) => ({ width: 52, height: 52, borderRadius: 26, alignItems: 'center', justifyContent: 'center',
         backgroundColor: theme.secondary, opacity: mix.status !== 'connected' ? 0.5 : pressed ? 0.7 : 1 })}>

@@ -1,6 +1,7 @@
 import React from 'react';
 import Section from './HardwareSection.ios';
 import { useResetDeviceData } from './useResetDeviceData';
+import { useClearSavedLevels } from './useClearSavedLevels';
 import { Host, Form, Toggle, Picker, Text, Button, LabeledContent, VStack, HStack, Spacer, TextField, Image, useNativeState } from '@expo/ui/swift-ui';
 import { font, foregroundStyle, tag, pickerStyle, buttonStyle, lineLimit, scrollContentBackground, disabled } from '@expo/ui/swift-ui/modifiers';
 import { router } from 'expo-router';
@@ -14,6 +15,7 @@ export default function SettingsContent() {
   const statusColor = state.demo ? theme.orange : mix.status === 'connected' ? theme.green : mix.status === 'disconnected' ? theme.danger : theme.orange;
   const nickname = useNativeState(state.settings.nickname);
   const reset = useResetDeviceData(() => nickname.set(''));
+  const clearLevels = useClearSavedLevels();
   React.useEffect(() => () => { session.restoreNickname(); }, [session]);
   return <Host style={{ flex: 1 }} colorScheme={theme.scheme} seedColor={theme.tint}>
     <Form modifiers={[scrollContentBackground('hidden')]}>
@@ -47,7 +49,14 @@ export default function SettingsContent() {
       </Section>
       <Section title="Mixer" symbol="slider.horizontal.3">
         <Toggle label="Haptic feedback" isOn={state.settings.haptics} onIsOnChange={haptics => session.setSettings({ haptics })} />
+        <Toggle label="Show signal meters" isOn={state.settings.showMeters} onIsOnChange={showMeters => session.setSettings({ showMeters })} />
+        <Toggle label="Show dB values" isOn={state.settings.showLevels} onIsOnChange={showLevels => session.setSettings({ showLevels })} />
+        <Picker label="Text size" systemImage="textformat.size" selection={state.settings.textSize}
+          onSelectionChange={textSize => session.setSettings({ textSize })} modifiers={[pickerStyle('menu')]}>
+          <Text modifiers={[tag('standard')]}>Standard</Text><Text modifiers={[tag('large')]}>Large</Text><Text modifiers={[tag('larger')]}>Larger</Text>
+        </Picker>
         <Button label="Edit channels" systemImage="line.3.horizontal" onPress={() => router.push('/layout')} />
+        <Button label="Clear saved levels" systemImage="clock.arrow.circlepath" role="destructive" onPress={clearLevels} />
       </Section>
       <Section>
         <Button label="Reset device data" role="destructive" onPress={reset.confirm} modifiers={[disabled(reset.resetting)]} />
