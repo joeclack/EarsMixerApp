@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import Animated, { cancelAnimation, Easing, FadeIn, FadeOut, LinearTransition, ReduceMotion, useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
-import { Pressable, Text, View, useWindowDimensions } from 'react-native';
+import { Platform, Pressable, Text, View, useWindowDimensions } from 'react-native';
 import { TEXT_SCALE } from '../../../src/mixer/session';
 import { router, useFocusEffect } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -47,6 +47,9 @@ export default function Mixer() {
   const insets = useSafeAreaInsets();
   const landscapeEdges = useLandscapeEdgePadding(insets.left, insets.right);
   const landscape = width > height;
+  // iPad landscape has the height for the top toolbar, so it keeps the portrait
+  // toolbar and gives the rail's width to the faders.
+  const sideRail = landscape && !(Platform.OS === 'ios' && Platform.isPad);
   const [bankHeight, setBankHeight] = useState(height);
   const layoutReady = useStableMixerLayout([width, height, insets.top, insets.bottom, insets.left, insets.right,
     landscapeEdges.paddingLeft, landscapeEdges.paddingRight, bankHeight].join('|'), landscape ? 'landscape' : 'portrait');
@@ -77,7 +80,7 @@ export default function Mixer() {
     [mix.config, mix.aux, mix.parameter, expanded, state.preferences]);
   const focusedRow = !landscape && focused !== null ? sections.flatMap(section => [section.header, ...section.channels]).find(row => row.channel === focused) : undefined;
   const closeFocused = () => { session.mixer.cancelWrites(); setFocused(null); };
-  const topPadding = landscape ? insets.top + 12 : 20;
+  const topPadding = sideRail ? insets.top + 12 : 20;
   // In landscape the one-line names sit just above the home indicator.
   const bottomPadding = landscape ? Math.max(6, insets.bottom - 10) : insets.bottom + 20;
   // Each landscape strip has three rows: its level, the fader, and its name.
@@ -178,7 +181,7 @@ export default function Mixer() {
       </View>
     </Animated.View>;
   }, [landscape, cardHeight, stripHeight, theme, mix.parameter, session, expanded, textScale, showLevels, levelRow, nameRow]);
-  return <Page title={mix.config?.aux.find(aux => aux.channel === mix.aux)?.label || 'Mixer'} scroll={false} compactHeader hideHeader={landscape} toolbar={<MixerToolbar />} desk>
+  return <Page title={mix.config?.aux.find(aux => aux.channel === mix.aux)?.label || 'Mixer'} scroll={false} compactHeader hideHeader={sideRail} toolbar={<MixerToolbar />} desk>
     <AuxPresence />
     {/* The plain opacity hides stale layout within the same commit; the
         animated layer then fades the settled layout in. */}
@@ -186,7 +189,7 @@ export default function Mixer() {
     <View pointerEvents={layoutReady ? 'auto' : 'none'} accessibilityElementsHidden={!layoutReady}
       importantForAccessibility={layoutReady ? 'auto' : 'no-hide-descendants'} style={{ flex: 1, flexDirection: landscape ? 'row' : 'column',
       paddingLeft: landscape ? landscapeEdges.paddingLeft : 0, paddingRight: landscape ? landscapeEdges.paddingRight : 0, opacity: layoutReady ? 1 : 0 }}>
-    {landscape && <LandscapeMixerToolbar top={topPadding} bottom={bottomPadding} />}
+    {sideRail && <LandscapeMixerToolbar top={topPadding} bottom={bottomPadding} />}
     <View onLayout={event => setBankHeight(event.nativeEvent.layout.height)} style={{ flex: 1, minWidth: 0, overflow: landscape ? 'hidden' : 'visible' }}>
     <LandscapeFaderViewport enabled={landscape}>
     <MixerLoadingBoundary>{!state.server ? <EmptyMixer /> : <FaderFocusTransition row={focusedRow} origin={focusOrigin} onClose={closeFocused}>

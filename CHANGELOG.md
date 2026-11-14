@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.9.0 — iPad top toolbar
+
+- On iPad in landscape, the mixer keeps the portrait toolbar at the top (AUX selector, options and Settings) instead of the side rail, giving the rail's width to the faders. iPhone landscape still uses the side rail.
+
 ## 0.8.0 — Lock faders, display settings
 
 - Lock faders from the mixer's options menu (beside Channel groups) or the lock button in the landscape rail. While locked, faders, the tall fader and MUTE keys ignore touches and Set all levels to off is unavailable; a "Faders locked · Unlock" bar shows at the top in portrait. The lock lasts until you unlock or restart the app.
