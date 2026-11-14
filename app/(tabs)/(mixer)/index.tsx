@@ -11,7 +11,7 @@ import { mixerRows, mixerSections, type MixerRow, type MixerSection } from '../.
 import { Page, EmptyMixer, Icon } from '../../../src/components/ui';
 import NativeButton from '../../../src/components/NativeButton';
 import Fader, { FaderValue } from '../../../src/components/Fader';
-import { LevelMuteToggle, MuteButton } from '../../../src/components/MuteButton';
+import { MuteKey } from '../../../src/components/MuteButton';
 import GroupExpandTarget from '../../../src/components/GroupExpandTarget';
 import CloseButton from '../../../src/components/CloseButton';
 import { FADER_INSET } from '../../../src/components/faderGeometry';
@@ -29,8 +29,9 @@ import LandscapeFaderViewport from '../../../src/components/LandscapeFaderViewpo
 
 // Landscape strip geometry: the level row above the fader and the name row below.
 // Names are one line so the fader keeps as much height as possible.
-const STRIP_WIDTH = 96, STRIP_PADDING = 4, STRIP_GAP = 2, LEVEL_ROW = 20, NAME_ROW = 18;
-const STRIP_CHROME = STRIP_PADDING * 2 + STRIP_GAP * 2 + LEVEL_ROW + NAME_ROW;
+// Top to bottom: a MUTE key, the level, the fader and the name.
+const STRIP_WIDTH = 96, STRIP_PADDING = 4, STRIP_GAP = 2, MUTE_ROW = 26, LEVEL_ROW = 18, NAME_ROW = 18;
+const STRIP_CHROME = STRIP_PADDING * 2 + STRIP_GAP * 3 + MUTE_ROW + LEVEL_ROW + NAME_ROW;
 // Opening or closing a group slides it open or shut, pushing the channels
 // after it along; its members fade in as they are uncovered.
 const groupSlide = LinearTransition.duration(280).easing(Easing.out(Easing.cubic)).reduceMotion(ReduceMotion.System);
@@ -108,7 +109,8 @@ export default function Mixer() {
     const renderFader = (channel: MixerRow, position: number) => landscape
       ? <Animated.View key={channel.channel} testID={'channel-' + channel.channel} {...member}
         style={{ width: STRIP_WIDTH, height: open ? cardHeight - 2 : cardHeight, alignItems: 'center', paddingVertical: STRIP_PADDING, gap: STRIP_GAP, ...divider(position) }}>
-        <View style={{ height: LEVEL_ROW, justifyContent: 'center' }}><LevelMuteToggle channel={channel.channel} label={channel.label} height={LEVEL_ROW} /></View>
+        <MuteKey channel={channel.channel} label={channel.label} width={68} height={MUTE_ROW} />
+        <View style={{ height: LEVEL_ROW, justifyContent: 'center' }}><FaderValue channel={channel.channel} /></View>
         <Fader channel={channel.channel} label={channel.label} vertical length={open ? stripHeight - 2 : stripHeight} />
         {grouped && !open ? <GroupExpandTarget label={group.label} onExpand={expand}>
           <View style={{ width: STRIP_WIDTH - 8, height: NAME_ROW, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 3 }}>
@@ -126,8 +128,8 @@ export default function Mixer() {
         style={{ gap: 2, paddingTop: grouped && !open ? 0 : 10, paddingHorizontal: 4, paddingBottom: 4, ...divider(position) }}>
         {!channel.members && <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 12 }}>
           <Text numberOfLines={2} style={{ color: theme.text, fontSize: 15, fontWeight: '600', flex: 1 }}>{channel.label}</Text>
-          <MuteButton channel={channel.channel} label={channel.label} />
-          <FaderValue channel={channel.channel} />
+          <MuteKey channel={channel.channel} label={channel.label} width={56} height={24} />
+          <View style={{ minWidth: 60, alignItems: 'flex-end' }}><FaderValue channel={channel.channel} /></View>
         </View>}
         <ExpandableFader bare channel={channel.channel} label={channel.label} onEnlarge={origin => {
           session.mixer.cancelWrites(); setFocusOrigin(origin); setFocused(channel.channel);
@@ -148,8 +150,8 @@ export default function Mixer() {
         <View style={{ minHeight: 48, paddingHorizontal: 16, paddingTop: 6, gap: 8, flexDirection: 'row', alignItems: 'center' }}>
           <Icon name={{ ios: 'link', android: 'link', web: 'link' }} size={14} />
           <Text numberOfLines={2} style={{ flex: 1, color: theme.text, fontSize: 15, fontWeight: '700' }}>{group.label}</Text>
-          <MuteButton channel={group.channel} label={group.label} />
-          <FaderValue channel={group.channel} />
+          <MuteKey channel={group.channel} label={group.label} width={56} height={24} />
+          <View style={{ minWidth: 60, alignItems: 'flex-end' }}><FaderValue channel={group.channel} /></View>
           <Icon name={{ ios: 'chevron.down', android: 'expand_more', web: 'expand_more' }} size={16} />
         </View>
       </GroupExpandTarget>)}

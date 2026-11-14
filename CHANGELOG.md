@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.6.1 — MUTE keys
+
+- Mute is now a labelled MUTE key, lit red while muted, like a desk's. In landscape it sits at the top of each strip above the level; in portrait it sits beside the level on each row and group. Tapping the level no longer mutes.
+
 ## 0.6.0 — Mute in my mix, message the engineer
 
 - Mute a channel in your own mix. In portrait, each row has a mute button beside its level; in landscape, tap the level above a strip. Muting turns the desk's send to your AUX off and keeps its level, so unmuting restores it exactly; the engineer sees it on the desk and everyone on the same mix sees it muted. A muted fader's light dims. A group's mute mutes all its members. Needs EarsMixer 1.12.0.
