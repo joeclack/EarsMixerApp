@@ -13,6 +13,7 @@ import SetupProgress from './SetupProgress';
 import NativeButton from './NativeButton';
 import SetupList from './SetupList';
 import SetupPreview from './SetupPreview';
+import { useToolbarHaptic } from './useToolbarHaptic';
 
 const steps = [
   { title: 'Set your nickname', body: 'This name identifies your connection to the mixer. Others on your mix see it.', bullets: [] },
@@ -22,7 +23,7 @@ const steps = [
     bullets: ['Templates load a saved layout. They never change desk levels.', 'Channel groups gather channels under one name.', 'Layouts save automatically on this phone.'] },
 ];
 export default function SetupWalkthrough() {
-  const { session, state, mix } = useSession(), theme = useTheme();
+  const { session, state, mix } = useSession(), theme = useTheme(), haptic = useToolbarHaptic();
   const [step, setStep] = useState(0), [finishing, setFinishing] = useState(false);
   const current = steps[step];
   const [checking, setChecking] = useState(false);
@@ -84,6 +85,7 @@ export default function SetupWalkthrough() {
       </Animated.View>
       <View style={{ paddingHorizontal: 20, paddingTop: 12, paddingBottom: 16, maxWidth: 600, width: '100%', alignSelf: 'center' }}>
         <NativeButton title={next} prominent fullWidth disabled={finishing || (step === 0 && !nickname)} onPress={() => {
+          haptic();
           Keyboard.dismiss();
           if (step < steps.length - 1) setStep(value => value + 1);
           else { setFinishing(true); void session.completeSetup().then(() => router.back()).finally(() => setFinishing(false)); }

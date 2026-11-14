@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.16.0 — Setup button haptic
+
+- The Next and Finish buttons in setup give a light tap when Haptic feedback is on.
+
 ## 0.15.3 — One-line orientation step
 
 - The portrait or landscape setup page is a single line of explanation under its picture, with no list.
