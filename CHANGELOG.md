@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.12.0 — Simpler landscape rail
+
+- Remove the Message the engineer button from the phone landscape side rail. Message the engineer is still in the mixer's options menu in portrait.
+
 ## 0.11.1 — Keep desk levels forgets saved levels
 
 - Choosing Keep desk levels when asked to load saved levels now forgets the levels saved for that AUX, so you are not asked again about the same levels.

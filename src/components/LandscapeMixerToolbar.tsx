@@ -1,5 +1,4 @@
 import { Pressable, Text, View, useWindowDimensions } from 'react-native';
-import { router } from 'expo-router';
 import { Icon } from './ui';
 import { useSession } from '../mixer/context';
 import { useTheme } from '../theme';
@@ -24,11 +23,6 @@ export default function LandscapeMixerToolbar({ top, bottom }: { top: number; bo
       style={({ pressed }) => ({ width: 52, height: 52, borderRadius: 26, alignItems: 'center', justifyContent: 'center',
         backgroundColor: mix.locked ? theme.tint : theme.secondary, opacity: pressed ? 0.7 : 1 })}>
       <Icon name={{ ios: mix.locked ? 'lock.fill' : 'lock.open', android: mix.locked ? 'lock' : 'lock_open', web: mix.locked ? 'lock' : 'lock_open' }} size={20} color={mix.locked ? theme.panel : theme.tint} />
-    </Pressable>
-    <Pressable accessibilityRole="button" accessibilityLabel="Message the engineer" disabled={mix.status !== 'connected'} onPress={() => router.push('/request')}
-      style={({ pressed }) => ({ width: 52, height: 52, borderRadius: 26, alignItems: 'center', justifyContent: 'center',
-        backgroundColor: theme.secondary, opacity: mix.status !== 'connected' ? 0.5 : pressed ? 0.7 : 1 })}>
-      <Icon name={{ ios: 'bubble.left.fill', android: 'chat', web: 'chat' }} size={20} color={theme.tint} />
     </Pressable>
   </View>;
 }
