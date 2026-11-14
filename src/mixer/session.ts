@@ -1,5 +1,5 @@
 import { readLevelStates, stateKey, type SavedLevelState } from './recentStates';
-import { normalizeMixerAddress, probeMixer, readSavedMixers, rememberMixer, type SavedMixer } from '../connection';
+import { normalizeMixerAddress, probeMixerInfo, readSavedMixers, rememberMixer, type SavedMixer } from '../connection';
 import { requestTemplates, templatePreferences, type MixerTemplate } from './templates';
 import { DEMO_URL, createDemoSocket, demoTemplates, demoTemplate } from './demo';
 import { MixerClient, type Socket } from './client';
@@ -267,7 +267,7 @@ export class MixerSession {
     this.patch({ connecting: true, restorePrompt: null, message: '', pinPrompt: null });
     try {
       await this.loadLevelStates();
-      const server = input === DEMO_URL ? DEMO_URL : await probeMixer(input, { fetchImpl: this.fetcher });
+      const { url: server, name } = input === DEMO_URL ? { url: DEMO_URL, name: '' } : await probeMixerInfo(input, { fetchImpl: this.fetcher });
       this.persistValues();
       await this.queue;
       let raw: any = {};
@@ -288,7 +288,7 @@ export class MixerSession {
       this.mixer.disconnect();
       this.mixer.configureGroups(preferences.groupsByAux, preferences.globalGroups);
       this.mixer.restoreGroupBalances(balances);
-      this.patch({ selectedTemplate, server, demo: server === DEMO_URL, preferences, recent: server === DEMO_URL ? this.state.recent : rememberMixer(this.state.recent, server) });
+      this.patch({ selectedTemplate, server, demo: server === DEMO_URL, preferences, recent: server === DEMO_URL ? this.state.recent : rememberMixer(this.state.recent, server, Date.now(), name) });
       this.mixer.restoreValues(values);
       if (channels) this.mixer.restoreConfig(channels, preferences.selectedAux);
       this.mixer.selectAux(preferences.selectedAux);

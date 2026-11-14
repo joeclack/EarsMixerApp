@@ -1,5 +1,5 @@
 import { browseMixers, reachableMixer, type DiscoveryNative, type NearbyMixer } from './browser';
-import { probeMixer } from '../connection';
+import { probeMixerInfo } from '../connection';
 
 // Wait for a discovery window rather than connecting to the first announcement:
 // a second desk can arrive a moment later.
@@ -10,8 +10,8 @@ export async function findStartupMixers(native: DiscoveryNative | null, recent: 
   try {
     const checks = recent.map(async url => {
       try {
-        const reachable = await probeMixer(url, { signal, timeoutMs: 2500 });
-        known.push({ id: reachable, name: new URL(reachable).host, urls: [reachable] });
+        const reachable = await probeMixerInfo(url, { signal, timeoutMs: 2500 });
+        known.push({ id: reachable.url, name: reachable.name || new URL(reachable.url).host, urls: [reachable.url] });
       } catch {}
     });
     await Promise.all([Promise.all(checks), new Promise<void>(resolve => {

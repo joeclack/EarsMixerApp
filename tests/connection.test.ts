@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { normalizeMixerAddress, probeMixer, readSavedMixers, rememberMixer } from '../src/connection';
+import { mixerLabel, normalizeMixerAddress, probeMixer, probeMixerInfo, readSavedMixers, rememberMixer } from '../src/connection';
 
 test('mixer addresses accept local IPs, DNS, ports, HTTPS and IPv6', () => {
   assert.equal(normalizeMixerAddress(' 192.168.1.10:8082 '), 'http://192.168.1.10:8082/');
@@ -48,4 +48,18 @@ test('recent mixers are capped, deduplicated and survive corrupted storage', () 
   assert.deepEqual(readSavedMixers(JSON.stringify([{ url: 'file:///bad', lastConnected: 1 }])), []);
   assert.equal(readSavedMixers(JSON.stringify(items)).length, 5);
   assert.equal(readSavedMixers(JSON.stringify(items))[0].url, 'http://mixer6.local/');
+});
+
+test('the server name is read, saved with the mixer and kept when a server stops reporting it', async () => {
+  const reply = (body: object): typeof fetch => async () => Response.json({ url: 'http://x/', qr: 'data:image/png;base64,test', ...body });
+  assert.deepEqual(await probeMixerInfo('10.0.0.5', { fetchImpl: reply({ name: '  Stage Left ' }) }), { url: 'http://10.0.0.5/', name: 'Stage Left' });
+  assert.equal((await probeMixerInfo('10.0.0.5', { fetchImpl: reply({}) })).name, '');
+  assert.equal((await probeMixerInfo('10.0.0.5', { fetchImpl: reply({ name: 42 }) })).name, '');
+  const named = rememberMixer([], '10.0.0.5', 1, 'Stage Left');
+  assert.deepEqual(named, [{ url: 'http://10.0.0.5/', lastConnected: 1, name: 'Stage Left' }]);
+  assert.equal(rememberMixer(named, '10.0.0.5', 2)[0].name, 'Stage Left');
+  assert.equal(readSavedMixers(JSON.stringify(named))[0].name, 'Stage Left');
+  assert.equal(readSavedMixers(JSON.stringify([{ url: 'http://10.0.0.5/', lastConnected: 1, name: {} }]))[0].name, undefined);
+  assert.equal(mixerLabel('http://10.0.0.5/', named), 'Stage Left');
+  assert.equal(mixerLabel('http://10.0.0.6:8082/', named), '10.0.0.6:8082');
 });

@@ -2,7 +2,7 @@ import { useCallback, useState } from 'react';
 import { AppState, Platform } from 'react-native';
 import { useFocusEffect } from 'expo-router';
 import { requireOptionalNativeModule } from 'expo';
-import { probeMixer } from '../connection';
+import { probeMixerInfo } from '../connection';
 import { useSession } from '../mixer/context';
 import { browseMixers, type DiscoveryNative, type DiscoveryState } from './browser';
 
@@ -23,8 +23,8 @@ export function useNearbyMixers() {
       let latest: DiscoveryState = { status: 'searching', mixers: [], message: '' };
       const publish = () => { if (!signal.aborted) setState({ ...latest, mixers: [...latest.mixers, ...[...known.values()].filter(item => !latest.mixers.some(found => found.urls.includes(item.urls[0])))] }); };
       stop = browseMixers(native, value => { latest = value; publish(); });
-      for (const recent of session.recent) void probeMixer(recent.url, { signal, timeoutMs: 2500 }).then(url => {
-        known.set(url, { id: url, name: new URL(url).host, urls: [url] }); publish();
+      for (const recent of session.recent) void probeMixerInfo(recent.url, { signal, timeoutMs: 2500 }).then(({ url, name }) => {
+        known.set(url, { id: url, name: name || recent.name || new URL(url).host, urls: [url] }); publish();
       }).catch(() => {});
     };
     change(AppState.currentState || 'active');

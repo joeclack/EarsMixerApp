@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.17.0 — Server names
+
+- Mixers are listed by the name set in the server's admin area (EarsMixer 1.14.0 or later) instead of by address. Recent mixers, Settings, the PIN screen and setup show the name, with the address underneath in Recent mixers. Older servers still show their address.
+
 ## 0.16.3 — Plain backgrounds
 
 - Every screen, including the mixer desk, now has a plain background colour. The gradient and grain texture are gone.

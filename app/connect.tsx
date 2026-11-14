@@ -87,8 +87,10 @@ export default function Connect() {
       {!!state.recent.length && <>
         <View style={{ marginBottom: 8 }}><PanelHeading title="Recent mixers" /></View>
         {state.recent.map(item => <View key={item.url} style={{ flexDirection: 'row', alignItems: 'center' }}>
-          <View style={{ flex: 1 }}><Row title={new URL(item.url).host} detail={state.server === item.url ? 'Current mixer' : 'Tap to connect'} onPress={() => { if (!busy) void connect(item.url); }} /></View>
-          <Pressable accessibilityLabel={'Forget ' + new URL(item.url).host} accessibilityRole="button" disabled={busy} onPress={() => void session.forget(item.url)}
+          <View style={{ flex: 1 }}><Row title={item.name || new URL(item.url).host}
+            detail={[item.name && new URL(item.url).host, state.server === item.url ? 'Current mixer' : !item.name && 'Tap to connect'].filter(Boolean).join(' · ')}
+            onPress={() => { if (!busy) void connect(item.url); }} /></View>
+          <Pressable accessibilityLabel={'Forget ' + (item.name || new URL(item.url).host)} accessibilityRole="button" disabled={busy} onPress={() => void session.forget(item.url)}
             style={{ width: 44, height: 44, alignItems: 'center', justifyContent: 'center' }}><Icon name={{ ios: 'minus.circle', android: 'remove_circle_outline', web: 'remove_circle_outline' }} size={20} color={theme.muted} /></Pressable>
         </View>)}
       </>}

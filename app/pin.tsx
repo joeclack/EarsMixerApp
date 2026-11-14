@@ -9,6 +9,7 @@ import NativeButton from '../src/components/NativeButton';
 import { Message } from '../src/components/ui';
 import { useTheme } from '../src/theme';
 import { useSession } from '../src/mixer/context';
+import { mixerLabel } from '../src/connection';
 
 // Shown when the connected mixer requires its connection PIN. The PIN is
 // entered once; the mixer then recognises this device until its PIN changes
@@ -32,7 +33,7 @@ export default function Pin() {
     catch (failure) { setError(failure instanceof Error ? failure.message : 'Could not check the PIN. Try again.'); setPin(''); }
     finally { setBusy(false); }
   }
-  const host = state.server ? new URL(state.server).host : 'the mixer';
+  const host = state.server ? mixerLabel(state.server, state.recent) : 'the mixer';
   return <ScreenSurface><ScrollView style={{ flex: 1 }} keyboardShouldPersistTaps="handled" automaticallyAdjustKeyboardInsets
     contentContainerStyle={{ padding: 24, paddingTop: 32, paddingBottom: insets.bottom + 24 }}>
     <View style={{ flexDirection: 'row', gap: 12, alignItems: 'center', marginBottom: 20 }}>

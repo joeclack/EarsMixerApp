@@ -7,6 +7,7 @@ import { fillMaxWidth, padding, semantics } from '@expo/ui/jetpack-compose/modif
 import { useResetDeviceData } from './useResetDeviceData';
 import { useClearSavedLevels } from './useClearSavedLevels';
 import { useSession } from '../mixer/context';
+import { mixerLabel } from '../connection';
 import { useTheme } from '../theme';
 import { Message } from './ui';
 import HardwarePanel from './HardwarePanel';
@@ -23,7 +24,7 @@ export default function SettingsContent() {
   React.useEffect(() => () => { session.restoreNickname(); }, [session]);
   return <>
     <MaterialSection title="Mixer connection" symbol="wifi" footer="Tap the mixer to change it, scan a code or enter an address.">
-      <MaterialItem title={state.demo ? 'Demo mode' : state.server ? new URL(state.server).host : 'Connect to a mixer'}
+      <MaterialItem title={state.demo ? 'Demo mode' : state.server ? mixerLabel(state.server, state.recent) : 'Connect to a mixer'}
         detail={state.demo ? 'Demo' : mix.status === 'connected' ? 'Connected' : state.pinPrompt ? 'PIN needed' : mix.status === 'disconnected' ? 'Not connected' : 'Connecting…'}
         symbol={state.demo ? 'play_circle' : mix.status === 'connected' ? 'wifi' : 'wifi_off'} onPress={() => router.push('/connect')}
         trailing={<TextButton onClick={() => router.push('/connect')}><Text>{state.server ? 'Change' : 'Connect'}</Text></TextButton>} />

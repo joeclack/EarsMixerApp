@@ -6,6 +6,7 @@ import { Text, View, Switch, Platform } from 'react-native';
 import { router } from 'expo-router';
 import Constants from 'expo-constants';
 import { useSession } from '../mixer/context';
+import { mixerLabel } from '../connection';
 import { useTheme } from '../theme';
 import { Row, Section } from './ui';
 import Segmented from './Segmented';
@@ -15,7 +16,7 @@ export default function SettingsContent() {
   const clearLevels = useClearSavedLevels();
   return <>
     <Section title="Mixer connection" symbol={{ ios: 'wifi', android: 'wifi', web: 'wifi' }} footer="Tap the mixer to change it, scan a code or enter an address.">
-      <Row title={state.demo ? 'Demo mode' : state.server ? new URL(state.server).host : 'Connect to a mixer'}
+      <Row title={state.demo ? 'Demo mode' : state.server ? mixerLabel(state.server, state.recent) : 'Connect to a mixer'}
         detail={state.demo ? 'Demo' : mix.status === 'connected' ? 'Connected' : state.pinPrompt ? 'PIN needed' : mix.status === 'disconnected' ? 'Not connected' : 'Connecting…'} onPress={() => router.push('/connect')}>
         <Text style={{ color: theme.tint, fontSize: 15 }}>{state.server ? 'Change' : 'Connect'}</Text>
       </Row>

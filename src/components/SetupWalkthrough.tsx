@@ -7,6 +7,7 @@ import { findStartupMixers, reachableMixer } from '../discovery/startup';
 import type { DiscoveryNative } from '../discovery/browser';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useSession } from '../mixer/context';
+import { mixerLabel } from '../connection';
 import { useTheme } from '../theme';
 import { Message } from './ui';
 import SetupProgress from './SetupProgress';
@@ -71,7 +72,7 @@ export default function SetupWalkthrough() {
             style={{ fontSize: 20, color: theme.text, paddingVertical: 14, marginTop: 6, borderBottomWidth: 1, borderBottomColor: theme.line }} />}
           {step === 1 && <View style={{ gap: 14, alignItems: 'flex-start', marginTop: 6 }}>
             <Text accessibilityLiveRegion="polite" style={{ color: mix.status === 'connected' ? theme.green : theme.muted, fontSize: 17 }}>
-              {state.pinPrompt ? 'PIN needed' : state.demo ? 'Demo mode' : mix.status === 'connected' && state.server ? 'Connected to ' + new URL(state.server).host : state.connecting || mix.status === 'connecting' || mix.status === 'loading' ? 'Connecting…' : checking ? 'Looking for a mixer…' : 'Not connected'}
+              {state.pinPrompt ? 'PIN needed' : state.demo ? 'Demo mode' : mix.status === 'connected' && state.server ? 'Connected to ' + mixerLabel(state.server, state.recent) : state.connecting || mix.status === 'connecting' || mix.status === 'loading' ? 'Connecting…' : checking ? 'Looking for a mixer…' : 'Not connected'}
             </Text>
             <NativeButton title={state.server ? 'Change mixer' : 'Connect'} bordered onPress={() => router.push('/connect')} />
           </View>}

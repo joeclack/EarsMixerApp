@@ -8,6 +8,7 @@ import { font, foregroundStyle, tag, pickerStyle, buttonStyle, lineLimit, scroll
 import { router } from 'expo-router';
 import Constants from 'expo-constants';
 import { useSession } from '../mixer/context';
+import { mixerLabel } from '../connection';
 import { useTheme } from '../theme';
 export default function SettingsContent() {
   const { session, state, mix } = useSession(), theme = useTheme();
@@ -25,7 +26,7 @@ export default function SettingsContent() {
           <HStack spacing={12}>
             <Image systemName={state.demo ? 'play.circle.fill' : mix.status === 'connected' ? 'wifi' : 'wifi.slash'} size={20} color={statusColor} />
             <VStack alignment="leading" spacing={2}>
-              <Text modifiers={[lineLimit(1), font({ weight: 'semibold' })]}>{state.demo ? 'Demo mode' : state.server ? new URL(state.server).host : 'Connect to a mixer'}</Text>
+              <Text modifiers={[lineLimit(1), font({ weight: 'semibold' })]}>{state.demo ? 'Demo mode' : state.server ? mixerLabel(state.server, state.recent) : 'Connect to a mixer'}</Text>
               <Text modifiers={[font({ textStyle: 'caption' }), foregroundStyle(statusColor)]}>{status}</Text>
             </VStack>
             <Spacer />
