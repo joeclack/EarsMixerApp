@@ -36,6 +36,8 @@ const stripChrome = (levelRow: number, nameRow: number) => STRIP_PADDING * 2 + S
 const groupSlide = LinearTransition.duration(280).easing(Easing.out(Easing.cubic)).reduceMotion(ReduceMotion.System);
 const memberIn = FadeIn.duration(220).reduceMotion(ReduceMotion.System);
 const memberOut = FadeOut.duration(140).reduceMotion(ReduceMotion.System);
+// An open group's edge, and on iPad landscape the name bar beneath its members.
+const GROUP_EDGE = 2, GROUP_FOOTER = 44;
 
 export default function Mixer() {
   const { session, state, mix } = useSession();
@@ -46,7 +48,11 @@ export default function Mixer() {
   const landscape = width > height;
   // iPad landscape has the height for the top toolbar, so it keeps the portrait
   // toolbar and gives the rail's width to the faders.
-  const sideRail = landscape && !(Platform.OS === 'ios' && Platform.isPad);
+  const pad = Platform.OS === 'ios' && Platform.isPad;
+  const sideRail = landscape && !pad;
+  // iPad landscape names an open group in a bar spanning its members, rather
+  // than a narrow rotated rail beside them.
+  const groupFooter = landscape && pad;
   const [bankHeight, setBankHeight] = useState(height);
   const layoutReady = useStableMixerLayout([width, height, insets.top, insets.bottom, insets.left, insets.right,
     landscapeEdges.paddingLeft, landscapeEdges.paddingRight, bankHeight].join('|'), landscape ? 'landscape' : 'portrait');
@@ -106,12 +112,14 @@ export default function Mixer() {
     const divider = (position: number) => position > 0 && (landscape
       ? { borderLeftWidth: 1, borderLeftColor: theme.deskDivider } : { borderTopWidth: 1, borderTopColor: theme.deskDivider });
     const member = open ? { entering: memberIn, exiting: memberOut } : {};
+    // Open members give the group's top edge, and any name bar, their height.
+    const memberShrink = open ? GROUP_EDGE + (groupFooter ? GROUP_FOOTER : 0) : 0;
     const renderFader = (channel: MixerRow, position: number) => landscape
       ? <Animated.View key={channel.channel} testID={'channel-' + channel.channel} {...member}
-        style={{ width: STRIP_WIDTH, height: open ? cardHeight - 2 : cardHeight, alignItems: 'center', paddingVertical: STRIP_PADDING, gap: STRIP_GAP, ...divider(position) }}>
+        style={{ width: STRIP_WIDTH, height: cardHeight - memberShrink, alignItems: 'center', paddingVertical: STRIP_PADDING, gap: STRIP_GAP, ...divider(position) }}>
         <MuteKey channel={channel.channel} label={channel.label} width={68} height={MUTE_ROW} />
         {showLevels && <View style={{ height: levelRow, justifyContent: 'center' }}><FaderValue channel={channel.channel} size={13 * textScale} /></View>}
-        <Fader channel={channel.channel} label={channel.label} vertical length={open ? stripHeight - 2 : stripHeight} />
+        <Fader channel={channel.channel} label={channel.label} vertical length={stripHeight - memberShrink} />
         {grouped && !open ? <GroupExpandTarget label={group.label} onExpand={expand}>
           <View style={{ width: STRIP_WIDTH - 8, height: nameRow, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 3 }}>
             <Icon name={{ ios: 'link', android: 'link', web: 'link' }} size={11} />
@@ -135,7 +143,7 @@ export default function Mixer() {
       </Animated.View>;
     // The section resizes with a slide; clipping it reveals or covers its members.
     return <Animated.View layout={groupSlide} testID={grouped ? 'group-' + group.channel : undefined} style={{
-      overflow: grouped ? 'hidden' : undefined, height: landscape ? cardHeight : undefined, width: landscape ? (open ? item.channels.length * STRIP_WIDTH + 44 : STRIP_WIDTH) : undefined,
+      overflow: grouped ? 'hidden' : undefined, height: landscape ? cardHeight : undefined, width: landscape ? (open ? item.channels.length * STRIP_WIDTH + (groupFooter ? GROUP_EDGE * 2 : 44) : STRIP_WIDTH) : undefined,
       ...divider(index),
     }}>
       {grouped && !landscape && (open ? <View style={{ minHeight: 48, paddingHorizontal: 16, gap: 8,
@@ -153,10 +161,11 @@ export default function Mixer() {
           <Icon name={{ ios: 'chevron.down', android: 'expand_more', web: 'expand_more' }} size={16} />
         </View>
       </GroupExpandTarget>)}
-      <View style={{ flexDirection: landscape ? 'row' : 'column',
-        ...(open && (landscape ? { borderTopWidth: 2, borderTopColor: theme.groupEdge }
+      <View style={{ flexDirection: landscape && !groupFooter ? 'row' : 'column',
+        ...(open && (landscape ? { borderTopWidth: GROUP_EDGE, borderColor: theme.groupEdge,
+          ...(groupFooter && { borderLeftWidth: GROUP_EDGE, borderRightWidth: GROUP_EDGE }) }
           : { marginLeft: 8, borderLeftWidth: 2, borderLeftColor: theme.groupEdge, borderTopWidth: 1, borderTopColor: theme.deskDivider })) }}>
-        {landscape && open && <View style={{ width: 44, height: cardHeight - 2, alignItems: 'center', paddingTop: STRIP_PADDING }}>
+        {sideRail && open && <View style={{ width: 44, height: cardHeight - 2, alignItems: 'center', paddingTop: STRIP_PADDING }}>
           <View style={{ width: 44, height: 44, alignItems: 'center', justifyContent: 'center' }}>
             {canClose && <CloseButton label={'Close ' + group.label + ' group'} onPress={close} />}
           </View>
@@ -167,10 +176,19 @@ export default function Mixer() {
             }}>{group.label}</Text>
           </View>
         </View>}
-        {(open ? item.channels : [group]).map((channel, position) => renderFader(channel, position))}
+        {groupFooter ? <View style={{ flexDirection: 'row' }}>
+          {(open ? item.channels : [group]).map((channel, position) => renderFader(channel, position))}
+        </View> : (open ? item.channels : [group]).map((channel, position) => renderFader(channel, position))}
+        {groupFooter && open && <View style={{ height: GROUP_FOOTER, flexDirection: 'row', alignItems: 'center', gap: 8, paddingLeft: 12, paddingRight: 2,
+          borderTopWidth: 1, borderTopColor: theme.deskDivider }}>
+          <Icon name={{ ios: 'link', android: 'link', web: 'link' }} size={14} />
+          <Text numberOfLines={1} accessibilityRole="header" style={{ flex: 1, minWidth: 0, color: theme.text, fontSize: 15 * textScale, fontWeight: '700' }}>{group.label}</Text>
+          {canClose ? <CloseButton label={'Close ' + group.label + ' group'} onPress={close} />
+            : <Text style={{ color: theme.muted, fontSize: 11, paddingRight: 10 }}>Pan</Text>}
+        </View>}
       </View>
     </Animated.View>;
-  }, [landscape, cardHeight, stripHeight, theme, mix.parameter, session, expanded, textScale, showLevels, levelRow, nameRow]);
+  }, [landscape, sideRail, groupFooter, cardHeight, stripHeight, theme, mix.parameter, session, expanded, textScale, showLevels, levelRow, nameRow]);
   return <Page title={mix.config?.aux.find(aux => aux.channel === mix.aux)?.label || 'Mixer'} scroll={false} compactHeader hideHeader={sideRail} toolbar={<MixerToolbar />} desk>
     <AuxPresence />
     {/* The plain opacity hides stale layout within the same commit; the

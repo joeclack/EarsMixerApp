@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.14.0 — iPad group name bar
+
+- On iPad in landscape, an open group shows its name in a bar along the bottom, spanning the group, with the close button at its end. The rotated name rail beside the group is gone.
+- Open groups on iPad landscape are outlined on both sides as well as the top, so you can see where each group starts and ends.
+
 ## 0.13.0 — No tall fader
 
 - Remove hold-to-open tall fader from the portrait mixer. Holding a fader no longer lifts it or opens a full-screen fader; drag the handle as usual.
