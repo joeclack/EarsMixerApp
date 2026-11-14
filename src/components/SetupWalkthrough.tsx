@@ -19,8 +19,7 @@ const steps = [
   { title: 'Set your nickname', body: 'This name identifies your connection to the mixer. Others on your mix see it.', bullets: [] },
   { title: 'Connect to a mixer', body: 'Make sure you are on the correct Wi-Fi.', bullets: [] },
   { title: 'Portrait or landscape', body: 'Hold your phone upright for a list of faders, or turn it sideways for faders like the desk.', bullets: [] },
-  { title: 'Start with a template', body: 'Get started quickly by selecting a pre-made template. You can change it any time in the … menu.',
-    bullets: ['Templates load a saved layout. They never change desk levels.', 'Channel groups gather channels under one name.', 'Layouts save automatically on this phone.'] },
+  { title: 'Start with a template', body: 'Get started quickly by selecting a pre-made template. You can change it any time in the … menu.', bullets: [] },
 ];
 export default function SetupWalkthrough() {
   const { session, state, mix } = useSession(), theme = useTheme(), haptic = useToolbarHaptic();

@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.16.2 — No list on the template page
+
+- The last setup page no longer shows a list under its explanation.
+
 ## 0.16.1 — Template page wording
 
 - The last setup page is now titled Start with a template and suggests picking a pre-made template to get started quickly.
