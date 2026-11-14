@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.15.0 — Shorter setup
+
+- The setup walkthrough is now four pages: nickname, connection, portrait or landscape, and templates and groups.
+- The last page has Choose template and Create group buttons once you are connected.
+- The practice faders and the separate layout page are gone.
+
 ## 0.14.0 — iPad group name bar
 
 - On iPad in landscape, an open group shows its name in a bar along the bottom, spanning the group, with the close button at its end. The rotated name rail beside the group is gone.

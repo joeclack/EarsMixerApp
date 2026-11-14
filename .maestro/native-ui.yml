@@ -17,12 +17,6 @@ appId: com.joeclack.earsmixerapp
     text: "Next"
     enabled: true
 - tapOn:
-    text: "Next"
-    enabled: true
-- tapOn:
-    text: "Next"
-    enabled: true
-- tapOn:
     text: "Finish"
     enabled: true
 - extendedWaitUntil:

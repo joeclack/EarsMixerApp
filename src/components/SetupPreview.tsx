@@ -1,29 +1,16 @@
-import { memo, useCallback, useMemo, useState, type ReactNode } from 'react';
-import { Image, Text, View } from 'react-native';
-import Animated, { useAnimatedStyle, useSharedValue, type SharedValue } from 'react-native-reanimated';
-import { Gesture, GestureDetector } from 'react-native-gesture-handler';
-import { scheduleOnRN } from 'react-native-worklets';
-import { useSession } from '../mixer/context';
-import { useDetentHaptics } from '../mixer/dragHaptics';
-import { dbToPosition, levelText, positionToDb } from '../mixer/model';
+import { memo, type ReactNode } from 'react';
+import { Text, View } from 'react-native';
 import { useTheme } from '../theme';
-import { faderArtwork } from './faderArtwork';
-import { FADER_CAP_HEIGHT, FADER_CAP_WIDTH } from './faderGeometry';
-import FaderHousing from './FaderHousing';
 import HardwarePanel from './HardwarePanel';
 import { hardwarePalette } from './hardwarePalette';
-import { Engraved, LcdReadout } from './ConsoleDetails';
+import { Engraved } from './ConsoleDetails';
 import { Icon } from './ui';
 
-// Small previews of the real interface for each setup step. Most are static
-// illustrations hidden from assistive technologies; the Adjust step's faders
-// are practice faders the user can drag, which never send anything to a desk.
+// Small static previews of the real interface for each setup step, hidden
+// from assistive technologies.
 export default memo(function SetupPreview({ step, nickname }: { step: number; nickname: string }) {
-  const preview = [<Presence key={0} nickname={nickname} />, <Connect key={1} />, <Templates key={2} />,
-    <Adjust key={3} />, <Landscape key={4} />, <Layout key={5} />][step];
-  const interactive = step === 3;
-  return <View pointerEvents={interactive ? 'box-none' : 'none'} accessible={false} accessibilityElementsHidden={!interactive}
-    importantForAccessibility={interactive ? 'auto' : 'no-hide-descendants'}
+  const preview = [<Presence key={0} nickname={nickname} />, <Connect key={1} />, <Views key={2} />, <Templates key={3} />][step];
+  return <View pointerEvents="none" accessible={false} accessibilityElementsHidden importantForAccessibility="no-hide-descendants"
     style={{ flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 28 }}>
     <View style={{ width: '100%', maxWidth: 340 }}>{preview}</View>
   </View>;
@@ -91,143 +78,61 @@ function Templates() {
   </View>;
 }
 
-// One practice channel's level, shown by its practice bar. It is
-// local to setup and never reaches the mixer.
-type PracticeChannel = { label: string; position: SharedValue<number>; db: number; setDb(db: number): void };
-function usePracticeChannel(label: string, initialDb: number): PracticeChannel {
-  const position = useSharedValue(dbToPosition(initialDb));
-  const [db, setDb] = useState(initialDb);
-  return { label, position, db, setDb };
-}
-
-// The drag shared by both orientations: the real handle artwork moving along a
-// track of `track` points, with detent haptics and a live readout.
-function usePracticeDrag(channel: PracticeChannel, track: number, vertical: boolean) {
-  const { session } = useSession();
-  const start = useSharedValue(0);
-  const detents = useDetentHaptics(session.state.settings.haptics);
-  const { position, setDb } = channel;
-  const report = useCallback((value: number) => setDb(positionToDb(value)), [setDb]);
-  const pan = useMemo(() => {
-    const gesture = Gesture.Pan().enabled(track > 0);
-    if (vertical) gesture.activeOffsetY([-3, 3]).failOffsetX([-10, 10]);
-    else gesture.activeOffsetX([-3, 3]).failOffsetY([-10, 10]);
-    return gesture.onStart(() => {
-      'worklet';
-      start.set(position.get()); detents.start(position.get() * track);
-    }).onUpdate(event => {
-      'worklet';
-      const movement = vertical ? -event.translationY : event.translationX;
-      const next = Math.max(0, Math.min(1, start.get() + movement / track));
-      position.set(next); detents.move(next * track); scheduleOnRN(report, next);
-    });
-  }, [track, vertical, position, start, report, detents]);
-  const step = useCallback((up: boolean) => {
-    const next = Math.max(0, Math.min(1, position.get() + (up ? 0.05 : -0.05)));
-    position.set(next); setDb(positionToDb(next));
-  }, [position, setDb]);
-  return { pan, step };
-}
-
-// The real handle artwork, centred on its track position by the parent's offset.
-function PracticeHandle({ vertical, size = 1, style }: { vertical: boolean; size?: number; style: object }) {
-  return <Animated.View style={[{ position: 'absolute', alignItems: 'center', justifyContent: 'center', borderRadius: 8 * size,
-    boxShadow: [{ offsetX: 1, offsetY: 4, blurRadius: 4, color: '#000000B3' }] },
-    vertical ? { left: -FADER_CAP_WIDTH * size / 2, top: -FADER_CAP_HEIGHT * size / 2, width: FADER_CAP_WIDTH * size, height: FADER_CAP_HEIGHT * size }
-      : { left: -FADER_CAP_HEIGHT / 2, top: 3 - FADER_CAP_WIDTH / 2, width: FADER_CAP_HEIGHT, height: FADER_CAP_WIDTH }, style]}>
-    <Image source={faderArtwork} resizeMode="stretch" style={{ width: FADER_CAP_WIDTH * size, height: FADER_CAP_HEIGHT * size,
-      transform: vertical ? [] : [{ rotate: '90deg' }] }} />
-  </Animated.View>;
-}
-
-// A practice bar the user can drag; it never sends anything to a desk.
-function PracticeFader({ channel }: { channel: PracticeChannel }) {
-  const theme = useTheme();
-  const [track, setTrack] = useState(0);
-  const { pan, step } = usePracticeDrag(channel, track, false);
-  const thumbStyle = useAnimatedStyle(() => ({ transform: [{ translateX: track * channel.position.get() }] }));
-  const fillStyle = useAnimatedStyle(() => ({ width: track * channel.position.get() }));
-  const text = levelText(channel.db, 'level');
-  return <View style={{ gap: 8 }}>
-    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 8 }}>
-      <Text style={{ flex: 1, color: theme.text, fontSize: 15, fontWeight: '600' }}>{channel.label}</Text>
-      <LcdReadout>{text}</LcdReadout>
-    </View>
-    <FaderHousing vertical={false}>
-      <GestureDetector gesture={pan}>
-        <View accessible accessibilityRole="adjustable" accessibilityLabel={channel.label + ' practice fader'} accessibilityValue={{ text }}
-          accessibilityActions={[{ name: 'increment' }, { name: 'decrement' }]}
-          onAccessibilityAction={event => step(event.nativeEvent.actionName === 'increment')}
-          style={{ height: 56, justifyContent: 'center' }}>
-          <View onLayout={event => setTrack(event.nativeEvent.layout.width)} style={{ marginHorizontal: FADER_CAP_HEIGHT / 2, height: 6, justifyContent: 'center' }}>
-            <View style={{ height: 6, borderRadius: 3, backgroundColor: '#000000' }} />
-            <Animated.View style={[{ position: 'absolute', left: 0, height: 6, borderRadius: 3, backgroundColor: theme.dark ? '#48D8C4' : '#7EEBD0' }, fillStyle]} />
-            <PracticeHandle vertical={false} style={thumbStyle} />
-          </View>
-        </View>
-      </GestureDetector>
-    </FaderHousing>
-  </View>;
-}
-
-function Adjust() {
-  const channels = [usePracticeChannel('Keys', -6), usePracticeChannel('Click', 2.4)];
-  return <View style={{ gap: 14 }}>
-    {channels.map(channel => <PracticeFader key={channel.label} channel={channel} />)}
-  </View>;
-}
-
 function MiniStrip({ level }: { level: number }) {
   const { dark } = useTheme(), palette = hardwarePalette(dark);
-  return <View style={{ width: 16, flex: 1, borderRadius: 8, backgroundColor: dark ? '#0B171C' : '#E9E2CC',
-    borderWidth: dark ? 0 : 1, borderColor: '#B42B43', alignItems: 'center',
-    boxShadow: [{ offsetX: 0, offsetY: 2, blurRadius: 4, color: dark ? '#000000A6' : '#2E4A5833' }] }}>
-    <View style={{ position: 'absolute', top: 8, bottom: 8, width: 2, borderRadius: 1, backgroundColor: '#000000' }} />
-    <View style={{ position: 'absolute', bottom: 8, height: `${level * 70}%`, width: 2, borderRadius: 1, backgroundColor: palette.indicator }} />
-    <View style={{ position: 'absolute', bottom: `${level * 70}%`, width: 14, height: 9, borderRadius: 2, backgroundColor: '#1F292E',
+  return <View style={{ width: 12, flex: 1, borderRadius: 6, backgroundColor: dark ? '#0B171C' : '#E9E2CC',
+    borderWidth: dark ? 0 : 1, borderColor: '#B42B43', alignItems: 'center' }}>
+    <View style={{ position: 'absolute', top: 6, bottom: 6, width: 2, borderRadius: 1, backgroundColor: '#000000' }} />
+    <View style={{ position: 'absolute', bottom: 6, height: `${level * 70}%`, width: 2, borderRadius: 1, backgroundColor: palette.indicator }} />
+    <View style={{ position: 'absolute', bottom: `${level * 70}%`, width: 11, height: 7, borderRadius: 2, backgroundColor: '#1F292E',
       borderWidth: 1, borderColor: '#5A6970' }} />
   </View>;
 }
 
-// A phone turned sideways, showing the vertical fader bank and the side rail.
-function Landscape() {
+function MiniBar({ level }: { level: number }) {
+  const { dark } = useTheme(), palette = hardwarePalette(dark);
+  return <View style={{ height: 10, borderRadius: 5, backgroundColor: dark ? '#0B171C' : '#E9E2CC', justifyContent: 'center',
+    borderWidth: dark ? 0 : 1, borderColor: '#B42B43' }}>
+    <View style={{ marginHorizontal: 5, height: 2, borderRadius: 1, backgroundColor: '#000000' }} />
+    <View style={{ position: 'absolute', left: 5, width: `${level * 80}%`, height: 2, borderRadius: 1, backgroundColor: palette.indicator }} />
+    <View style={{ position: 'absolute', left: `${level * 80}%`, width: 7, height: 10, borderRadius: 2, backgroundColor: '#1F292E',
+      borderWidth: 1, borderColor: '#5A6970' }} />
+  </View>;
+}
+
+function Phone({ width, height, label, children }: { width: number; height: number; label: string; children: ReactNode }) {
   const theme = useTheme();
-  const levels = [0.7, 0.5, 0.85, 0.6, 0.4, 0.75, 0.55];
-  return <View style={{ alignItems: 'center', gap: 10 }}>
-    <View style={{ width: 300, height: 150, borderRadius: 28, padding: 7, backgroundColor: theme.dark ? '#2B3740' : '#1E272C',
-      boxShadow: [{ offsetX: 0, offsetY: 8, blurRadius: 18, color: theme.dark ? '#000000A6' : '#2E4A5840' }] }}>
-      <View style={{ flex: 1, borderRadius: 22, overflow: 'hidden', backgroundColor: theme.bg, flexDirection: 'row', paddingVertical: 12, paddingHorizontal: 12, gap: 10 }}>
-        <View style={{ gap: 8, justifyContent: 'center' }}>
-          {(['headphones', 'slider.horizontal.3', 'infinity'] as const).map((symbol, index) => <View key={symbol} style={{ width: 24, height: 24, borderRadius: 12,
-            alignItems: 'center', justifyContent: 'center', backgroundColor: index === 2 ? theme.danger : theme.secondary }}>
-            <Icon name={{ ios: symbol, android: index === 0 ? 'headphones' : index === 1 ? 'tune' : 'all_inclusive', web: index === 0 ? 'headphones' : index === 1 ? 'tune' : 'all_inclusive' }}
-              size={12} color={index === 2 ? '#FFFFFF' : theme.text} />
+  return <View style={{ alignItems: 'center', gap: 8 }}>
+    <View style={{ width, height, borderRadius: 20, padding: 5, backgroundColor: theme.dark ? '#2B3740' : '#1E272C',
+      boxShadow: [{ offsetX: 0, offsetY: 6, blurRadius: 14, color: theme.dark ? '#000000A6' : '#2E4A5840' }] }}>
+      <View style={{ flex: 1, borderRadius: 16, overflow: 'hidden', backgroundColor: theme.bg, padding: 9 }}>{children}</View>
+    </View>
+    <Engraved size={10}>{label}</Engraved>
+  </View>;
+}
+
+// The same mix held upright and turned sideways.
+function Views() {
+  const theme = useTheme();
+  const levels = [0.7, 0.5, 0.85, 0.6, 0.4, 0.75];
+  return <View style={{ flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'center', gap: 22 }}>
+    <Phone width={86} height={164} label="Portrait">
+      <View style={{ flex: 1, gap: 9, paddingTop: 6 }}>
+        {levels.map((level, index) => <MiniBar key={index} level={level} />)}
+      </View>
+    </Phone>
+    <Phone width={196} height={106} label="Landscape">
+      <View style={{ flex: 1, flexDirection: 'row', gap: 8 }}>
+        <View style={{ gap: 6, justifyContent: 'center' }}>
+          {(['headphones', 'slider.horizontal.3'] as const).map((symbol, index) => <View key={symbol} style={{ width: 20, height: 20, borderRadius: 10,
+            alignItems: 'center', justifyContent: 'center', backgroundColor: theme.secondary }}>
+            <Icon name={{ ios: symbol, android: index === 0 ? 'headphones' : 'tune', web: index === 0 ? 'headphones' : 'tune' }} size={10} color={theme.text} />
           </View>)}
         </View>
         <View style={{ flex: 1, flexDirection: 'row', justifyContent: 'space-between' }}>
           {levels.map((level, index) => <MiniStrip key={index} level={level} />)}
         </View>
       </View>
-    </View>
-    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-      <Icon name={{ ios: 'rotate.right', android: 'screen_rotation', web: 'screen_rotation' }} size={14} color={theme.muted} />
-      <Engraved size={10}>Turn sideways</Engraved>
-    </View>
+    </Phone>
   </View>;
-}
-
-function LayoutRow({ name, hidden = false, last = false }: { name: string; hidden?: boolean; last?: boolean }) {
-  const theme = useTheme();
-  return <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 11, opacity: hidden ? 0.45 : 1,
-    borderBottomWidth: last ? 0 : 1, borderBottomColor: theme.line }}>
-    <Icon name={hidden ? { ios: 'eye.slash', android: 'visibility_off', web: 'visibility_off' } : { ios: 'eye', android: 'visibility', web: 'visibility' }} size={16} />
-    <Text style={{ flex: 1, color: theme.text, fontSize: 16 }}>{name}</Text>
-    <Icon name={{ ios: 'line.3.horizontal', android: 'drag_handle', web: 'drag_handle' }} size={16} color={theme.muted} />
-  </View>;
-}
-
-function Layout() {
-  return <Card>
-    <View><LayoutRow name="Click" /><LayoutRow name="Keys" /><LayoutRow name="Crowd mics" hidden /><LayoutRow name="Vox 1" last /></View>
-  </Card>;
 }
