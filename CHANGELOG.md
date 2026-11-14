@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.16.3 — Plain backgrounds
+
+- Every screen, including the mixer desk, now has a plain background colour. The gradient and grain texture are gone.
+
 ## 0.16.2 — No list on the template page
 
 - The last setup page no longer shows a list under its explanation.

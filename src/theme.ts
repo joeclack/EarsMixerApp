@@ -18,7 +18,6 @@ export function useTheme() {
     consoleRim: '#FFF9E3', consoleShadow: '#5A422D66',
     // The mixer's desk: one panel with the faders set straight into it.
     deskBg: dark ? '#0B1015' : '#E6DFC8',
-    deskGradient: dark ? ['#1C2A33', '#141F26', '#0F181E'] as const : ['#F2ECD8', '#E6DFC8', '#D9D0B4'] as const,
     deskLip: dark ? 'rgba(160,200,215,0.08)' : 'rgba(255,255,255,0.7)',
     deskDivider: dark ? 'rgba(132,155,165,0.14)' : 'rgba(180,43,67,0.22)',
   }), [dark]);
