@@ -2,6 +2,7 @@
 
 ## 0.1.0 — First TestFlight build (unreleased)
 
+- Removed the GitHub Actions workflows for mobile builds and previews.
 - Documented the development workflow, design system, release checks and private security reporting.
 - Added a pull request template.
 
