@@ -7,7 +7,7 @@ Check out /screenshots for in-app screenshots
 ## Features
 
 - Select an AUX and adjust channel send levels or pan.
-- Horizontal portrait faders, a vertical landscape bank, and a tall single-fader view.
+- Horizontal portrait faders and a vertical landscape bank.
 - Named channel groups, relative level control, channel ordering and visibility.
 - Light/dark themes, haptics, connection QR scanning and native server discovery.
 - Device-local layouts and saved level states, shared server templates, and offline demo mode.
@@ -45,3 +45,9 @@ For a real server, enter its reachable network address, such as `192.168.1.100:8
 - **CI previews:** GitHub Actions builds Android APK and iOS simulator artifacts. Downloadable Android previews are also listed under [Releases](https://github.com/joeclack/EarsMixerApp/releases).
 
 Version: **0.1.0**. Expo reads it from `package.json`; build profiles are in [eas.json](eas.json). See [CHANGELOG.md](CHANGELOG.md) for changes.
+
+## Development checks
+
+When requested, run `npm run typecheck` and `npm test` from this repository. Use the relevant bundle script in [package.json](package.json) for build checks.
+
+See [contributor guidance](AGENTS.md), the [design system](DESIGN_SYSTEM.md), the [release plan](PLAN.md) and the [security policy](SECURITY.md).

@@ -2,6 +2,9 @@
 
 ## 0.1.0 — First TestFlight build (unreleased)
 
+- Documented the development workflow, design system, release checks and private security reporting.
+- Added a pull request template.
+
 - Mixers are listed by the name set in the server's admin area (EarsMixer 1.14.0 or later) instead of by address. Recent mixers, Settings, the PIN screen and setup show the name, with the address underneath in Recent mixers. Older servers still show their address.
 
 ## Development history
