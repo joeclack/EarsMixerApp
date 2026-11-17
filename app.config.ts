@@ -32,6 +32,9 @@ const config: ExpoConfig = {
     ['expo-build-properties', { android: { usesCleartextTraffic: true }, ios: { deploymentTarget: '16.4' } }],
   ],
   web: { favicon: './assets/favicon.png', bundler: 'metro' },
+  extra: {
+    eas: { projectId: '63a0ebae-ced2-4805-bb9d-1bc26f1e78b0' },
+  },
 };
 
 export default config;

@@ -42,7 +42,19 @@ For a real server, enter its reachable network address, such as `192.168.1.100:8
 - **iOS simulator:** use the `simulator` EAS profile.
 - **Store builds:** use the `production` EAS profile and configure the relevant store credentials and submission separately.
 - **Web:** `npm run web` for development; `npm run build:web` exports `dist/` for a static host with SPA route fallback. The mixer server must be reachable from the browser and allow the required CORS reads.
-- **CI previews:** GitHub Actions builds Android APK and iOS simulator artifacts. Downloadable Android previews are also listed under [Releases](https://github.com/joeclack/EarsMixerApp/releases).
+- **Previously published previews:** Android APKs are available under [Releases](https://github.com/joeclack/EarsMixerApp/releases).
+
+### TestFlight
+
+Once configured, [the TestFlight workflow](.eas/workflows/testflight.yml) builds the iOS store binary and uploads it to App Store Connect on every push to `main`, including PR merges. EAS increments the build number remotely. The app version still comes from `package.json`.
+
+Before merging the workflow:
+
+1. Connect the `EarsMixerApp` GitHub repository in the [Expo project's GitHub settings](https://expo.dev/accounts/joeclack/projects/earsmixer-app/github). The Expo project ID is already set in `app.config.ts`.
+2. Create or select the App Store Connect app for `com.joeclack.earsmixerapp`. Add its numeric Apple ID as `submit.production.ios.ascAppId` in [eas.json](eas.json), using a string.
+3. Run `npx eas-cli@latest credentials --platform ios`. Select the `production` profile and configure iOS distribution signing and the App Store Connect API key for Expo Submit.
+4. If the app already has an uploaded build, initialise the EAS build number with `npx eas-cli@latest build:version:set --platform ios --profile production` using the latest uploaded build number.
+5. Validate the workflow with `npx eas-cli@latest workflow:validate .eas/workflows/testflight.yml --non-interactive`. To publish a first build manually, run `npx eas-cli@latest workflow:run .eas/workflows/testflight.yml`.
 
 Version: **0.1.0**. Expo reads it from `package.json`; build profiles are in [eas.json](eas.json). See [CHANGELOG.md](CHANGELOG.md) for changes.
 
