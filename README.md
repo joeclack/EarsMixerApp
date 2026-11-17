@@ -50,7 +50,7 @@ Once configured, [the TestFlight workflow](.eas/workflows/testflight.yml) builds
 
 Before merging the workflow:
 
-1. Sign in with `npx eas-cli@latest login` and link the app with `npx eas-cli@latest init`. Commit the resulting Expo project ID and connect the `EarsMixerApp` GitHub repository in the Expo project's GitHub settings.
+1. Connect the `EarsMixerApp` GitHub repository in the [Expo project's GitHub settings](https://expo.dev/accounts/joeclack/projects/earsmixer-app/github). The Expo project ID is already set in `app.config.ts`.
 2. Create or select the App Store Connect app for `com.joeclack.earsmixerapp`. Add its numeric Apple ID as `submit.production.ios.ascAppId` in [eas.json](eas.json), using a string.
 3. Run `npx eas-cli@latest credentials --platform ios`. Select the `production` profile and configure iOS distribution signing and the App Store Connect API key for Expo Submit.
 4. If the app already has an uploaded build, initialise the EAS build number with `npx eas-cli@latest build:version:set --platform ios --profile production` using the latest uploaded build number.
