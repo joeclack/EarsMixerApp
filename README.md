@@ -42,7 +42,7 @@ For a real server, enter its reachable network address, such as `192.168.1.100:8
 - **iOS simulator:** use the `simulator` EAS profile.
 - **Store builds:** use the `production` EAS profile and configure the relevant store credentials and submission separately.
 - **Web:** `npm run web` for development; `npm run build:web` exports `dist/` for a static host with SPA route fallback. The mixer server must be reachable from the browser and allow the required CORS reads.
-- **CI previews:** GitHub Actions builds Android APK and iOS simulator artifacts. Downloadable Android previews are also listed under [Releases](https://github.com/joeclack/EarsMixerApp/releases).
+- **Previously published previews:** Android APKs are available under [Releases](https://github.com/joeclack/EarsMixerApp/releases).
 
 ### TestFlight
 
