@@ -1,12 +1,37 @@
-name: Publish iOS build to TestFlight
+name: Deploy iOS to production
+
+# On every push to main, compare the native fingerprint with existing builds:
+# - native code or config unchanged: publish an over-the-air update to the
+#   production channel, which TestFlight and App Store builds with that
+#   fingerprint download on their next launch.
+# - native code or config changed: build a new binary and upload it to TestFlight.
 
 on:
   push:
     branches: [main]
 
 jobs:
+  fingerprint:
+    name: Fingerprint native code
+    type: fingerprint
+    environment: production
+
+  get_ios_build:
+    name: Find a matching iOS build
+    needs: [fingerprint]
+    type: get-build
+    params:
+      platform: ios
+      profile: production
+      distribution: store
+      fingerprint_hash: ${{ needs.fingerprint.outputs.ios_fingerprint_hash }}
+      # A build with this fingerprint that is still running counts as a match.
+      wait_for_in_progress: true
+
   build_ios:
     name: Build iOS app
+    needs: [get_ios_build]
+    if: ${{ !needs.get_ios_build.outputs.build_id }}
     type: build
     params:
       platform: ios
@@ -14,8 +39,19 @@ jobs:
 
   submit_ios:
     name: Upload to TestFlight
+    needs: [get_ios_build, build_ios]
+    if: ${{ !needs.get_ios_build.outputs.build_id }}
     type: testflight
-    needs: [build_ios]
     params:
       build_id: ${{ needs.build_ios.outputs.build_id }}
       profile: production
+
+  publish_ios_update:
+    name: Publish iOS update
+    needs: [get_ios_build]
+    if: ${{ needs.get_ios_build.outputs.build_id }}
+    type: update
+    environment: production
+    params:
+      channel: production
+      platform: ios
