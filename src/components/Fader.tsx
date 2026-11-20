@@ -4,14 +4,13 @@ import Animated, { useSharedValue, useAnimatedStyle, cancelAnimation, Easing, wi
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import { scheduleOnRN, scheduleOnUI } from 'react-native-worklets';
 import FaderHandleSurface from './FaderHandleSurface';
-import SignalMeter from './SignalMeter';
 import { LinearGradient } from 'expo-linear-gradient';
 import { FADER_CAP_HEIGHT, FADER_CAP_WIDTH, FADER_INSET, FADER_TRACK_CENTER, FADER_LIGHT } from './faderGeometry';
 import { useDetentHaptics } from '../mixer/dragHaptics';
 import * as Haptics from 'expo-haptics';
 import { useFaderSession } from '../mixer/context';
 import { useTheme } from '../theme';
-import { clamp, levelText, dbToPosition, SIGNAL_METERS_ENABLED } from '../mixer/model';
+import { clamp, levelText, dbToPosition } from '../mixer/model';
 import type { DragToken } from '../mixer/client';
 import { releasePosition } from '../mixer/faderPrecision';
 
@@ -188,9 +187,6 @@ export default memo(function Fader({ channel, label, vertical = false, length = 
       </Animated.View>
     </View>
     <FaderScale width={extent} travel={travel} vertical={vertical} parameter={mix.parameter} color={FADER_LIGHT} size={size} />
-    {/* Live input signal beside the slot; groups have none of their own. */}
-    {SIGNAL_METERS_ENABLED && channel > 0 && <SignalMeter mixer={session.mixer} channel={channel} vertical={vertical} start={inset} length={travel}
-      offset={vertical ? FADER_TRACK_CENTER * size + 9 : 37} />}
     <GestureDetector gesture={gesture}><Animated.View accessible accessibilityRole="adjustable" accessibilityLabel={label + (mix.parameter === 'pan' ? ' pan' : ' level')}
       accessibilityHint={onEnlarge ? 'Touch and hold to open a full-screen fader' : undefined}
       accessibilityState={{ disabled: !ready }} accessibilityValue={{ min: 0, max: 100, now: Math.round(position * 100), text: levelText(session.mixer.displayValue(channel), mix.parameter) }}

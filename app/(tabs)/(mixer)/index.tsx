@@ -205,8 +205,7 @@ export default function Mixer() {
       data={sections} renderItem={renderSection} keyExtractor={item => String(item.header.channel)} contentInsetAdjustmentBehavior="never"
       // Portrait faders sit straight on the desk, divided by fine lines.
       contentContainerStyle={{ paddingTop: topPadding, paddingLeft: landscape ? 16 : 4, paddingRight: landscape ? 16 : 4, paddingBottom: bottomPadding }} keyboardShouldPersistTaps="handled"
-      // Demo meters are labelled so they are never mistaken for the desk's signal.
-      ListHeaderComponent={!landscape && sections.length && (mix.locked || (mix.config?.meters === 'simulated' && state.settings.showMeters)) ? <View style={{ paddingHorizontal: 12, paddingBottom: 6, gap: 6 }}>
+      ListHeaderComponent={!landscape && sections.length && mix.locked ? <View style={{ paddingHorizontal: 12, paddingBottom: 6, gap: 6 }}>
         {/* While locked, a bar says so and unlocks with a tap, so a locked mixer is never a mystery. */}
         {mix.locked && <Pressable accessibilityRole="button" accessibilityLabel="Faders locked. Unlock faders" onPress={() => session.mixer.setLocked(false)}
           style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 8, minHeight: 44, paddingHorizontal: 12, borderRadius: 10,
@@ -215,8 +214,6 @@ export default function Mixer() {
           <Text style={{ flex: 1, color: theme.text, fontSize: 15, fontWeight: '600' }}>Faders locked</Text>
           <Text style={{ color: theme.tint, fontSize: 15, fontWeight: '600' }}>Unlock</Text>
         </Pressable>}
-        {/* Demo meters are labelled so they are never mistaken for the desk's signal. */}
-        {mix.config?.meters === 'simulated' && state.settings.showMeters && <Text style={{ color: theme.muted, fontSize: 11, paddingHorizontal: 4 }}>Signal meters are simulated</Text>}
       </View> : undefined}
       ListEmptyComponent={<View style={{ alignItems: 'center', paddingVertical: 40, gap: 12 }}>
         <Icon name={{ ios: 'eye.slash', android: 'visibility_off', web: 'visibility_off' }} size={34} color={theme.muted} />
