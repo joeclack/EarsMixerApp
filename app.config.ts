@@ -1,8 +1,14 @@
 import type { ExpoConfig } from 'expo/config';
 import { version } from './package.json';
 
+const projectId = '63a0ebae-ced2-4805-bb9d-1bc26f1e78b0';
+
 const config: ExpoConfig = {
   name: 'EarsMixer', slug: 'earsmixer-app', version,
+  // The fingerprint changes whenever native code or config changes, so an
+  // over-the-air update only reaches builds with matching native code.
+  runtimeVersion: { policy: 'fingerprint' },
+  updates: { url: `https://u.expo.dev/${projectId}` },
   orientation: 'default', userInterfaceStyle: 'automatic',
   icon: './assets/icon.png',
   ios: {
@@ -33,7 +39,7 @@ const config: ExpoConfig = {
   ],
   web: { favicon: './assets/favicon.png', bundler: 'metro' },
   extra: {
-    eas: { projectId: '63a0ebae-ced2-4805-bb9d-1bc26f1e78b0' },
+    eas: { projectId },
   },
 };
 

@@ -44,9 +44,16 @@ For a real server, enter its reachable network address, such as `192.168.1.100:8
 - **Web:** `npm run web` for development; `npm run build:web` exports `dist/` for a static host with SPA route fallback. The mixer server must be reachable from the browser and allow the required CORS reads.
 - **Previously published previews:** Android APKs are available under [Releases](https://github.com/joeclack/EarsMixerApp/releases).
 
-### TestFlight
+### TestFlight and over-the-air updates
 
-Once configured, [the TestFlight workflow](.eas/workflows/testflight.yml) builds the iOS store binary and uploads it to App Store Connect on every push to `main`, including PR merges. EAS increments the build number remotely. The app version still comes from `package.json`.
+[The deploy workflow](.eas/workflows/testflight.yml) runs on every push to `main`, including PR merges. It fingerprints the native project and looks for a production iOS build with the same fingerprint:
+
+- **Match found (JavaScript and assets only changed):** it publishes an EAS Update to the `production` channel. Installed TestFlight and App Store builds download it on launch and apply it on the next launch.
+- **No match (native code, dependencies with native code, or native config in `app.config.ts` changed):** it builds a new iOS store binary and uploads it to TestFlight.
+
+The runtime version uses the `fingerprint` policy, so an update only reaches builds whose native code matches. EAS increments the build number remotely. The app version still comes from `package.json`. Builds made before `expo-updates` was added cannot receive updates.
+
+To publish an update by hand, run `npx eas-cli@latest update --channel production --platform ios`.
 
 Before merging the workflow:
 

@@ -6,6 +6,7 @@
 - Documented the development workflow, design system, release checks and private security reporting.
 - Added a pull request template.
 - Added an EAS workflow to build and upload iOS releases to TestFlight on updates to `main`.
+- Merges to `main` now publish an over-the-air EAS Update when only JavaScript or assets changed, and build and upload a new TestFlight binary when native code changed. The app includes `expo-updates` with a fingerprint runtime version, and the `production` and `preview` build profiles use matching update channels.
 - Removed GitHub Actions for mobile checks, preview builds and Android APK publishing.
 
 - The app has a tab bar again, with three tabs: Mixer, Channels and Settings. The Channels tab switches between Channels (order and visibility), Groups and Templates. The Settings button is gone from the mixer, and the options menu keeps only Fader mode, Message the engineer, and Lock and Set all levels to off. The tab bar hides in phone landscape so the faders keep the full height.
