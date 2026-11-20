@@ -27,15 +27,8 @@ export default function MixerToolbar() {
 
         {(['level', 'pan'] as const).map(mode => <button key={mode} aria-pressed={mix.parameter === mode}
           onClick={event => { session.mixer.setParameter(mode); event.currentTarget.closest('details')?.removeAttribute('open'); }}>{mode === 'level' ? 'Level' : 'Pan'}</button>)}
-        <button onClick={event => { event.currentTarget.closest('details')?.removeAttribute('open'); router.push('/templates'); }}>{state.selectedTemplate ? state.selectedTemplate.name + ': Templates' : 'Templates'}</button>
-        <button onClick={event => { event.currentTarget.closest('details')?.removeAttribute('open'); router.push('/layout'); }}>Edit channels</button>
-        <button onClick={event => { event.currentTarget.closest('details')?.removeAttribute('open'); router.push('/groups'); }}>Channel groups</button>
         <button disabled={mix.status !== 'connected' || !mix.aux} onClick={event => { event.currentTarget.closest('details')?.removeAttribute('open'); setAllLevelsOff(); }} style={{ color: theme.danger }}>Set all levels to off</button>
       </div>
     </details>}
-
-    <Pressable accessibilityRole="button" accessibilityLabel="Settings" onPress={() => router.push('/settings')} style={styles.headerButton}>
-      <Icon name={{ web: 'settings' }} />
-    </Pressable>
   </View> }} />;
 }

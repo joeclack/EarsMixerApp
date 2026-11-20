@@ -94,7 +94,6 @@ function Navigation() {
     <StatusBar style={theme.dark ? 'light' : 'dark'} />
     <Stack screenOptions={{ contentStyle: { backgroundColor: theme.bg }, headerTintColor: theme.tint }}>
       <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-      <Stack.Screen name="settings" options={{ title: 'Settings', headerBackTitle: 'Mixer' }} />
       <Stack.Screen name="setup" options={{ headerShown: false, presentation: 'fullScreenModal', gestureEnabled: false }} />
       <Stack.Screen name="connect" options={sheetOptions} />
       <Stack.Screen name="pin" options={sheetOptions} />
@@ -102,8 +101,8 @@ function Navigation() {
       <Stack.Screen name="templates" options={sheetOptions} />
       <Stack.Screen name="request" options={sheetOptions} />
       <Stack.Screen name="scan" options={{ presentation: 'fullScreenModal', headerShown: false }} />
-      <Stack.Screen name="layout" options={{ title: 'Channel order', presentation: 'modal' }} />
-      <Stack.Screen name="groups" options={{ title: 'Channel groups', headerBackTitle: 'Mixer', presentation: 'card' }} />
+      <Stack.Screen name="layout" options={{ headerShown: false }} />
+      <Stack.Screen name="groups" options={{ headerShown: false }} />
       <Stack.Screen name="group" options={{ title: 'Edit group', headerBackTitle: 'Groups', presentation: 'card' }} />
       <Stack.Screen name="loading-preview" options={{ presentation: 'fullScreenModal', headerShown: false }} />
     </Stack>

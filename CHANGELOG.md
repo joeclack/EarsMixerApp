@@ -8,6 +8,10 @@
 - Added an EAS workflow to build and upload iOS releases to TestFlight on updates to `main`.
 - Removed GitHub Actions for mobile checks, preview builds and Android APK publishing.
 
+- The app has a tab bar again, with three tabs: Mixer, Channels and Settings. The Channels tab switches between Channels (order and visibility), Groups and Templates. The Settings button is gone from the mixer, and the options menu keeps only Fader mode, Message the engineer, and Lock and Set all levels to off. The tab bar hides in phone landscape so the faders keep the full height.
+- On iPhone, Lock faders and Set all levels to off are now a row of two icon buttons, a lock and an infinity sign, at the bottom of the mixer's options menu.
+- On iPhone, Fader mode in the options menu is now a row of two icons: a speaker for Level and a left-right arrow for Pan.
+- Edit channels and Channel groups are now one page. A Channels / Groups selector at the top switches between channel order and your groups, and the separate Channel groups menu item is gone. The page now slides in with a Mixer back button instead of opening as a modal with Done, so group editing opens on top of it.
 - Mixers are listed by the name set in the server's admin area (EarsMixer 1.14.0 or later) instead of by address. Recent mixers, Settings, the PIN screen and setup show the name, with the address underneath in Recent mixers. Older servers still show their address.
 
 ## Development history
