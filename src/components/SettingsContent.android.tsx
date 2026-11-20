@@ -60,7 +60,7 @@ export default function SettingsContent() {
       <MaterialItem title="Show dB values" symbol="tag" onPress={() => session.setSettings({ showLevels: !state.settings.showLevels })}
         trailing={<Switch value={state.settings.showLevels} onCheckedChange={showLevels => session.setSettings({ showLevels })}
           modifiers={[semantics({ contentDescription: 'Show dB values' })]} />} />
-      <MaterialItem title="Edit channels" symbol="reorder" onPress={() => router.push('/layout')} />
+      <MaterialItem title="Edit channels" symbol="reorder" onPress={() => router.push('/channels')} />
       <MaterialItem title="Clear saved levels" symbol="history" destructive onPress={clearLevels} />
     </MaterialSection>
     <MaterialSection title="Text size" symbol="format_size">

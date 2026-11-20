@@ -1,30 +1,6 @@
-import ScreenSurface from '../src/components/ScreenSurface';
-import { useHeaderHeight } from 'expo-router/react-navigation';
-import { useCallback } from 'react';
-import { router, Stack, useFocusEffect } from 'expo-router';
-import { Platform, Pressable, Text, View } from 'react-native';
-import { useSession } from '../src/mixer/context';
-import { useTheme } from '../src/theme';
-import ChannelOrder from '../src/components/ChannelOrder';
+import { Redirect, useLocalSearchParams } from 'expo-router';
+// Edit channels is now the Channels tab.
 export default function LayoutEditor() {
-  const { session } = useSession(), theme = useTheme();
-  const headerHeight = useHeaderHeight();
-  useFocusEffect(useCallback(() => { session.mixer.cancelWrites(); }, [session]));
-  return <ScreenSurface>
-    <Stack.Screen options={{ title: 'Edit channels', headerTransparent: true, headerStyle: { backgroundColor: 'transparent' }, headerShadowVisible: false }} />
-    {Platform.OS === 'web' ? <Stack.Screen options={{ headerRight: () =>
-      <Pressable accessibilityRole="button" onPress={() => router.back()} style={{ padding: 12 }}>
-        <Text style={{ color: theme.tint, fontSize: 17 }}>Done</Text>
-      </Pressable> }} /> :
-      <Stack.Toolbar placement="right">
-        <Stack.Toolbar.Button variant="done" accessibilityLabel="Done" onPress={() => router.back()}>Done</Stack.Toolbar.Button>
-      </Stack.Toolbar>}
-
-    <View style={{ flex: 1, paddingTop: headerHeight }}>
-      <Pressable accessibilityRole="button" onPress={() => router.push('/groups')} style={{ minHeight: 48, padding: 16 }}>
-        <Text style={{ color: theme.tint, fontSize: 17 }}>Manage channel groups</Text>
-      </Pressable>
-      <ChannelOrder />
-    </View>
-  </ScreenSurface>;
+  const { tab } = useLocalSearchParams<{ tab?: string }>();
+  return <Redirect href={{ pathname: '/channels', params: tab ? { tab } : {} }} />;
 }

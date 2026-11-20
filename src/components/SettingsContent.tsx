@@ -35,7 +35,7 @@ export default function SettingsContent() {
       <View style={{ padding: 12 }}><Segmented label="Text size" value={state.settings.textSize}
         options={[{ value: 'standard', label: 'Standard' }, { value: 'large', label: 'Large' }, { value: 'larger', label: 'Larger' }]}
         onChange={value => session.setSettings({ textSize: value as 'standard' | 'large' | 'larger' })} /></View>
-      <Row title="Edit channels" onPress={() => router.push('/layout')} />
+      <Row title="Edit channels" onPress={() => router.push('/channels')} />
       <Row title="Clear saved levels" destructive onPress={clearLevels} />
     </Section>
     <Section><Row title="Reset device data" destructive onPress={reset.confirm} /></Section>

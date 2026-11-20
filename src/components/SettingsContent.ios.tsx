@@ -58,7 +58,7 @@ export default function SettingsContent() {
           onSelectionChange={textSize => session.setSettings({ textSize })} modifiers={[pickerStyle('menu')]}>
           <Text modifiers={[tag('standard')]}>Standard</Text><Text modifiers={[tag('large')]}>Large</Text><Text modifiers={[tag('larger')]}>Larger</Text>
         </Picker>
-        <Button label="Edit channels" systemImage="line.3.horizontal" onPress={() => router.push('/layout')} />
+        <Button label="Edit channels" systemImage="line.3.horizontal" onPress={() => router.push('/channels')} />
         <Button label="Clear saved levels" systemImage="clock.arrow.circlepath" role="destructive" onPress={clearLevels} />
       </Section>
       <Section>

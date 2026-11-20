@@ -5,7 +5,7 @@ import { orderedChannels, type GroupScope } from '../mixer/model';
 import { moveGroupMembers } from '../mixer/groups';
 
 export type GroupEditorProps = { groupId: number | null; scope: GroupScope };
-export const closeGroupEditor = () => { if (router.canGoBack()) router.back(); else router.replace('/groups'); };
+export const closeGroupEditor = () => { if (router.canGoBack()) router.back(); else router.replace({ pathname: '/channels', params: { tab: 'groups' } }); };
 export function useGroupEditor({ groupId, scope }: GroupEditorProps) {
   const { session, state, mix } = useSession();
   const groups = state.preferences.groupsByAux[String(scope.aux)] || [];

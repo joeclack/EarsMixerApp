@@ -222,7 +222,7 @@ export default function Mixer() {
         <Icon name={{ ios: 'eye.slash', android: 'visibility_off', web: 'visibility_off' }} size={34} color={theme.muted} />
         <Text style={{ color: theme.text, fontSize: 19, fontWeight: '600' }}>{hidden.length ? 'All channels hidden' : 'No channels'}</Text>
         <Text style={{ color: theme.muted, textAlign: 'center', lineHeight: 22 }}>{hidden.length ? 'Use Edit to show channels.' : 'Check the server’s desk connection.'}</Text>
-        {hidden.length > 0 && <NativeButton title="Edit channels" onPress={() => router.push('/layout')} />}
+        {hidden.length > 0 && <NativeButton title="Edit channels" onPress={() => router.push('/channels')} />}
       </View>} /></View>}</MixerLoadingBoundary>
     </LandscapeFaderViewport>
     </View>

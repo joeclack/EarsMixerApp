@@ -6,6 +6,6 @@
     "production": { "distribution": "store", "autoIncrement": true }
   },
   "submit": {
-    "production": {}
+    "production": { "ios": { "ascAppId": "6837369648" } }
   }
 }
