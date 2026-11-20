@@ -7,6 +7,7 @@ import { fillMaxWidth, padding, semantics } from '@expo/ui/jetpack-compose/modif
 import { useResetDeviceData } from './useResetDeviceData';
 import { useClearSavedLevels } from './useClearSavedLevels';
 import { useSession } from '../mixer/context';
+import { SIGNAL_METERS_ENABLED } from '../mixer/model';
 import { mixerLabel } from '../connection';
 import { useTheme } from '../theme';
 import { Message } from './ui';
@@ -54,9 +55,9 @@ export default function SettingsContent() {
       <MaterialItem title="Haptic feedback" symbol="vibration" onPress={() => session.setSettings({ haptics: !state.settings.haptics })}
         trailing={<Switch value={state.settings.haptics} onCheckedChange={haptics => session.setSettings({ haptics })}
           modifiers={[semantics({ contentDescription: 'Haptic feedback' })]} />} />
-      <MaterialItem title="Show signal meters" symbol="graphic_eq" onPress={() => session.setSettings({ showMeters: !state.settings.showMeters })}
+      {SIGNAL_METERS_ENABLED && <MaterialItem title="Show signal meters" symbol="graphic_eq" onPress={() => session.setSettings({ showMeters: !state.settings.showMeters })}
         trailing={<Switch value={state.settings.showMeters} onCheckedChange={showMeters => session.setSettings({ showMeters })}
-          modifiers={[semantics({ contentDescription: 'Show signal meters' })]} />} />
+          modifiers={[semantics({ contentDescription: 'Show signal meters' })]} />} />}
       <MaterialItem title="Show dB values" symbol="tag" onPress={() => session.setSettings({ showLevels: !state.settings.showLevels })}
         trailing={<Switch value={state.settings.showLevels} onCheckedChange={showLevels => session.setSettings({ showLevels })}
           modifiers={[semantics({ contentDescription: 'Show dB values' })]} />} />

@@ -2,6 +2,7 @@
 
 ## 0.1.0 — First TestFlight build (unreleased)
 
+- Signal meters are switched off for now, including in demo mode. The app no longer asks servers for meter readings or draws meters beside faders, and **Show signal meters** is gone from Settings. One switch in `src/mixer/model.ts` (`SIGNAL_METERS_ENABLED`) brings them back.
 - Removed the GitHub Actions workflows for mobile builds and previews.
 - Documented the development workflow, design system, release checks and private security reporting.
 - Added a pull request template.

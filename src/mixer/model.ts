@@ -1,6 +1,10 @@
 export type Channel = { channel: number; label: string; order: number };
 export type Aux = { channel: number; label: string; colour: string; stereo: boolean };
 // meters: whether the server streams signal meters: live from the desk, or simulated (the demo).
+// Signal meters are switched off for now because desk readings aren't reliable
+// yet. While this is false the app treats every server, and the demo, as having
+// no meters: it never asks for them, draws none and hides the setting.
+export const SIGNAL_METERS_ENABLED = false;
 export type MixerConfig = { channels: Channel[]; aux: Aux[]; snapshot: string; meters?: 'live' | 'simulated' | null };
 export type Parameter = 'level' | 'pan';
 export type ChannelGroup = { id: number; name: string; members: number[] };
@@ -79,7 +83,7 @@ export function parseConfig(value: unknown): MixerConfig | null {
     aux: unique(value.aux.filter((a: any) => record(a) && positive(a.channel) && a.enabled !== false).map((a: any) =>
       ({ channel: a.channel, label: typeof a.label === 'string' ? a.label : 'Mix ' + a.channel, colour: /^#[a-f\d]{6}$/i.test(a.colour) ? a.colour : '#007AFF', stereo: !!a.stereo }))),
     snapshot: typeof value.snapshot === 'string' ? value.snapshot : '',
-    meters: value.meters === 'live' || value.meters === 'simulated' ? value.meters : null,
+    meters: SIGNAL_METERS_ENABLED && (value.meters === 'live' || value.meters === 'simulated') ? value.meters : null,
   };
 }
 export const clamp = (value: number) => Math.max(0, Math.min(1, value));
