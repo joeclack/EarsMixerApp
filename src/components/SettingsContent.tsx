@@ -30,7 +30,6 @@ export default function SettingsContent() {
         onChange={value => session.setSettings({ appearance: value as 'system' | 'light' | 'dark' })} /></View></Section>
     <Section title="Mixer" symbol={{ ios: 'slider.horizontal.3', android: 'tune', web: 'tune' }}>
       <Row title="Haptic feedback"><Switch accessibilityLabel="Haptic feedback" value={state.settings.haptics} onValueChange={haptics => session.setSettings({ haptics })} /></Row>
-      <Row title="Show signal meters"><Switch accessibilityLabel="Show signal meters" value={state.settings.showMeters} onValueChange={showMeters => session.setSettings({ showMeters })} /></Row>
       <Row title="Show dB values"><Switch accessibilityLabel="Show dB values" value={state.settings.showLevels} onValueChange={showLevels => session.setSettings({ showLevels })} /></Row>
       <View style={{ padding: 12 }}><Segmented label="Text size" value={state.settings.textSize}
         options={[{ value: 'standard', label: 'Standard' }, { value: 'large', label: 'Large' }, { value: 'larger', label: 'Larger' }]}

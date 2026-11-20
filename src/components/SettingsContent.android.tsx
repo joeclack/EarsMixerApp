@@ -54,9 +54,6 @@ export default function SettingsContent() {
       <MaterialItem title="Haptic feedback" symbol="vibration" onPress={() => session.setSettings({ haptics: !state.settings.haptics })}
         trailing={<Switch value={state.settings.haptics} onCheckedChange={haptics => session.setSettings({ haptics })}
           modifiers={[semantics({ contentDescription: 'Haptic feedback' })]} />} />
-      <MaterialItem title="Show signal meters" symbol="graphic_eq" onPress={() => session.setSettings({ showMeters: !state.settings.showMeters })}
-        trailing={<Switch value={state.settings.showMeters} onCheckedChange={showMeters => session.setSettings({ showMeters })}
-          modifiers={[semantics({ contentDescription: 'Show signal meters' })]} />} />
       <MaterialItem title="Show dB values" symbol="tag" onPress={() => session.setSettings({ showLevels: !state.settings.showLevels })}
         trailing={<Switch value={state.settings.showLevels} onCheckedChange={showLevels => session.setSettings({ showLevels })}
           modifiers={[semantics({ contentDescription: 'Show dB values' })]} />} />

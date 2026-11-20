@@ -52,7 +52,6 @@ export default function SettingsContent() {
       <Section title="Mixer" symbol="slider.horizontal.3">
         {/* iPad has no haptic engine, so the setting would do nothing there. */}
         {!(Platform.OS === 'ios' && Platform.isPad) &&<Toggle label="Haptic feedback" isOn={state.settings.haptics} onIsOnChange={haptics => session.setSettings({ haptics })} />}
-        <Toggle label="Show signal meters" isOn={state.settings.showMeters} onIsOnChange={showMeters => session.setSettings({ showMeters })} />
         <Toggle label="Show dB values" isOn={state.settings.showLevels} onIsOnChange={showLevels => session.setSettings({ showLevels })} />
         <Picker label="Text size" systemImage="textformat.size" selection={state.settings.textSize}
           onSelectionChange={textSize => session.setSettings({ textSize })} modifiers={[pickerStyle('menu')]}>

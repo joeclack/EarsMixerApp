@@ -9,9 +9,9 @@ import { moveGroupMembers } from './groups';
 type Storage = { getItem(key: string): Promise<string | null>; setItem(key: string, value: string): Promise<void>; getAllKeys?(): Promise<readonly string[]>; multiRemove?(keys: string[]): Promise<void> };
 export type TextSize = 'standard' | 'large' | 'larger';
 export type Settings = { appearance: 'system' | 'light' | 'dark'; nickname: string; haptics: boolean;
-  /** Mixer display: signal meters beside faders, dB values, and channel text size. */
-  showMeters: boolean; showLevels: boolean; textSize: TextSize };
-export const DEFAULT_SETTINGS: Settings = { appearance: 'system', nickname: '', haptics: true, showMeters: true, showLevels: true, textSize: 'standard' };
+  /** Mixer display: dB values and channel text size. */
+  showLevels: boolean; textSize: TextSize };
+export const DEFAULT_SETTINGS: Settings = { appearance: 'system', nickname: '', haptics: true, showLevels: true, textSize: 'standard' };
 /** How much larger mixer text is drawn at each text size. */
 export const TEXT_SCALE: Record<TextSize, number> = { standard: 1, large: 1.2, larger: 1.4 };
 export type SessionState = {
@@ -139,11 +139,9 @@ export class MixerSession {
         appearance: settings.appearance === 'dark' || settings.appearance === 'light' ? settings.appearance : 'system',
         haptics: settings.haptics !== false,
         nickname: typeof settings.nickname === 'string' ? settings.nickname.slice(0, 80) : '',
-        showMeters: settings.showMeters !== false,
         showLevels: settings.showLevels !== false,
         textSize: settings.textSize === 'large' || settings.textSize === 'larger' ? settings.textSize : 'standard',
       } });
-      this.mixer.setMetersWanted(this.state.settings.showMeters);
       this.savedNickname = this.state.settings.nickname;
     } catch { this.patch({ message: 'Could not load device settings.' }); }
     this.patch({ hydrated: true });
@@ -192,7 +190,6 @@ export class MixerSession {
     this.patch({ settings: { ...this.state.settings, ...settings } });
     if (this.state.settings.nickname.trim()) this.savedNickname = this.state.settings.nickname;
     this.mixer.identify(this.nickname() || null);
-    if ('showMeters' in settings) this.mixer.setMetersWanted(this.state.settings.showMeters);
     void this.persist('earsmixer.native.settings.v1', { ...this.state.settings, nickname: this.savedNickname });
   }
   /** Forget the levels saved on this phone for every mixer and AUX. The desk is unchanged. */
@@ -431,7 +428,6 @@ export class MixerSession {
     this.patch({ recentStates: {}, restorePrompt: null, selectedTemplate: null, setupComplete: false, server: null, lastServer: null, recent: [], settings: DEFAULT_SETTINGS,
       preferences: emptyPreferences(), connecting: false, message: '', pinPrompt: null });
     this.mixer.setLocked(false);
-    this.mixer.setMetersWanted(true);
   }
   setLifecycle(state: string) {
     if ((state === 'inactive' || state === 'background') && this.state.confirmation) this.dismissConfirmation(this.state.confirmation.id);

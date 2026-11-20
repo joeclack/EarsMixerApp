@@ -176,48 +176,6 @@ export class MixerClient {
   onAccessDenied(listener: (revoked: boolean) => void) { this.denied = listener; }
   private desiredAux: number | null = null;
   private listeners = new Set<() => void>();
-  // Signal meters are high-rate telemetry. They bypass emit() and React state:
-  // each meter subscribes to its own channel and animates on the UI thread.
-  private meterReadings = new Map<number, number | null>();
-  private meterListeners = new Map<number, Set<(db: number | null) => void>>();
-  private meterExpiry: ReturnType<typeof setTimeout> | null = null;
-  private metersWanted = true;
-  /** Turning meters off in Settings stops the stream rather than hiding it. */
-  setMetersWanted(wanted: boolean) {
-    if (wanted === this.metersWanted) return;
-    this.metersWanted = wanted;
-    if (!wanted) this.clearMeters();
-    if (this.state.config?.meters && this.state.status === 'connected') this.send({ meters: wanted });
-  }
-  onMeter(channel: number, fn: (db: number | null) => void) {
-    let set = this.meterListeners.get(channel);
-    if (!set) this.meterListeners.set(channel, set = new Set());
-    set.add(fn);
-    fn(this.meterReadings.get(channel) ?? null);
-    return () => { set!.delete(fn); if (!set!.size) this.meterListeners.delete(channel); };
-  }
-  // Readings that stop arriving are stale, never shown as live.
-  private clearMeters() {
-    if (this.meterExpiry) clearTimeout(this.meterExpiry);
-    this.meterExpiry = null;
-    if (!this.meterReadings.size) return;
-    this.meterReadings.clear();
-    this.meterListeners.forEach(set => set.forEach(fn => fn(null)));
-  }
-  private receiveMeters(meters: any) {
-    const config = this.state.config;
-    if (!config?.meters || !meters || meters.kind !== config.meters || !Array.isArray(meters.levels)) return;
-    const visible = new Set(config.channels.map(c => c.channel));
-    for (const entry of meters.levels.slice(0, 512)) {
-      if (!Array.isArray(entry) || !visible.has(entry[0])) continue;
-      const db = entry[1] === null ? null : Number.isFinite(entry[1]) && entry[1] >= -150 && entry[1] <= 30 ? entry[1] as number : undefined;
-      if (db === undefined || this.meterReadings.get(entry[0]) === db) continue;
-      this.meterReadings.set(entry[0], db);
-      this.meterListeners.get(entry[0])?.forEach(fn => fn(db));
-    }
-    if (this.meterExpiry) clearTimeout(this.meterExpiry);
-    this.meterExpiry = setTimeout(() => this.clearMeters(), 800);
-  }
   private controlListeners = new Set<() => void>();
   private controls: MixerControls = this.readControls();
   private channels = new Map<number, { snapshot: string; listeners: Set<() => void> }>();
@@ -263,7 +221,6 @@ export class MixerClient {
   connect(url: string, preserveConfig = false) { this.disconnect(preserveConfig); this.url = url; this.attempt = 0; this.open(); }
   disconnect(preserveConfig = false) {
     this.url = null;
-    this.clearMeters();
     this.liveLevels = {}; this.levelGeneration++;
     this.queryGeneration++;
     if (this.retry) clearTimeout(this.retry);
@@ -304,7 +261,6 @@ export class MixerClient {
     if (this.query) clearTimeout(this.query);
     this.cancelWrites();
     this.liveLevels = {};
-    this.clearMeters();
     this.emit({ peers: [], status: this.url ? 'connecting' : 'disconnected', values: {}, muted: {} });
     if (this.url) this.retry = setTimeout(() => this.open(), Math.min(10000, 1000 * 2 ** this.attempt++));
   }
@@ -440,7 +396,6 @@ export class MixerClient {
       this.denied?.(message.auth === 'revoked');
       return;
     }
-    if (message.meters) { this.receiveMeters(message.meters); return; }
     if (message.requestSent || message.requestAcknowledged || message.requestRejected) { this.receiveRequest(message); return; }
     if (message.presence) {
       const { aux, peers } = message.presence;
@@ -462,11 +417,7 @@ export class MixerClient {
       this.attempt = 0;
       this.cancelWrites();
       const aux = config.aux.find(a => a.channel === this.desiredAux)?.channel ?? config.aux[0]?.channel ?? null;
-      this.clearMeters();
       this.emit({ peers: [], config, status: 'connected', aux, values: {}, muted: {} }); this.refresh();
-      // Ask for meters only when the server has them. The app disconnects in
-      // the background, which also ends the stream.
-      if (config.meters && this.metersWanted) this.send({ meters: true });
       return;
     }
     if (!Array.isArray(message.args) || typeof message.address !== 'string') return;
