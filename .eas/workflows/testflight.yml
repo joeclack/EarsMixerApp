@@ -37,11 +37,14 @@ jobs:
       platform: ios
       profile: production
 
+  # A store build submitted to App Store Connect appears in TestFlight once
+  # Apple has processed it. The `testflight` job type needs a paid Expo plan
+  # to submit an EAS build, so this uses `submit`.
   submit_ios:
     name: Upload to TestFlight
     needs: [get_ios_build, build_ios]
     if: ${{ !needs.get_ios_build.outputs.build_id }}
-    type: testflight
+    type: submit
     params:
       build_id: ${{ needs.build_ios.outputs.build_id }}
       profile: production
