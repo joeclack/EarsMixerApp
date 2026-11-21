@@ -48,7 +48,8 @@ export function mixerRows(config: MixerConfig | null, preferences: Preferences, 
     if (emitted.has(id)) return [];
     emitted.add(id);
     const label = groupLabel(group, channels);
-    const header: MixerRow = { ...channel, channel: id, label, members, group: id };
+    // A group header is not its first member, so it doesn't take that member's colour.
+    const header: MixerRow = { ...channel, channel: id, label, members, group: id, colour: undefined };
     return expanded.includes(id) || pan ? [header, ...members.map(member => ({ ...channels.find(c => c.channel === member)!, group: id }))] : [header];
   });
 }

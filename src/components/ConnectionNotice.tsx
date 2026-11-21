@@ -33,7 +33,7 @@ export default function ConnectionNotice() {
     }
     const timer = setTimeout(() => {
       wasShown.current = true; setShown(true);
-      if (session.state.settings.haptics) void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning).catch(() => {});
+      void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning).catch(() => {});
       if (Platform.OS === 'ios') AccessibilityInfo.announceForAccessibility('Lost connection to the mixer. Check your Wi-Fi.');
     }, SUSTAINED_DROP_MS);
     return () => clearTimeout(timer);

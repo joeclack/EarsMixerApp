@@ -10,11 +10,10 @@ import { Icon } from './ui';
 
 export default function ConfirmationToast() {
   const { session, confirmation } = useConfirmationState();
-  return confirmation ? <Notice key={confirmation.id} message={confirmation.message}
-    haptics={session.state.settings.haptics} onDismiss={() => session.dismissConfirmation(confirmation.id)} /> : null;
+  return confirmation ? <Notice key={confirmation.id} message={confirmation.message} onDismiss={() => session.dismissConfirmation(confirmation.id)} /> : null;
 }
 
-function Notice({ message, haptics, onDismiss }: { message: string; haptics: boolean; onDismiss(): void }) {
+function Notice({ message, onDismiss }: { message: string; onDismiss(): void }) {
   const theme = useTheme(), insets = useSafeAreaInsets();
   const progress = useSharedValue(0), announced = useRef(false);
   const dismiss = useRef(onDismiss); dismiss.current = onDismiss;
@@ -23,7 +22,7 @@ function Notice({ message, haptics, onDismiss }: { message: string; haptics: boo
     if (!announced.current) {
       announced.current = true;
       if (Platform.OS === 'ios') AccessibilityInfo.announceForAccessibility(message);
-      if (haptics) void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
+      void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
     }
     let alive = true;
     let hide: ReturnType<typeof setTimeout> | undefined;
@@ -36,7 +35,7 @@ function Notice({ message, haptics, onDismiss }: { message: string; haptics: boo
       }, enabled ? 6000 : 2600);
     });
     return () => { alive = false; clearTimeout(hide); clearTimeout(remove); };
-  }, [message, haptics, progress]);
+  }, [message, progress]);
   const animated = useAnimatedStyle(() => ({ opacity: progress.value, transform: [{ translateY: (1 - progress.value) * 6 }] }));
   return <View pointerEvents="none" style={{ position: 'absolute', left: insets.left + 20, right: insets.right + 20,
     bottom: insets.bottom + 20, alignItems: 'center', zIndex: 100 }}>

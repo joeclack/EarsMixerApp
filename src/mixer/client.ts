@@ -9,6 +9,7 @@ export interface Socket {
   send(value: string): void; close(): void;
 }
 export type AuxPeer = { id: string; nickname: string | null };
+export type ClientType = 'ios' | 'android' | 'app-web';
 export type MixState = {
   peers: AuxPeer[];
   status: 'disconnected' | 'connecting' | 'loading' | 'connected';
@@ -173,6 +174,9 @@ export class MixerClient {
   private access: { device: string | null; token: string | null } = { device: null, token: null };
   private denied: ((revoked: boolean) => void) | null = null;
   setAccess(device: string | null, token: string | null) { this.access = { device, token }; }
+  // Tells the server which kind of app is connecting, shown on its Clients page.
+  private clientType: ClientType | null = null;
+  setClientType(type: ClientType) { this.clientType = type; }
   onAccessDenied(listener: (revoked: boolean) => void) { this.denied = listener; }
   private desiredAux: number | null = null;
   private listeners = new Set<() => void>();
@@ -247,7 +251,7 @@ export class MixerClient {
     socket.onopen = () => {
       if (this.socket !== socket) return;
       this.emit({ status: 'loading' });
-      this.send({ auth: { ...this.access, name: this.username } });
+      this.send({ auth: { ...this.access, name: this.username, ...(this.clientType && { client: this.clientType }) } });
       this.send({ username: this.username });
     };
     socket.onmessage = event => { if (this.socket === socket) this.receive(event.data); };

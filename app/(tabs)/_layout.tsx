@@ -3,11 +3,12 @@ import { NativeTabs } from 'expo-router/native-tabs';
 import { useTheme } from '../../src/theme';
 // Phone landscape gives the faders the full height, so the tab bar hides there.
 // The side rail keeps the live controls; rotate back for Channels and Settings.
+// The tab bar stays full size while scrolling.
 export default function TabLayout() {
   const theme = useTheme();
   const { width, height } = useWindowDimensions();
   const hidden = width > height && !(Platform.OS === 'ios' && Platform.isPad);
-  return <NativeTabs hidden={hidden} tintColor={theme.tint} minimizeBehavior="onScrollDown" sidebarAdaptable>
+  return <NativeTabs hidden={hidden} tintColor={theme.tint} minimizeBehavior="never" sidebarAdaptable>
     <NativeTabs.Trigger name="(mixer)">
       <NativeTabs.Trigger.Label>Mixer</NativeTabs.Trigger.Label>
       <NativeTabs.Trigger.Icon sf="slider.horizontal.3" md="tune" />

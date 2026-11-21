@@ -21,5 +21,6 @@ export default function LandscapeFaderActions({ parameter, disabled, offDisabled
       style={{ width: 48, height: 48, borderRadius: 24, backgroundColor: theme.panel, alignItems: 'center', justifyContent: 'center', opacity: offDisabled ? 0.4 : 1 }}>
       <Icon name={{ android: 'all_inclusive', web: 'all_inclusive' }} color={theme.danger} />
     </Pressable>
+    <Text style={{ color: theme.muted, fontSize: 11, textAlign: 'center' }}>All off</Text>
   </View>;
 }

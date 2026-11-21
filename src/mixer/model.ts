@@ -1,4 +1,5 @@
-export type Channel = { channel: number; label: string; order: number };
+// colour is the server's six-digit hex for the channel, when one is set.
+export type Channel = { channel: number; label: string; order: number; colour?: string };
 export type Aux = { channel: number; label: string; colour: string; stereo: boolean };
 export type MixerConfig = { channels: Channel[]; aux: Aux[]; snapshot: string };
 export type Parameter = 'level' | 'pan';
@@ -74,7 +75,8 @@ export function parseConfig(value: unknown): MixerConfig | null {
   const unique = <T extends { channel: number }>(rows: T[]) => [...new Map(rows.map(row => [row.channel, row])).values()];
   return {
     channels: unique(value.channels.filter((c: any) => record(c) && positive(c.channel) && c.enabled !== false).map((c: any) =>
-      ({ channel: c.channel, label: typeof c.label === 'string' ? c.label : 'Channel ' + c.channel, order: Number.isFinite(c.order) ? c.order : c.channel }))).sort((a, b) => a.order - b.order),
+      ({ channel: c.channel, label: typeof c.label === 'string' ? c.label : 'Channel ' + c.channel, order: Number.isFinite(c.order) ? c.order : c.channel,
+        ...(typeof c.colour === 'string' && /^#[a-f\d]{6}$/i.test(c.colour) ? { colour: c.colour } : {}) }))).sort((a, b) => a.order - b.order),
     aux: unique(value.aux.filter((a: any) => record(a) && positive(a.channel) && a.enabled !== false).map((a: any) =>
       ({ channel: a.channel, label: typeof a.label === 'string' ? a.label : 'Mix ' + a.channel, colour: /^#[a-f\d]{6}$/i.test(a.colour) ? a.colour : '#007AFF', stereo: !!a.stereo }))),
     snapshot: typeof value.snapshot === 'string' ? value.snapshot : '',
