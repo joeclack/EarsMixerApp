@@ -23,7 +23,7 @@ export default function Request() {
     if (!mixer.sendRequest(null, text)) return;
     Keyboard.dismiss();
     setText('');
-    if (state.settings.haptics) void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
+    void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
   };
   return <ScreenSurface><ScrollView style={{ flex: 1 }} keyboardShouldPersistTaps="handled" automaticallyAdjustKeyboardInsets
     contentContainerStyle={{ padding: 24, paddingTop: 32, paddingBottom: insets.bottom + 24 }}>

@@ -8,10 +8,10 @@ import { contiguousGroupOrder, layoutChannelOrder, layoutItems, replaceLayoutGro
 import { moveGroupMembers } from './groups';
 type Storage = { getItem(key: string): Promise<string | null>; setItem(key: string, value: string): Promise<void>; getAllKeys?(): Promise<readonly string[]>; multiRemove?(keys: string[]): Promise<void> };
 export type TextSize = 'standard' | 'large' | 'larger';
-export type Settings = { appearance: 'system' | 'light' | 'dark'; nickname: string; haptics: boolean;
+export type Settings = { appearance: 'system' | 'light' | 'dark'; nickname: string;
   /** Mixer display: dB values and channel text size. */
   showLevels: boolean; textSize: TextSize };
-export const DEFAULT_SETTINGS: Settings = { appearance: 'system', nickname: '', haptics: true, showLevels: true, textSize: 'standard' };
+export const DEFAULT_SETTINGS: Settings = { appearance: 'system', nickname: '', showLevels: true, textSize: 'standard' };
 /** How much larger mixer text is drawn at each text size. */
 export const TEXT_SCALE: Record<TextSize, number> = { standard: 1, large: 1.2, larger: 1.4 };
 export type SessionState = {
@@ -137,7 +137,6 @@ export class MixerSession {
       try { const saved = JSON.parse(last || 'null'); if (typeof saved === 'string') lastServer = normalizeMixerAddress(saved); } catch {}
       this.patch({ setupComplete: setup === 'true', lastServer, recent: readSavedMixers(recent), settings: {
         appearance: settings.appearance === 'dark' || settings.appearance === 'light' ? settings.appearance : 'system',
-        haptics: settings.haptics !== false,
         nickname: typeof settings.nickname === 'string' ? settings.nickname.slice(0, 80) : '',
         showLevels: settings.showLevels !== false,
         textSize: settings.textSize === 'large' || settings.textSize === 'larger' ? settings.textSize : 'standard',

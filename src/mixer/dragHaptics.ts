@@ -9,9 +9,9 @@ import { detentAt, stepDetent } from './detents';
 // on the UI thread inside the drag gesture, so they follow the finger without
 // waiting for React, and a fast swipe gives at most one tick per frame rather
 // than queued bursts. A handle pinned at either end of its travel is silent.
-export function useDetentHaptics(enabled: boolean) {
+export function useDetentHaptics() {
   const state = useSharedValue({ detent: 0, tickedAt: 0 });
-  const tick = useCallback(() => { if (enabled) void Haptics.selectionAsync().catch(() => {}); }, [enabled]);
+  const tick = useCallback(() => { void Haptics.selectionAsync().catch(() => {}); }, []);
   // Call from the gesture's onStart with the handle's position in points.
   const start = useCallback((points: number) => {
     'worklet';

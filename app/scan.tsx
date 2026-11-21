@@ -44,7 +44,7 @@ function Scanner() {
       // A readable mixer code: confirm with a tap and close straight away. The
       // connection carries on behind the mixer's own loading screen.
       scanning.current = true; alive.current = false;
-      if (session.state.settings.haptics) void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
+      void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
       const setup = !session.state.setupComplete;
       // Target a route rather than blindly popping whichever nested stack is focused.
       router.dismissTo(setup ? '/setup' : '/(tabs)/(mixer)');

@@ -19,7 +19,7 @@ export const MuteKey = memo(function MuteKey({ channel, label, width = 64, heigh
   if (!mixer.muteKnown(channel)) return <View style={{ width, height }} />;
   const toggle = () => {
     if (!mixer.setMuted(channel, !muted)) return;
-    if (session.state.settings.haptics) void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => {});
+    void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => {});
   };
   // Grow the touch area to at least 44pt without changing the key's size.
   const slopX = Math.max(0, (44 - width) / 2), slopY = Math.max(0, (44 - height) / 2);

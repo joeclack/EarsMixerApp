@@ -39,7 +39,7 @@ export default memo(function Fader({ channel, label, vertical = false, length = 
   const scale = pressScale || localScale;
   useEffect(() => { cancelAnimation(scale); scale.set(1); }, [mix.epoch, vertical, scale]);
   const drag = useRef<DragToken | null>(null);
-  const detents = useDetentHaptics(session.state.settings.haptics);
+  const detents = useDetentHaptics();
   const inset = FADER_INSET * size;
   // A vertical strip's length is given, so its travel is right on the first
   // frame; only horizontal bars wait for their measured width.
@@ -49,7 +49,7 @@ export default memo(function Fader({ channel, label, vertical = false, length = 
     if (epoch !== session.mixer.state.epoch) return;
     drag.current = session.mixer.beginDrag(channel);
     if (!drag.current) return;
-    if (session.state.settings.haptics) void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
+    void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
   }, [session, channel]);
   const update = useCallback((next: number) => {
     if (!drag.current || drag.current.epoch !== session.mixer.state.epoch) return;
@@ -107,7 +107,7 @@ export default memo(function Fader({ channel, label, vertical = false, length = 
   }, [session, channel, thumb, active, vertical, extent]);
   const epoch = mix.epoch;
   const pressHaptic = useCallback(() => {
-    if (session.state.settings.haptics) void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy).catch(() => {});
+    void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy).catch(() => {});
   }, [session]);
   const touchesHandle = useCallback((x: number, y: number) => {
     'worklet';
@@ -200,7 +200,7 @@ export default memo(function Fader({ channel, label, vertical = false, length = 
         if (event.nativeEvent.actionName === 'expand') { pressHaptic(); onEnlarge?.(); return; }
         const token = session.mixer.beginDrag(channel); if (!token) return;
         session.mixer.drag(token, clamp(position + (event.nativeEvent.actionName === 'increment' ? 0.02 : -0.02))); session.mixer.flush(token); session.mixer.cancelDrag(token);
-        if (session.state.settings.haptics) void Haptics.selectionAsync().catch(() => {});
+        void Haptics.selectionAsync().catch(() => {});
       }}
       style={[{ position: 'absolute', left: vertical ? (FADER_TRACK_CENTER - FADER_CAP_WIDTH / 2) * size : 4,
         top: vertical ? 4 * size : (56 - FADER_CAP_WIDTH) / 2,

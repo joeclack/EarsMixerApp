@@ -1,5 +1,4 @@
 import React from 'react';
-import { Platform } from 'react-native';
 import Section from './HardwareSection.ios';
 import { useResetDeviceData } from './useResetDeviceData';
 import { useClearSavedLevels } from './useClearSavedLevels';
@@ -50,14 +49,11 @@ export default function SettingsContent() {
         </Picker>
       </Section>
       <Section title="Mixer" symbol="slider.horizontal.3">
-        {/* iPad has no haptic engine, so the setting would do nothing there. */}
-        {!(Platform.OS === 'ios' && Platform.isPad) &&<Toggle label="Haptic feedback" isOn={state.settings.haptics} onIsOnChange={haptics => session.setSettings({ haptics })} />}
         <Toggle label="Show dB values" isOn={state.settings.showLevels} onIsOnChange={showLevels => session.setSettings({ showLevels })} />
         <Picker label="Text size" systemImage="textformat.size" selection={state.settings.textSize}
           onSelectionChange={textSize => session.setSettings({ textSize })} modifiers={[pickerStyle('menu')]}>
           <Text modifiers={[tag('standard')]}>Standard</Text><Text modifiers={[tag('large')]}>Large</Text><Text modifiers={[tag('larger')]}>Larger</Text>
         </Picker>
-        <Button label="Edit channels" systemImage="line.3.horizontal" onPress={() => router.push('/channels')} />
         <Button label="Clear saved levels" systemImage="clock.arrow.circlepath" role="destructive" onPress={clearLevels} />
       </Section>
       <Section>

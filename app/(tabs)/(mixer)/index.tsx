@@ -101,13 +101,13 @@ export default function Mixer() {
       if (expanded.includes(group.channel)) return;
       session.mixer.cancelWrites();
       setExpanded(ids => ids.includes(group.channel) ? ids : [...ids, group.channel]);
-      if (session.state.settings.haptics) void Haptics.selectionAsync().catch(() => {});
+      void Haptics.selectionAsync().catch(() => {});
     };
     const close = () => {
       if (!expanded.includes(group.channel)) return;
       session.mixer.cancelWrites();
       setExpanded(ids => ids.filter(id => id !== group.channel));
-      if (session.state.settings.haptics) void Haptics.selectionAsync().catch(() => {});
+      void Haptics.selectionAsync().catch(() => {});
     };
     // Faders sit straight on the desk, divided by fine lines: rows in portrait,
     // strips in landscape.
