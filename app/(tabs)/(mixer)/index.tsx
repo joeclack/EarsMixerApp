@@ -19,7 +19,8 @@ import GroupExpandTarget from '../../../src/components/GroupExpandTarget';
 import CloseButton from '../../../src/components/CloseButton';
 import { FADER_INSET } from '../../../src/components/faderGeometry';
 import MixerToolbar from '../../../src/components/MixerToolbar';
-import AuxPresence from '../../../src/components/AuxPresence';
+// Other people on this AUX are hidden for now; restore this import and <AuxPresence /> below to show them.
+// import AuxPresence from '../../../src/components/AuxPresence';
 import ConnectionNotice from '../../../src/components/ConnectionNotice';
 import MixerLoadingBoundary from '../../../src/components/MixerLoadingBoundary';
 import { useLandscapeEdgePadding } from '../../../src/components/useLandscapeEdgePadding';
@@ -198,7 +199,7 @@ export default function Mixer() {
     </Animated.View>;
   }, [landscape, sideRail, topPadding, groupFooter, cardHeight, stripHeight, theme, mix.parameter, session, expanded, textScale, showLevels, levelRow, nameRow]);
   return <Page title={mix.config?.aux.find(aux => aux.channel === mix.aux)?.label || 'Mixer'} scroll={false} compactHeader hideHeader={sideRail} toolbar={<MixerToolbar />} desk>
-    <AuxPresence />
+    {/* <AuxPresence /> */}
     {/* The plain opacity hides stale layout within the same commit; the
         animated layer then fades the settled layout in. */}
     <Animated.View style={[{ flex: 1 }, revealStyle]}>
