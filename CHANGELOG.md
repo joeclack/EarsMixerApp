@@ -2,6 +2,7 @@
 
 ## 0.1.0 — First TestFlight build (unreleased)
 
+- Settings → About shows the build number next to the version, for example 0.1.0 (5), so you can tell which TestFlight build an over-the-air update is running on.
 - Removed signal meters. Faders no longer show a meter, demo mode no longer simulates them, **Show signal meters** is gone from Settings, and the app no longer asks servers for meter readings or accepts them.
 - Removed the GitHub Actions workflows for mobile builds and previews.
 - Documented the development workflow, design system, release checks and private security reporting.

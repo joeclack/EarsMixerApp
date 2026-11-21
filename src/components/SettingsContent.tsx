@@ -4,7 +4,7 @@ import { useClearSavedLevels } from './useClearSavedLevels';
 import ProfileCard from './ProfileCard';
 import { Text, View, Switch, Platform } from 'react-native';
 import { router } from 'expo-router';
-import Constants from 'expo-constants';
+import { appVersionLabel } from '../appVersion';
 import { useSession } from '../mixer/context';
 import { mixerLabel } from '../connection';
 import { useTheme } from '../theme';
@@ -42,6 +42,6 @@ export default function SettingsContent() {
       <Row title="Test first-time setup" onPress={() => void session.restartSetup()} />
       {__DEV__ && <Row title="Preview loading animation" onPress={() => router.push('/loading-preview')} />}
     </Section>
-    <Section title="About" symbol={{ ios: 'info.circle', android: 'info', web: 'info' }}><Row title="EarsMixer"><Text style={{ color: theme.muted }}>{Constants.expoConfig?.version}</Text></Row></Section>
+    <Section title="About" symbol={{ ios: 'info.circle', android: 'info', web: 'info' }}><Row title="EarsMixer"><Text style={{ color: theme.muted }}>{appVersionLabel()}</Text></Row></Section>
   </>;
 }

@@ -6,7 +6,7 @@ import { useClearSavedLevels } from './useClearSavedLevels';
 import { Host, Form, Toggle, Picker, Text, Button, LabeledContent, VStack, HStack, Spacer, TextField, Image, useNativeState } from '@expo/ui/swift-ui';
 import { font, foregroundStyle, tag, pickerStyle, buttonStyle, lineLimit, scrollContentBackground, disabled } from '@expo/ui/swift-ui/modifiers';
 import { router } from 'expo-router';
-import Constants from 'expo-constants';
+import { appVersionLabel } from '../appVersion';
 import { useSession } from '../mixer/context';
 import { mixerLabel } from '../connection';
 import { useTheme } from '../theme';
@@ -68,7 +68,7 @@ export default function SettingsContent() {
         {__DEV__ && <Button label="Preview loading animation" systemImage="slider.vertical.3" onPress={() => router.push('/loading-preview')} />}
       </Section>
       <Section title="About" symbol="info.circle">
-        <LabeledContent label="EarsMixer"><Text>{Constants.expoConfig?.version || '—'}</Text></LabeledContent>
+        <LabeledContent label="EarsMixer"><Text>{appVersionLabel()}</Text></LabeledContent>
       </Section>
     </Form>
   </Host>;
