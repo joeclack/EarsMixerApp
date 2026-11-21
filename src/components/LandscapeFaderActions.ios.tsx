@@ -28,5 +28,6 @@ export default function LandscapeFaderActions({ parameter, disabled: unavailable
         <Image systemName="infinity" size={22} modifiers={[frame({ width: 44, height: 44 })]} />
       </Button>
     </Host>
+    <RNText style={{ color: theme.muted, fontSize: 11, lineHeight: 15 }}>All off</RNText>
   </View>;
 }

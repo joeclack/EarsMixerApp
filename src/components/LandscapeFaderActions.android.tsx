@@ -34,5 +34,6 @@ export default function LandscapeFaderActions({ parameter, disabled, offDisabled
         <Icon name={{ android: 'all_inclusive' }} color={theme.danger} />
       </Pressable>
     </RailButton>
+    <Text style={{ color: theme.muted, fontSize: 11, textAlign: 'center' }}>All off</Text>
   </View>;
 }

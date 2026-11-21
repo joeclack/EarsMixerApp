@@ -1,9 +1,9 @@
-import { Pressable, Text, View, useWindowDimensions } from 'react-native';
-import { Icon } from './ui';
+import { Text, View, useWindowDimensions } from 'react-native';
 import { useSession } from '../mixer/context';
 import { useTheme } from '../theme';
 import LandscapeAuxPicker from './LandscapeAuxPicker';
 import LandscapeFaderActions from './LandscapeFaderActions';
+import LandscapeLockButton from './LandscapeLockButton';
 import { useSetAllLevelsOff } from './useSetAllLevelsOff';
 
 export default function LandscapeMixerToolbar({ top, bottom }: { top: number; bottom: number }) {
@@ -19,10 +19,7 @@ export default function LandscapeMixerToolbar({ top, bottom }: { top: number; bo
     {height - top - bottom >= 320 && !!selected && <Text numberOfLines={3} style={{ width: 60, color: theme.muted, fontSize: 11, textAlign: 'center', lineHeight: 15 }}>{selected.label}</Text>}
     <LandscapeFaderActions parameter={mix.parameter} disabled={!state.server} offDisabled={!state.server || mix.status !== 'connected' || !mix.aux || mix.locked}
       onModeChange={mode => session.mixer.setParameter(mode)} onAllOff={setAllLevelsOff} />
-    <Pressable accessibilityRole="switch" accessibilityLabel="Lock faders" accessibilityState={{ checked: mix.locked }} onPress={() => session.mixer.setLocked(!mix.locked)}
-      style={({ pressed }) => ({ width: 52, height: 52, borderRadius: 26, alignItems: 'center', justifyContent: 'center',
-        backgroundColor: mix.locked ? theme.tint : theme.secondary, opacity: pressed ? 0.7 : 1 })}>
-      <Icon name={{ ios: mix.locked ? 'lock.fill' : 'lock.open', android: mix.locked ? 'lock' : 'lock_open', web: mix.locked ? 'lock' : 'lock_open' }} size={20} color={mix.locked ? theme.panel : theme.tint} />
-    </Pressable>
+    <LandscapeLockButton locked={mix.locked} onToggle={() => session.mixer.setLocked(!mix.locked)} />
+    <Text style={{ color: theme.muted, fontSize: 11, lineHeight: 15 }}>{mix.locked ? 'Locked' : 'Lock'}</Text>
   </View>;
 }

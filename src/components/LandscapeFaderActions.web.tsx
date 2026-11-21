@@ -18,5 +18,6 @@ export default function LandscapeFaderActions({ parameter, disabled, offDisabled
     <Pressable accessibilityRole="button" accessibilityLabel="Set all levels to off" disabled={offDisabled} onPress={onAllOff} style={[circle, { opacity: offDisabled ? 0.4 : 1 }]}>
       <Icon name={{ web: 'all_inclusive' }} color={theme.danger} />
     </Pressable>
+    <Text style={{ color: theme.muted, fontSize: 11, textAlign: 'center' }}>All off</Text>
   </View>;
 }
