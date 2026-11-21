@@ -9,7 +9,11 @@ import type { Socket } from './client';
 
 const Context = createContext<MixerSession | null>(null);
 export function MixerProvider({ children }: React.PropsWithChildren) {
-  const [session] = useState(() => new MixerSession(AsyncStorage, url => new WebSocket(url) as unknown as Socket));
+  const [session] = useState(() => {
+    const created = new MixerSession(AsyncStorage, url => new WebSocket(url) as unknown as Socket);
+    created.mixer.setClientType(Platform.OS === 'ios' || Platform.OS === 'android' ? Platform.OS : 'app-web');
+    return created;
+  });
   useEffect(() => {
     void session.hydrate();
     const subscription = AppState.addEventListener('change', state => session.setLifecycle(state));
