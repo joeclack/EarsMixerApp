@@ -1,7 +1,7 @@
 import React from 'react';
 import { Text as PlainText, TextInput, View } from 'react-native';
 import { router } from 'expo-router';
-import Constants from 'expo-constants';
+import { appVersionLabel } from '../appVersion';
 import { SegmentedButton, SingleChoiceSegmentedButtonRow, Switch, Text, TextButton } from '@expo/ui/jetpack-compose';
 import { fillMaxWidth, padding, semantics } from '@expo/ui/jetpack-compose/modifiers';
 import { useResetDeviceData } from './useResetDeviceData';
@@ -76,7 +76,7 @@ export default function SettingsContent() {
       {__DEV__ && <MaterialItem title="Preview loading animation" symbol="animation" onPress={() => router.push('/loading-preview')} />}
     </MaterialSection>
     <MaterialSection title="About" symbol="info">
-      <MaterialItem title="EarsMixer" symbol="headphones" trailing={<Text color={theme.muted}>{Constants.expoConfig?.version ?? ''}</Text>} />
+      <MaterialItem title="EarsMixer" symbol="headphones" trailing={<Text color={theme.muted}>{appVersionLabel()}</Text>} />
     </MaterialSection>
   </>;
 }
