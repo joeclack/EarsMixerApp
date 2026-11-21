@@ -35,6 +35,12 @@ test('native configuration filters disabled channels and layout validation drops
   for (const value of [-60, -30, -12, 0, 10]) assert.ok(Math.abs(positionToDb(dbToPosition(value)) - value) < 1e-8);
   assert.equal(positionToDb(0), -150); assert.equal(dbToPosition(-150), 0);
 });
+test('channel colours are kept only when they are six-digit hex values', () => {
+  const parsed = parseConfig({ aux: [], channels: [
+    { channel: 1, label: 'Vox', colour: '#E53935' }, { channel: 2, label: 'Keys', colour: '' },
+    { channel: 3, label: 'Kick', colour: 'red' }, { channel: 4, label: 'Bass' }] });
+  assert.deepEqual(parsed?.channels.map(channel => channel.colour), ['#E53935', undefined, undefined, undefined]);
+});
 test('connecting and restoring a mix sends only reads; unknown channels cannot be moved', async t => {
   const { client, level, writes, socket } = setup(t);
   assert.equal(client.beginDrag(1), null);

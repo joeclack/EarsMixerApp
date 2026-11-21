@@ -13,12 +13,15 @@ import { useTheme } from '../theme';
 import { clamp, levelText, dbToPosition } from '../mixer/model';
 import type { DragToken } from '../mixer/client';
 import { releasePosition } from '../mixer/faderPrecision';
+import { fillGradient, mute } from '../mixer/channelColour';
 
 // Long-press timing for opening the tall fader: a pause before any visible
 // response, then a steady lift that ends exactly when the fader opens.
 export const HOLD_DELAY = 30, HOLD_LIFT = 120, HOLD_SCALE = 1.04;
 
-export default memo(function Fader({ channel, label, vertical = false, length = 200, size = 1, onEnlarge, pressScale }: { channel: number; label: string; vertical?: boolean; length?: number; size?: number; onEnlarge?: () => void; pressScale?: SharedValue<number> }) {
+const DEFAULT_GRADIENT = ['#048E7B', '#1BEABD', '#7CFFE2', '#13D9AF'] as const;
+
+export default memo(function Fader({ channel, label, vertical = false, length = 200, size = 1, onEnlarge, pressScale, colour }: { channel: number; label: string; vertical?: boolean; length?: number; size?: number; onEnlarge?: () => void; pressScale?: SharedValue<number>; colour?: string }) {
   const { session, mix } = useFaderSession(channel);
   const [width, setWidth] = useState(0);
   const ready = session.mixer.canDrag(channel);
@@ -169,6 +172,9 @@ export default memo(function Fader({ channel, label, vertical = false, length = 
   const thumbStyle = useAnimatedStyle(() => ({ transform: vertical ? [{ translateY: travel * (1 - thumb.value) }] : [{ translateX: travel * thumb.value }] }));
   const fillStyle = useAnimatedStyle(() => vertical ? { height: travel * thumb.value } : { width: travel * thumb.value });
   const theme = useTheme();
+  // A channel colour from the server lights the fill, softened, in place of the default green.
+  const light = colour ? mute(colour, 0.12) : FADER_LIGHT;
+  const gradient = useMemo(() => colour ? fillGradient(colour) : DEFAULT_GRADIENT, [colour]);
   return <GestureDetector gesture={enlarge}><View onLayout={vertical ? undefined : event => setWidth(event.nativeEvent.layout.width)} style={{ height: vertical ? length : 56, width: vertical ? 80 * size : undefined, alignSelf: vertical ? 'center' : undefined }}>
     {/* A slot cut through the panel, shaded at its top edge with a lit lower lip. */}
     <View pointerEvents="none" style={[vertical
@@ -179,14 +185,14 @@ export default memo(function Fader({ channel, label, vertical = false, length = 
       ? { position: 'absolute', top: inset, bottom: inset, left: FADER_TRACK_CENTER * size - 4, width: 8, borderRadius: 4, backgroundColor: '#010709', justifyContent: 'flex-end' }
       : { position: 'absolute', left: inset, right: inset, top: 24, height: 8, borderRadius: 4, backgroundColor: '#010709' }}>
       {/* A muted send keeps its level; its light dims to show it is off in this mix. */}
-      <Animated.View style={[vertical ? { width: 8 } : { height: 8 }, { opacity: muted ? 0.25 : 1, borderRadius: 4, backgroundColor: FADER_LIGHT,
-        boxShadow: [{ offsetX: 0, offsetY: 0, blurRadius: 6, spreadDistance: 1, color: '#12E6B970' }] }, fillStyle]}>
-        <LinearGradient pointerEvents="none" colors={['#048E7B', '#1BEABD', '#7CFFE2', '#13D9AF']}
+      <Animated.View style={[vertical ? { width: 8 } : { height: 8 }, { opacity: muted ? 0.25 : 1, borderRadius: 4, backgroundColor: light,
+        boxShadow: [{ offsetX: 0, offsetY: 0, blurRadius: 6, spreadDistance: 1, color: colour ? light + '70' : '#12E6B970' }] }, fillStyle]}>
+        <LinearGradient pointerEvents="none" colors={gradient}
           locations={[0, 0.3, 0.6, 1]} start={vertical ? { x: 0, y: 0.5 } : { x: 0.5, y: 0 }}
           end={vertical ? { x: 1, y: 0.5 } : { x: 0.5, y: 1 }} style={{ position: 'absolute', inset: 0, borderRadius: 4 }} />
       </Animated.View>
     </View>
-    <FaderScale width={extent} travel={travel} vertical={vertical} parameter={mix.parameter} color={FADER_LIGHT} size={size} />
+    <FaderScale width={extent} travel={travel} vertical={vertical} parameter={mix.parameter} color={light} size={size} />
     <GestureDetector gesture={gesture}><Animated.View accessible accessibilityRole="adjustable" accessibilityLabel={label + (mix.parameter === 'pan' ? ' pan' : ' level')}
       accessibilityHint={onEnlarge ? 'Touch and hold to open a full-screen fader' : undefined}
       accessibilityState={{ disabled: !ready }} accessibilityValue={{ min: 0, max: 100, now: Math.round(position * 100), text: levelText(session.mixer.displayValue(channel), mix.parameter) }}

@@ -12,6 +12,8 @@ import { mixerRows, mixerSections, type MixerRow, type MixerSection } from '../.
 import { Page, EmptyMixer, Icon } from '../../../src/components/ui';
 import NativeButton from '../../../src/components/NativeButton';
 import Fader, { FaderValue } from '../../../src/components/Fader';
+import { LinearGradient } from 'expo-linear-gradient';
+import { markerGradient } from '../../../src/mixer/channelColour';
 import { MuteKey } from '../../../src/components/MuteButton';
 import GroupExpandTarget from '../../../src/components/GroupExpandTarget';
 import CloseButton from '../../../src/components/CloseButton';
@@ -117,9 +119,12 @@ export default function Mixer() {
     const renderFader = (channel: MixerRow, position: number) => landscape
       ? <Animated.View key={channel.channel} testID={'channel-' + channel.channel} {...member}
         style={{ width: STRIP_WIDTH, height: cardHeight - memberShrink, alignItems: 'center', paddingVertical: STRIP_PADDING, gap: STRIP_GAP, ...divider(position) }}>
+        {/* The server's channel colour hangs from the top edge of the screen, above the strip, like the portrait rows' edge strip. */}
+        {channel.colour && <LinearGradient testID={'channel-colour-' + channel.channel} colors={markerGradient(channel.colour)} start={{ x: 0.5, y: 0 }} end={{ x: 0.5, y: 1 }}
+          style={{ position: 'absolute', top: -topPadding, left: 14, right: 14, height: 6, borderBottomLeftRadius: 3, borderBottomRightRadius: 3 }} />}
         <MuteKey channel={channel.channel} label={channel.label} width={68} height={MUTE_ROW} />
         {showLevels && <View style={{ height: levelRow, justifyContent: 'center' }}><FaderValue channel={channel.channel} size={13 * textScale} /></View>}
-        <Fader channel={channel.channel} label={channel.label} vertical length={stripHeight - memberShrink} />
+        <Fader channel={channel.channel} label={channel.label} colour={channel.colour} vertical length={stripHeight - memberShrink} />
         {grouped && !open ? <GroupExpandTarget label={group.label} onExpand={expand}>
           <View style={{ width: STRIP_WIDTH - 8, height: nameRow, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 3 }}>
             <Icon name={{ ios: 'link', android: 'link', web: 'link' }} size={11} />
@@ -133,27 +138,30 @@ export default function Mixer() {
         </View>}
       </Animated.View>
       : <Animated.View key={channel.channel} testID={'channel-' + channel.channel} {...member}
-        style={{ gap: 2, paddingTop: grouped && !open ? 0 : 10, paddingHorizontal: 4, paddingBottom: 4, ...divider(position) }}>
+        style={{ gap: 2, paddingTop: grouped && !open ? 0 : 10, paddingHorizontal: 8, paddingBottom: 4, ...divider(position) }}>
+        {/* The server's channel colour runs down the row from the screen edge, rounded on its inner side. */}
+        {channel.colour && <LinearGradient testID={'channel-colour-' + channel.channel} colors={markerGradient(channel.colour)} start={{ x: 0.5, y: 0 }} end={{ x: 0.5, y: 1 }}
+          style={{ position: 'absolute', top: 14, bottom: 14, left: 0, width: 6, borderTopRightRadius: 3, borderBottomRightRadius: 3 }} />}
         {!channel.members && <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 12 }}>
           <Text numberOfLines={2} style={{ color: theme.text, fontSize: 15 * textScale, fontWeight: '600', flex: 1 }}>{channel.label}</Text>
           <MuteKey channel={channel.channel} label={channel.label} width={56} height={24} />
           {showLevels && <View style={{ minWidth: 60 * textScale, alignItems: 'flex-end' }}><FaderValue channel={channel.channel} size={13 * textScale} /></View>}
         </View>}
-        <Fader channel={channel.channel} label={channel.label} />
+        <Fader channel={channel.channel} label={channel.label} colour={channel.colour} />
       </Animated.View>;
     // The section resizes with a slide; clipping it reveals or covers its members.
     return <Animated.View layout={groupSlide} testID={grouped ? 'group-' + group.channel : undefined} style={{
       overflow: grouped ? 'hidden' : undefined, height: landscape ? cardHeight : undefined, width: landscape ? (open ? item.channels.length * STRIP_WIDTH + (groupFooter ? GROUP_EDGE * 2 : 44) : STRIP_WIDTH) : undefined,
       ...divider(index),
     }}>
-      {grouped && !landscape && (open ? <View style={{ minHeight: 48, paddingHorizontal: 16, gap: 8,
+      {grouped && !landscape && (open ? <View style={{ minHeight: 48, paddingHorizontal: 20, gap: 8,
         flexDirection: 'row', alignItems: 'center' }}>
         <Icon name={{ ios: 'link', android: 'link', web: 'link' }} size={14} />
         <Text numberOfLines={2} accessibilityRole="header" style={{ flex: 1, minWidth: 0, color: theme.text, fontSize: 15 * textScale, fontWeight: '700' }}>{group.label}</Text>
         {canClose ? <CloseButton label={'Close ' + group.label + ' group'} onPress={close} />
           : <Text style={{ color: theme.muted, fontSize: 11 }}>Pan</Text>}
       </View> : <GroupExpandTarget label={group.label} onExpand={expand}>
-        <View style={{ minHeight: 48, paddingHorizontal: 16, paddingTop: 6, gap: 8, flexDirection: 'row', alignItems: 'center' }}>
+        <View style={{ minHeight: 48, paddingHorizontal: 20, paddingTop: 6, gap: 8, flexDirection: 'row', alignItems: 'center' }}>
           <Icon name={{ ios: 'link', android: 'link', web: 'link' }} size={14} />
           <Text numberOfLines={2} style={{ flex: 1, color: theme.text, fontSize: 15 * textScale, fontWeight: '700' }}>{group.label}</Text>
           <MuteKey channel={group.channel} label={group.label} width={56} height={24} />
@@ -188,7 +196,7 @@ export default function Mixer() {
         </View>}
       </View>
     </Animated.View>;
-  }, [landscape, sideRail, groupFooter, cardHeight, stripHeight, theme, mix.parameter, session, expanded, textScale, showLevels, levelRow, nameRow]);
+  }, [landscape, sideRail, topPadding, groupFooter, cardHeight, stripHeight, theme, mix.parameter, session, expanded, textScale, showLevels, levelRow, nameRow]);
   return <Page title={mix.config?.aux.find(aux => aux.channel === mix.aux)?.label || 'Mixer'} scroll={false} compactHeader hideHeader={sideRail} toolbar={<MixerToolbar />} desk>
     <AuxPresence />
     {/* The plain opacity hides stale layout within the same commit; the
@@ -204,8 +212,8 @@ export default function Mixer() {
     <Animated.FlatList itemLayoutAnimation={groupSlide} key={landscape ? 'strips' : 'rows'} horizontal={landscape} extraData={[state.preferences, state.settings]}
       data={sections} renderItem={renderSection} keyExtractor={item => String(item.header.channel)} contentInsetAdjustmentBehavior="never"
       // Portrait faders sit straight on the desk, divided by fine lines.
-      contentContainerStyle={{ paddingTop: topPadding, paddingLeft: landscape ? 16 : 4, paddingRight: landscape ? 16 : 4, paddingBottom: bottomPadding }} keyboardShouldPersistTaps="handled"
-      ListHeaderComponent={!landscape && sections.length && mix.locked ? <View style={{ paddingHorizontal: 12, paddingBottom: 6, gap: 6 }}>
+      contentContainerStyle={{ paddingTop: topPadding, paddingLeft: landscape ? 16 : 0, paddingRight: landscape ? 16 : 0, paddingBottom: bottomPadding }} keyboardShouldPersistTaps="handled"
+      ListHeaderComponent={!landscape && sections.length && mix.locked ? <View style={{ paddingHorizontal: 16, paddingBottom: 6, gap: 6 }}>
         {/* While locked, a bar says so and unlocks with a tap, so a locked mixer is never a mystery. */}
         {mix.locked && <Pressable accessibilityRole="button" accessibilityLabel="Faders locked. Unlock faders" onPress={() => session.mixer.setLocked(false)}
           style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 8, minHeight: 44, paddingHorizontal: 12, borderRadius: 10,
