@@ -17,7 +17,8 @@ test('server templates replace local layout, persist and never recall audio leve
     await session.applyTemplate(id);
     assert.deepEqual(session.state.preferences.channelOrder, [2, 1]);
     assert.deepEqual(session.state.preferences.favouritesByAux, config.favouritesByAux);
-    assert.equal(session.state.preferences.selectedAux, 2);
+    // The template's starting AUX is ignored: applying it never changes the mix.
+    assert.equal(session.state.preferences.selectedAux, null);
     assert.equal(session.state.selectedTemplate?.name, 'Drums');
     session.preferences({ channelOrder: [1, 2] });
     assert(!('levels' in session.state.preferences));

@@ -6,7 +6,7 @@ export const demoTemplates = [{ id: 'd'.repeat(64), name: 'Full band' }, { id: '
 export function demoTemplate(id: string) {
   if (!demoTemplates.some(template => template.id === id)) throw new Error('Template not found.');
   const vocals = id[0] === 'e';
-  return { ...emptyPreferences(), selectedAux: vocals ? 2 : 1,
+  return { ...emptyPreferences(),
     channelOrder: vocals ? [15, 16, 17, ...names.map((_, index) => index + 1).filter(id => id < 15 || id > 17)] : names.map((_, index) => index + 1),
     hiddenByAux: vocals ? { '2': [19, 20] } : {},
     globalGroups: [{ id: 1, name: 'Drums', members: [1, 2, 3, 4, 5, 6, 7] }],
