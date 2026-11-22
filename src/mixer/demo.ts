@@ -8,9 +8,10 @@ export function demoTemplate(id: string) {
   const vocals = id[0] === 'e';
   return { ...emptyPreferences(),
     channelOrder: vocals ? [15, 16, 17, ...names.map((_, index) => index + 1).filter(id => id < 15 || id > 17)] : names.map((_, index) => index + 1),
-    hiddenByAux: vocals ? { '2': [19, 20] } : {},
-    globalGroups: [{ id: 1, name: 'Drums', members: [1, 2, 3, 4, 5, 6, 7] }],
-    groupsByAux: vocals ? { '2': [{ id: 2, name: 'Backing vocals', members: [16, 17] }] } : {} };
+    // One layout for any mix, like templates from the server.
+    hidden: vocals ? [19, 20] : [],
+    globalGroups: [{ id: 1, name: 'Drums', members: [1, 2, 3, 4, 5, 6, 7] },
+      ...(vocals ? [{ id: 2, name: 'Backing vocals', members: [16, 17] }] : [])] };
 }
 // Implements the same protocol locally. No WebSocket or HTTP connection exists.
 export function createDemoSocket(): Socket {

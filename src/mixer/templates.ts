@@ -16,8 +16,15 @@ export async function requestTemplates(server: string, id?: string, fetcher: typ
       .map(({ id, name }: MixerTemplate) => ({ id, name }));
   } finally { clearTimeout(timeout); signal?.removeEventListener('abort', abort); }
 }
-export function templatePreferences(config: unknown, compact: boolean): Preferences {
+// A template is one channel layout for any mix: its hidden channels apply to
+// every mix on the mixer and its groups are all-mix groups. Templates from
+// servers before 1.21.0 have no `hidden` list and keep their per-mix layout.
+export function templatePreferences(config: unknown, compact: boolean, auxes: number[] = []): Preferences {
   const preferences = config && typeof config === 'object' ? readPreferences({ ...config, compact }) : null;
   if (!preferences) throw new Error('This template has an invalid layout.');
-  return preferences;
+  const hidden = (config as { hidden?: unknown }).hidden;
+  if (hidden === undefined) return preferences;
+  if (!Array.isArray(hidden) || hidden.length > 1000 || !hidden.every(id => Number.isInteger(id) && id > 0)) throw new Error('This template has an invalid layout.');
+  const ids = [...new Set(hidden as number[])];
+  return { ...preferences, hiddenByAux: Object.fromEntries(auxes.map(aux => [String(aux), [...ids]])), groupsByAux: {} };
 }
