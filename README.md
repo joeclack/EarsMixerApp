@@ -63,7 +63,7 @@ Before merging the workflow:
 4. If the app already has an uploaded build, initialise the EAS build number with `npx eas-cli@latest build:version:set --platform ios --profile production` using the latest uploaded build number.
 5. Validate the workflow with `npx eas-cli@latest workflow:validate .eas/workflows/testflight.yml --non-interactive`. To publish a first build manually, run `npx eas-cli@latest workflow:run .eas/workflows/testflight.yml`.
 
-Version: **0.1.0**. Expo reads it from `package.json`; build profiles are in [eas.json](eas.json). See [CHANGELOG.md](CHANGELOG.md) for changes.
+Version: **1.0.0**. Expo reads it from `package.json`; build profiles are in [eas.json](eas.json). See [CHANGELOG.md](CHANGELOG.md) for changes.
 
 ## Development checks
 
