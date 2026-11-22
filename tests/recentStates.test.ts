@@ -11,7 +11,8 @@ function fixture(data = new Map<string, string>()) {
   const session = new MixerSession({ getItem: async key => data.get(key) || null, setItem: async (key, value) => { data.set(key, value); } }, () => socket,
     (async (url: string) => Response.json({ url, qr: 'data:image/png;base64,AAA' })) as typeof fetch);
   const levels = (aux: number, a: number, b: number) => [a, b].forEach((value, i) => socket.onmessage?.({ data: JSON.stringify({ address: `/Input_Channels/${i + 1}/Aux_Send/${aux}/send_level`, args: [value] }) }));
-  const open = () => { socket.onopen?.(); socket.onmessage?.({ data: JSON.stringify({ config }) }); };
+  // The app no longer picks the first AUX itself; with nothing saved, these tests mix on AUX 1.
+  const open = () => { socket.onopen?.(); socket.onmessage?.({ data: JSON.stringify({ config }) }); if (session.mixer.state.aux === null) session.preferences({ selectedAux: 1 }); };
   return { session, sent, socket, levels, open, data };
 }
 

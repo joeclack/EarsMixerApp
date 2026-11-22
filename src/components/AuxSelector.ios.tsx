@@ -17,7 +17,7 @@ export default function AuxSelector() {
   const [textWidth, setTextWidth] = useState(0);
   const auxes = mix.config?.aux || [];
   const selected = auxes.find(aux => aux.channel === mix.aux);
-  const name = selected?.label || (state.server ? 'Choose mix' : 'Mixer');
+  const name = selected?.label || (state.server ? 'No AUX' : 'Mixer');
   const unavailable = !state.server || !auxes.length || mix.status !== 'connected';
   // The capsule gets an explicit size from the name's measured width, rather than
   // measuring itself while the header reappears after rotation, and ignores the
@@ -39,8 +39,10 @@ export default function AuxSelector() {
         modifiers={[menuStyle('button'), buttonStyle(Number(Platform.Version) >= 26 ? 'glass' : 'bordered'), buttonBorderShape('capsule'),
           controlSize('large'), menuIndicator('hidden'), tint(theme.text), disabled(unavailable), frame({ width, height: HEIGHT }),
           accessibilityLabel('Choose AUX, ' + name)]}>
-        <Picker label="Choose AUX" selection={mix.aux ?? undefined} onSelectionChange={value => { if (typeof value === 'number') session.preferences({ selectedAux: value }); }}
+        {/* AUX channels are positive, so 0 stands for No AUX. */}
+        <Picker label="Choose AUX" selection={mix.aux ?? 0} onSelectionChange={value => { if (typeof value === 'number') session.preferences({ selectedAux: value || null }); }}
           modifiers={[pickerStyle('inline')]}>
+          <Text modifiers={[tag(0)]}>No AUX</Text>
           {auxes.map(aux => <Text key={aux.channel} modifiers={[tag(aux.channel)]}>{aux.label}</Text>)}
         </Picker>
       </Menu>

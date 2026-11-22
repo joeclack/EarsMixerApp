@@ -14,6 +14,8 @@ function setup(t: any) {
   const socket: Socket = { readyState: 1, send: raw => messages.push(JSON.parse(raw)), close() {}, onopen: null, onclose: null, onerror: null, onmessage: null };
   const client = new MixerClient(() => socket);
   client.configureGroups({ '1': [{ id: 1, name: '', members: [1, 2] }] });
+  // The app no longer picks the first AUX itself; these tests mix on AUX 1.
+  client.selectAux(1);
   client.connect('http://mixer/'); socket.onopen?.();
   const receive = (value: unknown) => socket.onmessage?.({ data: JSON.stringify(value) });
   receive({ config });
@@ -95,7 +97,7 @@ test('group creation and removal never write audio; membership persists per serv
   const make = () => new MixerSession({ getItem: async key => data.get(key) || null, setItem: async (key, value) => { data.set(key, value); } },
     () => { const socket: Socket = { readyState: 1, send: raw => writes.push(JSON.parse(raw)), close() {}, onopen: null, onclose: null, onmessage: null, onerror: null }; sockets.push(socket); return socket; },
     (async () => Response.json({ url: 'http://one/', qr: 'data:image/png;base64,AAA' })) as typeof fetch);
-  const first = make(); await first.connect('one'); sockets.at(-1)!.onmessage?.({ data: JSON.stringify({ config }) });
+  const first = make(); await first.connect('one'); sockets.at(-1)!.onmessage?.({ data: JSON.stringify({ config }) }); first.preferences({ selectedAux: 1 });
   assert.equal(first.createGroup([1, 2]), true);
   const group = first.state.preferences.groupsByAux['1'][0]; assert.equal(first.createGroup([2, 3]), false);
   assert.equal(first.createGroup([1]), false); assert.equal(first.createGroup([1, 99]), false);
@@ -161,7 +163,8 @@ function groupSession(t: any, data = new Map<string, string>()) {
     (async () => Response.json({ url: 'http://one/', qr: 'data:image/png;base64,AAA' })) as typeof fetch);
   const receive = (value: unknown) => sockets.at(-1)!.onmessage?.({ data: JSON.stringify(value) });
   const largeConfig = { ...config, channels: Array.from({ length: 6 }, (_, i) => ({ channel: i + 1, label: 'Channel ' + (i + 1) })) };
-  const connect = async () => { await session.connect('one'); sockets.at(-1)!.onopen?.(); receive({ config: largeConfig }); };
+  // The app no longer picks the first AUX itself; with nothing saved, these tests mix on AUX 1.
+  const connect = async () => { await session.connect('one'); sockets.at(-1)!.onopen?.(); receive({ config: largeConfig }); if (session.mixer.state.aux === null) session.preferences({ selectedAux: 1 }); };
   t.after(() => session.disconnect(false));
   return { session, connect, receive, data, largeConfig, scope: { server: 'http://one/', aux: 1 },
     writes: () => writes.filter(message => message.address && !message.address.endsWith('/?')) };

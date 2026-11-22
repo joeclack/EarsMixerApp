@@ -26,13 +26,14 @@ function LevelRestorePrompt() {
   const prompt = state.restorePrompt;
   useEffect(() => {
     if (!prompt) return;
-    const title = 'Load saved levels for ' + prompt.saved.name + '?';
-    const message = 'Desk levels differ from this phone’s saved state (' + new Date(prompt.saved.editedAt).toLocaleString() + ').';
+    // A plain yes or no: the mix changed on the desk, so load this phone's saved levels or leave the desk as it is.
+    const title = 'Mix changed on the desk';
+    const message = prompt.saved.name + ' has changed on the desk since you last mixed it on this phone. Load your saved levels from this phone, or keep the mix how it is?';
     if (Platform.OS === 'web') {
       session.resolveLevelRestore(prompt, window.confirm(title + '\n\n' + message));
     } else Alert.alert(title, message, [
-      { text: 'Keep desk levels', style: 'cancel', onPress: () => session.resolveLevelRestore(prompt, false) },
-      { text: 'Load saved levels', onPress: () => session.resolveLevelRestore(prompt, true) },
+      { text: 'No, keep how it is', style: 'cancel', onPress: () => session.resolveLevelRestore(prompt, false) },
+      { text: 'Yes, load my levels', onPress: () => session.resolveLevelRestore(prompt, true) },
     ], { cancelable: false });
   }, [session, prompt]);
   return null;

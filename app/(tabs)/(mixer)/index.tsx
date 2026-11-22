@@ -11,6 +11,7 @@ import { hiddenChannels } from '../../../src/mixer/model';
 import { mixerRows, mixerSections, type MixerRow, type MixerSection } from '../../../src/mixer/groups';
 import { Page, EmptyMixer, Icon } from '../../../src/components/ui';
 import NativeButton from '../../../src/components/NativeButton';
+import NoAuxSelected from '../../../src/components/NoAuxSelected';
 import Fader, { FaderValue } from '../../../src/components/Fader';
 import { LinearGradient } from 'expo-linear-gradient';
 import { markerGradient } from '../../../src/mixer/channelColour';
@@ -209,7 +210,7 @@ export default function Mixer() {
     {sideRail && <LandscapeMixerToolbar top={topPadding} bottom={bottomPadding} />}
     <View onLayout={event => setBankHeight(event.nativeEvent.layout.height)} style={{ flex: 1, minWidth: 0, overflow: landscape ? 'hidden' : 'visible' }}>
     <LandscapeFaderViewport enabled={landscape}>
-    <MixerLoadingBoundary>{!state.server ? <EmptyMixer /> : <View style={{ flex: 1 }}>
+    <MixerLoadingBoundary>{!state.server ? <EmptyMixer /> : mix.config && mix.aux === null ? <NoAuxSelected /> : <View style={{ flex: 1 }}>
     <Animated.FlatList itemLayoutAnimation={groupSlide} key={landscape ? 'strips' : 'rows'} horizontal={landscape} extraData={[state.preferences, state.settings]}
       data={sections} renderItem={renderSection} keyExtractor={item => String(item.header.channel)} contentInsetAdjustmentBehavior="never"
       // Portrait faders sit straight on the desk, divided by fine lines.

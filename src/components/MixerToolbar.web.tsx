@@ -15,10 +15,10 @@ export default function MixerToolbar() {
       <Icon name={{ web: mix.status === 'connected' ? 'wifi' : 'wifi_off' }} color={mix.status === 'connected' ? theme.green : theme.danger} />
     </Pressable>
     {state.server && !!mix.config?.aux.length && <select aria-label="Choose AUX" value={mix.aux ?? ''} disabled={mix.status !== 'connected'}
-      onChange={event => session.preferences({ selectedAux: Number(event.currentTarget.value) })}
+      onChange={event => session.preferences({ selectedAux: event.currentTarget.value ? Number(event.currentTarget.value) : null })}
       style={{ colorScheme: theme.scheme, color: theme.text, backgroundColor: theme.panel, border: '1px solid ' + theme.line,
         borderRadius: 8, padding: '8px', minHeight: 44, maxWidth: 130, font: 'inherit' }}>
-      <option value="" disabled>Choose mix</option>
+      <option value="">No AUX</option>
       {mix.config.aux.map(aux => <option key={aux.channel} value={aux.channel}>{aux.label}</option>)}
     </select>}
     {state.server && <details style={{ position: 'relative', color: theme.tint }}>

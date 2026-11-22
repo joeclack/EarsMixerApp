@@ -239,7 +239,8 @@ export class MixerClient {
   }
   restoreConfig(config: MixerConfig, aux: number | null) {
     this.cancelWrites();
-    this.emit({ config, aux: config.aux.find(a => a.channel === aux)?.channel ?? config.aux[0]?.channel ?? null, values: {} });
+    // No saved AUX means no AUX: the musician chooses their mix rather than landing on the first one.
+    this.emit({ config, aux: config.aux.find(a => a.channel === aux)?.channel ?? null, values: {} });
   }
   private open() {
     if (!this.url) return;
@@ -277,7 +278,7 @@ export class MixerClient {
   selectAux(aux: number | null) {
     this.desiredAux = aux;
     const available = this.state.config?.aux || [];
-    const selected = available.find(a => a.channel === aux)?.channel ?? available[0]?.channel ?? null;
+    const selected = available.find(a => a.channel === aux)?.channel ?? null;
     if (selected !== this.state.aux) { this.liveLevels = {}; this.emit({ aux: selected, peers: [], values: {}, muted: {} }); this.refresh(); }
   }
   setParameter(parameter: Parameter) {
@@ -310,7 +311,9 @@ export class MixerClient {
     this.cancelWrites();
     if (this.query) clearTimeout(this.query);
     this.emit({ values: {} });
-    if (!this.state.config || !this.state.aux || this.socket?.readyState !== 1) return;
+    if (!this.state.config || this.socket?.readyState !== 1) return;
+    // With no AUX chosen, tell the server so it stops listing this phone on its last mix.
+    if (!this.state.aux) { this.send({ selectedAux: null }); return; }
     this.send({ selectedAux: this.state.aux });
     const generation = ++this.queryGeneration;
     const query = (attempt: number) => {
@@ -420,7 +423,7 @@ export class MixerClient {
       if (this.timeout) clearTimeout(this.timeout);
       this.attempt = 0;
       this.cancelWrites();
-      const aux = config.aux.find(a => a.channel === this.desiredAux)?.channel ?? config.aux[0]?.channel ?? null;
+      const aux = config.aux.find(a => a.channel === this.desiredAux)?.channel ?? null;
       this.emit({ peers: [], config, status: 'connected', aux, values: {}, muted: {} }); this.refresh();
       return;
     }

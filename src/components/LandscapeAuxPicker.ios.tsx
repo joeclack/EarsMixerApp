@@ -12,12 +12,14 @@ import { useToolbarHaptic } from './useToolbarHaptic';
 export default function LandscapeAuxPicker({ auxes, selected, disabled: unavailable, onChange }: LandscapeAuxPickerProps) {
   const theme = useTheme();
   const haptic = useToolbarHaptic();
-  const label = auxes.find(aux => aux.channel === selected)?.label || 'Choose mix';
+  const label = auxes.find(aux => aux.channel === selected)?.label || 'No AUX';
   return <View onTouchStart={unavailable ? undefined : haptic}><Host colorScheme={theme.scheme} ignoreSafeArea="all" style={{ width: 64, height: 64 }}>
     <Menu label={<Image systemName="headphones" size={22} modifiers={[frame({ width: 44, height: 44 })]} />}
       modifiers={[menuStyle('button'), buttonStyle(Number(Platform.Version) >= 26 ? 'glass' : 'bordered'), buttonBorderShape('circle'),
         frame({ width: 64, height: 64 }), tint(theme.tint), disabled(unavailable), accessibilityLabel('Choose AUX, ' + label)]}>
-      <Picker label="Choose AUX" selection={selected} onSelectionChange={value => { if (typeof value === 'number') onChange(value); }} modifiers={[pickerStyle('inline')]}>
+      {/* AUX channels are positive, so 0 stands for No AUX. */}
+      <Picker label="Choose AUX" selection={selected ?? 0} onSelectionChange={value => { if (typeof value === 'number') onChange(value || null); }} modifiers={[pickerStyle('inline')]}>
+        <Text modifiers={[tag(0)]}>No AUX</Text>
         {auxes.map(aux => <Text key={aux.channel} modifiers={[tag(aux.channel)]}>{aux.label}</Text>)}
       </Picker>
     </Menu>

@@ -15,6 +15,11 @@ export default function SettingsContent() {
   const status = state.demo ? 'Demo' : mix.status === 'connected' ? 'Connected' : state.pinPrompt ? 'PIN needed' : mix.status === 'disconnected' ? 'Not connected' : 'Connecting…';
   const statusColor = state.demo ? theme.orange : mix.status === 'connected' ? theme.green : mix.status === 'disconnected' ? theme.danger : theme.orange;
   const nickname = useNativeState(state.settings.nickname);
+  // The native field only reads its starting text once. Settings can be created
+  // before first-time setup saves a nickname, so keep the field in step with the
+  // saved nickname whenever the musician isn't typing in it.
+  const nicknameFocused = React.useRef(false);
+  React.useEffect(() => { if (!nicknameFocused.current) nickname.set(state.settings.nickname); }, [state.settings.nickname, nickname]);
   const reset = useResetDeviceData(() => nickname.set(''));
   const clearLevels = useClearSavedLevels();
   React.useEffect(() => () => { session.restoreNickname(); }, [session]);
@@ -38,7 +43,7 @@ export default function SettingsContent() {
       </Section>
       <Section title="This device" symbol="person.crop.circle">
         <TextField placeholder="Nickname" text={nickname} maxLength={80} onTextChange={value => session.setSettings({ nickname: value })}
-          onFocusChange={focused => { if (!focused) nickname.set(session.restoreNickname()); }} />
+          onFocusChange={focused => { nicknameFocused.current = focused; if (!focused) nickname.set(session.restoreNickname()); }} />
         {!state.settings.nickname.trim() && <Text modifiers={[foregroundStyle(theme.muted)]}>A nickname is required. Others on your mix see it.</Text>}
         {!!state.message && <Text>{state.message}</Text>}
       </Section>
