@@ -10,7 +10,7 @@ export default function MixerToolbar() {
   const theme = useTheme();
   const setAllLevelsOff = useSetAllLevelsOff();
   const selected = mix.config?.aux.find(aux => aux.channel === mix.aux);
-  const label = selected?.label || 'Choose mix';
+  const label = selected?.label || 'No AUX';
   const pad = Platform.OS === 'ios' && Platform.isPad;
   const offDisabled = mix.status !== 'connected' || !mix.aux || mix.locked;
   const modeActions = [
@@ -39,6 +39,7 @@ export default function MixerToolbar() {
     {Platform.OS !== 'ios' && state.server && !!mix.config?.aux.length && <Stack.Toolbar.Menu icon={require('../../assets/toolbar/headphones.png')}
       accessibilityLabel={'Choose AUX, ' + label} disabled={mix.status !== 'connected'}>
       <Stack.Toolbar.Label>Choose AUX</Stack.Toolbar.Label>
+      <Stack.Toolbar.MenuAction isOn={mix.aux === null} onPress={() => session.preferences({ selectedAux: null })}>No AUX</Stack.Toolbar.MenuAction>
       {mix.config.aux.map(aux => <Stack.Toolbar.MenuAction key={aux.channel} isOn={mix.aux === aux.channel}
         onPress={() => session.preferences({ selectedAux: aux.channel })}>{aux.label}</Stack.Toolbar.MenuAction>)}
     </Stack.Toolbar.Menu>}

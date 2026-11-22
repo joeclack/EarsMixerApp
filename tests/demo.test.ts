@@ -9,6 +9,8 @@ test('demo provides 20 channels, local faders, AUXes and templates without netwo
     (async () => { throw Error('Demo must not fetch a server'); }) as typeof fetch);
   try {
     await session.startDemo();
+    // The demo starts on No AUX like any mixer; choose a mix to load levels.
+    session.preferences({ selectedAux: 1 });
     const deadline = Date.now() + 2000;
     while (Object.keys(session.mixer.state.values).length < 20 && Date.now() < deadline) await new Promise(resolve => setTimeout(resolve, 10));
     assert.equal(session.state.demo, true);

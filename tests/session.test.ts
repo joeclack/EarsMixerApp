@@ -47,6 +47,7 @@ test('app switcher retains connection; background and relaunch retain channels w
   const session = make(); await session.connect('mixer.local');
   sockets[0].onopen?.();
   sockets[0].onmessage?.({ data: JSON.stringify({ config: { channels: [{ channel: 1, label: 'Kick', order: 1 }], aux: [{ channel: 2, label: 'Drums', colour: '#007AFF', stereo: false }], snapshot: 'Live' } }) });
+  session.preferences({ selectedAux: 2 });
   sockets[0].onmessage?.({ data: JSON.stringify({ address: '/Input_Channels/1/Aux_Send/2/send_level', args: [-10] }) });
   session.setLifecycle('inactive');
   assert.equal(session.mixer.state.status, 'connected');
@@ -92,6 +93,7 @@ test('device reset removes local profiles and caches without writing desk levels
   session.setSettings({ nickname: 'Joe', appearance: 'dark' });
   await session.connect('mixer.local'); socket.onopen?.();
   socket.onmessage?.({ data: JSON.stringify({ config: { channels: [{ channel: 1, label: 'Kick', order: 1 }], aux: [{ channel: 2, label: 'Drums' }] } }) });
+  session.preferences({ selectedAux: 2 });
   socket.onmessage?.({ data: JSON.stringify({ address: '/Input_Channels/1/Aux_Send/2/send_level', args: [-10] }) });
   session.preferences({ compact: true, channelOrder: [1], favouritesByAux: { '2': { channels: [1], enabled: true } } });
   const drag = session.mixer.beginDrag(1)!;

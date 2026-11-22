@@ -20,6 +20,8 @@ const address = (channel = 1, aux = 1, parameter = 'level') => '/Input_Channels/
 function setup(t: any) {
   const sockets: FakeSocket[] = [];
   const client = new MixerClient(() => { const socket = new FakeSocket(); sockets.push(socket); return socket; });
+  // The app no longer picks the first AUX itself; these tests mix on AUX 1.
+  client.selectAux(1);
   client.connect('http://mixer.local/');
   const socket = sockets[0]; socket.onopen?.(); socket.receive({ config });
   const level = (value = -12, channel = 1, aux = 1, parameter = 'level') => socket.receive({ address: address(channel, aux, parameter), args: [value] });
@@ -34,6 +36,27 @@ test('native configuration filters disabled channels and layout validation drops
   assert.deepEqual(readPreferences({ ...emptyPreferences(), levels: [10], pan: [0] }), emptyPreferences());
   for (const value of [-60, -30, -12, 0, 10]) assert.ok(Math.abs(positionToDb(dbToPosition(value)) - value) < 1e-8);
   assert.equal(positionToDb(0), -150); assert.equal(dbToPosition(-150), 0);
+});
+test('with no AUX chosen the mixer stays on No AUX, reads nothing and tells the server; clearing a mix returns to it', () => {
+  const sockets: FakeSocket[] = [];
+  const client = new MixerClient(() => { const socket = new FakeSocket(); sockets.push(socket); return socket; });
+  client.connect('http://mixer.local/');
+  const socket = sockets[0]; socket.onopen?.(); socket.receive({ config });
+  assert.equal(client.state.status, 'connected');
+  assert.equal(client.state.aux, null);
+  assert.equal(socket.messages.some(m => typeof m.address === 'string'), false);
+  assert.deepEqual(socket.messages.filter(m => 'selectedAux' in m), [{ selectedAux: null }]);
+  assert.equal(client.beginDrag(1), null);
+  client.selectAux(2);
+  assert.equal(client.state.aux, 2);
+  assert.deepEqual(socket.messages.filter(m => 'selectedAux' in m).at(-1), { selectedAux: 2 });
+  client.selectAux(null);
+  assert.equal(client.state.aux, null);
+  assert.deepEqual(socket.messages.filter(m => 'selectedAux' in m).at(-1), { selectedAux: null });
+  // A saved AUX the server no longer offers also leaves the mixer on No AUX.
+  client.selectAux(9);
+  assert.equal(client.state.aux, null);
+  client.disconnect();
 });
 test('the app tells the server which kind of app is connecting, and stays quiet when not set', () => {
   const sockets: FakeSocket[] = [];
