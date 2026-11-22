@@ -28,10 +28,11 @@ test('demo provides 20 channels, local faders, AUXes and templates without netwo
     assert.equal(session.state.preferences.channelOrder[0], 15);
     // A template sets the layout only; the musician stays on the mix they chose.
     assert.equal(session.state.preferences.selectedAux, 1);
-    // Templates carry their own hidden channels and groups, replacing the phone's.
-    assert.deepEqual(session.state.preferences.hiddenByAux, { '2': [19, 20] });
-    assert.deepEqual(session.state.preferences.globalGroups.map(group => group.name), ['Drums']);
-    assert.deepEqual(session.state.preferences.groupsByAux['2'], [{ id: 2, name: 'Backing vocals', members: [16, 17] }]);
+    // A template is one layout for any mix: its hidden channels apply to every mix
+    // and its groups are all-mix groups, replacing the phone's.
+    assert.deepEqual(session.state.preferences.hiddenByAux, { '1': [19, 20], '2': [19, 20], '3': [19, 20], '4': [19, 20] });
+    assert.deepEqual(session.state.preferences.globalGroups.map(group => group.name), ['Drums', 'Backing vocals']);
+    assert.deepEqual(session.state.preferences.groupsByAux, {});
     assert.equal(session.state.recent.length, 0);
     assert.equal(session.state.lastServer, null);
   } finally { session.disconnect(); }

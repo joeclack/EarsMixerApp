@@ -164,7 +164,8 @@ export class MixerSession {
     const data = this.state.demo ? { config: demoTemplate(id), name: demoTemplates.find(template => template.id === id)?.name } : await requestTemplates(server, id, this.fetcher);
     if (server !== this.state.server || attempt !== this.attempt) throw new Error('The mixer connection changed. Choose a template again.');
     // A template sets the layout only. It never changes which mix the musician is on.
-    const preferences = { ...templatePreferences(data.config, this.state.preferences.compact), selectedAux: this.state.preferences.selectedAux };
+    const auxes = this.mixer.state.config?.aux.map(aux => aux.channel) ?? [];
+    const preferences = { ...templatePreferences(data.config, this.state.preferences.compact, auxes), selectedAux: this.state.preferences.selectedAux };
     this.mixer.cancelWrites();
     this.patch({ selectedTemplate: typeof data.name === 'string' && data.name.trim() && data.name.length <= 80 ? { id, name: data.name.trim() } : null });
     // A template replaces the whole layout: order, hidden channels and groups.

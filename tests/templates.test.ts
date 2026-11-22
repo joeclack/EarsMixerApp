@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { MixerSession } from '../src/mixer/session';
 import { emptyPreferences } from '../src/mixer/model';
+import { templatePreferences } from '../src/mixer/templates';
 import type { Socket } from '../src/mixer/client';
 
 test('server templates replace local layout, persist and never recall audio levels', async () => {
@@ -30,4 +31,15 @@ test('server templates replace local layout, persist and never recall audio leve
   } finally {
     session.disconnect();
   }
+});
+
+test('a template is one layout for any mix; older templates without `hidden` keep their per-mix layout', () => {
+  const base = { ...emptyPreferences(), channelOrder: [2, 1] };
+  const shared = templatePreferences({ ...base, hidden: [3, 3, 4], globalGroups: [{ id: 1, name: 'Vox', members: [1, 2] }] }, true, [1, 2]);
+  assert.deepEqual(shared.hiddenByAux, { '1': [3, 4], '2': [3, 4] });
+  assert.deepEqual(shared.groupsByAux, {});
+  assert.deepEqual(shared.globalGroups.map(group => group.name), ['Vox']);
+  const legacy = templatePreferences({ ...base, hiddenByAux: { '2': [5] } }, true, [1, 2]);
+  assert.deepEqual(legacy.hiddenByAux, { '2': [5] });
+  assert.throws(() => templatePreferences({ ...base, hidden: [0] }, true, [1]));
 });
