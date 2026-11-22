@@ -43,3 +43,23 @@ test('a template is one layout for any mix; older templates without `hidden` kee
   assert.deepEqual(legacy.hiddenByAux, { '2': [5] });
   assert.throws(() => templatePreferences({ ...base, hidden: [0] }, true, [1]));
 });
+
+test('removing a template goes back to the normal layout and keeps the mix', async () => {
+  const id = 'b'.repeat(64), saved = new Map<string, string>();
+  const config = { ...emptyPreferences(), channelOrder: [2, 1], hidden: [2], globalGroups: [{ id: 1, name: 'Pair', members: [1, 2] }] };
+  const socket: Socket = { readyState: 1, onopen: null, onclose: null, onerror: null, onmessage: null, close() {}, send() {} };
+  const session = new MixerSession({ getItem: async key => saved.get(key) || null, setItem: async (key, value) => { saved.set(key, value); } }, () => socket,
+    (async (url: string) => Response.json(url.endsWith('/api/connection') ? { url, qr: 'data:image/png;base64,AAA' } : { id, name: 'Pair', config })) as typeof fetch);
+  try {
+    await session.connect('mixer.local');
+    session.preferences({ selectedAux: 2 });
+    await session.applyTemplate(id);
+    assert.equal(session.state.selectedTemplate?.name, 'Pair');
+    session.removeTemplate();
+    assert.equal(session.state.selectedTemplate, null);
+    const { channelOrder, hiddenByAux, groupsByAux, globalGroups, selectedAux } = session.state.preferences;
+    assert.deepEqual({ channelOrder, hiddenByAux, groupsByAux, globalGroups, selectedAux }, { channelOrder: [], hiddenByAux: {}, groupsByAux: {}, globalGroups: [], selectedAux: 2 });
+    await new Promise(resolve => setTimeout(resolve, 0));
+    assert.equal(JSON.parse(saved.get('earsmixer.native.profile:http://mixer.local/')!).template, null);
+  } finally { session.disconnect(); }
+});

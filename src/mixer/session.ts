@@ -173,6 +173,16 @@ export class MixerSession {
     await this.queue;
     if (server === this.state.server && attempt === this.attempt) this.notifySuccess('Layout applied: ' + (this.state.selectedTemplate?.name || 'Template'));
   }
+  /** Take off the applied template and go back to the mixer's normal layout: the
+   *  desk's channel order, every channel shown and no groups. The mix and desk
+   *  levels are unchanged. */
+  removeTemplate() {
+    if (!this.state.server) return;
+    this.mixer.cancelWrites();
+    this.patch({ selectedTemplate: null });
+    this.preferences({ channelOrder: [], favouritesByAux: {}, hiddenByAux: {}, groupsByAux: {}, globalGroups: [] });
+    this.notifySuccess('Template removed');
+  }
   async restartSetup() {
     this.mixer.cancelWrites();
     await this.persist('earsmixer.native.setup.v1', false);
