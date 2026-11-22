@@ -1,37 +1,19 @@
 import { memo, type ReactNode } from 'react';
-import { Text, View } from 'react-native';
+import { View } from 'react-native';
 import { useTheme } from '../theme';
-import HardwarePanel from './HardwarePanel';
 import { hardwarePalette } from './hardwarePalette';
 import { Engraved } from './ConsoleDetails';
 import { Icon } from './ui';
 
-// Small static previews of the real interface for the later setup steps,
-// hidden from assistive technologies. The nickname and connection steps have none.
+// A small static preview of the real interface for the portrait or landscape
+// setup step, hidden from assistive technologies. Other steps have none.
 export default memo(function SetupPreview({ step }: { step: number }) {
-  const preview = step === 2 ? <Views /> : step === 3 ? <Templates /> : null;
+  const preview = step === 2 ? <Views /> : null;
   return <View pointerEvents="none" accessible={false} accessibilityElementsHidden importantForAccessibility="no-hide-descendants"
     style={{ flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 28 }}>
     <View style={{ width: '100%', maxWidth: 340 }}>{preview}</View>
   </View>;
 });
-
-// Saved layouts fanned out like a stack of cards.
-function Templates() {
-  const theme = useTheme();
-  const names = ['Vocals', 'Keys', 'Drums IEM'];
-  return <View style={{ height: 170 }}>
-    {names.map((name, index) => <HardwarePanel key={name} radius={18} style={{ position: 'absolute', left: 24 - index * 12, right: index * 12, top: index * 34,
-      height: 96, padding: 16, transform: [{ rotate: (index - 2) * 2.5 + 'deg' }] }}>
-      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-        <Icon name={{ ios: 'square.stack', android: 'layers', web: 'layers' }} size={18} />
-        <Text style={{ flex: 1, color: theme.text, fontSize: 16, fontWeight: '600' }}>{name}</Text>
-        {index === names.length - 1 && <Icon name={{ ios: 'checkmark.circle.fill', android: 'check_circle', web: 'check_circle' }} size={18} />}
-      </View>
-      <Text style={{ color: theme.muted, fontSize: 12, marginTop: 6 }}>{14 - index * 3} channels · 2 groups</Text>
-    </HardwarePanel>)}
-  </View>;
-}
 
 function MiniStrip({ level }: { level: number }) {
   const { dark } = useTheme(), palette = hardwarePalette(dark);

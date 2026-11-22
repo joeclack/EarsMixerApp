@@ -1,6 +1,6 @@
 import Animated, { FadeIn, ReduceMotion } from 'react-native-reanimated';
 import { useEffect, useState } from 'react';
-import { Keyboard, KeyboardAvoidingView, Platform, Text, TextInput, View } from 'react-native';
+import { Keyboard, KeyboardAvoidingView, Platform, ScrollView, Text, TextInput, View } from 'react-native';
 import { router } from 'expo-router';
 import { requireOptionalNativeModule } from 'expo';
 import { findStartupMixers, reachableMixer } from '../discovery/startup';
@@ -14,13 +14,14 @@ import SetupProgress from './SetupProgress';
 import NativeButton from './NativeButton';
 import SetupList from './SetupList';
 import SetupPreview from './SetupPreview';
+import TemplatesList from './TemplatesList';
 import { useToolbarHaptic } from './useToolbarHaptic';
 
 const steps = [
   { title: 'Set your nickname', body: 'This name identifies your connection to the mixer. Others on your mix see it.', bullets: [] },
   { title: 'Connect to a mixer', body: 'Make sure you are on the correct Wi-Fi.', bullets: [] },
   { title: 'Portrait or landscape', body: 'Hold your phone upright for a list of faders, or turn it sideways for faders like the desk.', bullets: [] },
-  { title: 'Start with a template', body: 'Get started quickly by selecting a pre-made template. You can change it any time in the … menu.', bullets: [] },
+  { title: 'Start with a template', body: 'Choose a layout to start with. Desk levels stay unchanged, and you can change it any time in the Channels tab.', bullets: [] },
 ];
 export default function SetupWalkthrough() {
   const { session, state, mix } = useSession(), theme = useTheme(), haptic = useToolbarHaptic();
@@ -60,7 +61,7 @@ export default function SetupWalkthrough() {
     </View>
     <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <Animated.View key={step} entering={FadeIn.duration(160).reduceMotion(ReduceMotion.System)} style={{ flex: 1, maxWidth: 600, width: '100%', alignSelf: 'center' }}>
-        {step >= 2 && <View style={{ flexGrow: 0, flexShrink: 1, height: 230, minHeight: 0, overflow: 'hidden' }}>
+        {step === 2 && <View style={{ flexGrow: 0, flexShrink: 1, height: 230, minHeight: 0, overflow: 'hidden' }}>
           <SetupPreview step={step} />
         </View>}
         <View style={{ paddingHorizontal: 20, paddingTop: 20, gap: 10 }}>
@@ -76,12 +77,13 @@ export default function SetupWalkthrough() {
             </Text>
             <NativeButton title={state.server ? 'Change mixer' : 'Connect'} bordered onPress={() => router.push('/connect')} />
           </View>}
-          {step === 3 && mix.status === 'connected' && <View style={{ alignItems: 'flex-start', marginTop: 6 }}>
-            <NativeButton title="Choose template" bordered onPress={() => router.push('/templates')} />
-          </View>}
+          {step === 3 && mix.status !== 'connected' && <Text style={{ color: theme.muted, fontSize: 17 }}>Connect to a mixer to see its templates.</Text>}
           <Message error>{state.message}</Message>
         </View>
-        {current.bullets.length ? <SetupList items={current.bullets} featured={'featured' in current ? current.featured : undefined} /> : <View style={{ flex: 1 }} />}
+        {/* The mixer's templates are listed right here, rather than behind a button. */}
+        {step === 3 && mix.status === 'connected' ? <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 12, paddingBottom: 16 }}>
+          <TemplatesList intro={false} />
+        </ScrollView> : current.bullets.length ? <SetupList items={current.bullets} featured={'featured' in current ? current.featured : undefined} /> : <View style={{ flex: 1 }} />}
       </Animated.View>
       <View style={{ paddingHorizontal: 20, paddingTop: 12, paddingBottom: 16, maxWidth: 600, width: '100%', alignSelf: 'center' }}>
         <NativeButton title={next} prominent fullWidth disabled={finishing || (step === 0 && !nickname)} onPress={() => {
