@@ -6,6 +6,7 @@ import { Alert, AppState, Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { MixerSession } from './session';
 import type { Socket } from './client';
+import { mixInUseText } from './mixInUse';
 
 const Context = createContext<MixerSession | null>(null);
 export function MixerProvider({ children }: React.PropsWithChildren) {
@@ -19,7 +20,19 @@ export function MixerProvider({ children }: React.PropsWithChildren) {
     const subscription = AppState.addEventListener('change', state => session.setLifecycle(state));
     return () => { subscription.remove(); session.disconnect(false); };
   }, [session]);
-  return <Context.Provider value={session}><LevelRestorePrompt />{children}</Context.Provider>;
+  return <Context.Provider value={session}><LevelRestorePrompt /><MixInUsePrompt />{children}</Context.Provider>;
+}
+// Arriving on a mix someone else is on, or changed in the last couple of hours,
+// says so once, so a musician knows their changes will be heard by someone else.
+function MixInUsePrompt() {
+  const session = useContext(Context)!;
+  useEffect(() => session.mixer.onMixInUse(warning => {
+    const name = session.mixer.state.config?.aux.find(aux => aux.channel === warning.aux)?.label || 'this mix';
+    const { title, message } = mixInUseText(warning, name);
+    if (Platform.OS === 'web') window.alert(title + '\n\n' + message);
+    else Alert.alert(title, message, [{ text: 'OK' }]);
+  }), [session]);
+  return null;
 }
 function LevelRestorePrompt() {
   const { session, state } = useSessionState();

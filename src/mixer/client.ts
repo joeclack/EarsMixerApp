@@ -1,6 +1,7 @@
 import { clamp, dbToPosition, parseConfig, type ChannelGroup, type MixerConfig, type Parameter } from './model';
 import { dragLevel } from './faderPrecision';
 import { captureBalance, groupKey, groupLevels, type GroupBalance } from './groups';
+import { RECENT_CHANGE_MINUTES, type MixInUse } from './mixInUse';
 
 export interface Socket {
   readyState: number;
@@ -68,6 +69,18 @@ export class MixerClient {
   levelGeneration = 0;
   private levelEdits = new Set<(aux: number, levels: Record<number, number>) => void>();
   onLevelEdit(fn: (aux: number, levels: Record<number, number>) => void) { this.levelEdits.add(fn); return () => { this.levelEdits.delete(fn); }; }
+  // Arriving on a mix someone else is using raises one warning. joinedAux is the
+  // mix already checked on this connection, so coming back from the background
+  // doesn't warn again; checkAux is the mix waiting for its first presence.
+  private mixInUse = new Set<(warning: MixInUse) => void>();
+  onMixInUse(fn: (warning: MixInUse) => void) { this.mixInUse.add(fn); return () => { this.mixInUse.delete(fn); }; }
+  private joinedAux: number | null = null;
+  private checkAux: number | null = null;
+  private arrive(aux: number | null) {
+    if (aux !== null && aux !== this.joinedAux) this.checkAux = aux;
+    if (aux === null) this.checkAux = null;
+    this.joinedAux = aux;
+  }
   private editedLevels(levels: Record<number, number>) {
     if (this.state.aux) this.levelEdits.forEach(fn => fn(this.state.aux!, levels));
   }
@@ -234,7 +247,7 @@ export class MixerClient {
     if (this.query) clearTimeout(this.query);
     const socket = this.socket; this.socket = null;
     if (socket) { socket.onclose = socket.onerror = socket.onmessage = socket.onopen = null; socket.close(); }
-    if (!preserveConfig) this.valueCache = {};
+    if (!preserveConfig) { this.valueCache = {}; this.joinedAux = this.checkAux = null; }
     this.emit({ peers: [], status: 'disconnected', config: preserveConfig ? this.state.config : null, values: {}, muted: {}, aux: preserveConfig ? this.state.aux : null });
   }
   restoreConfig(config: MixerConfig, aux: number | null) {
@@ -279,6 +292,7 @@ export class MixerClient {
     this.desiredAux = aux;
     const available = this.state.config?.aux || [];
     const selected = available.find(a => a.channel === aux)?.channel ?? null;
+    if (this.state.config && this.state.status === 'connected') this.arrive(selected);
     if (selected !== this.state.aux) { this.liveLevels = {}; this.emit({ aux: selected, peers: [], values: {}, muted: {} }); this.refresh(); }
   }
   setParameter(parameter: Parameter) {
@@ -415,6 +429,15 @@ export class MixerClient {
         seen.add(peer.id); valid.push({ id: peer.id, nickname: peer.nickname?.trim() || null });
       }
       if (JSON.stringify(valid) !== JSON.stringify(this.state.peers)) this.emit({ peers: valid });
+      if (aux === this.checkAux) {
+        this.checkAux = null;
+        const change = message.presence.lastChange;
+        const recent = change && typeof change === 'object' && change.self === false && Number.isInteger(change.minutesAgo) &&
+          change.minutesAgo >= 0 && change.minutesAgo < RECENT_CHANGE_MINUTES && (change.nickname === null || typeof change.nickname === 'string' && change.nickname.length <= 80);
+        const warning: MixInUse | null = valid.length ? { aux, kind: 'peers', names: valid.map(peer => peer.nickname) }
+          : recent ? { aux, kind: 'recent', name: change.nickname?.trim() || null, minutesAgo: change.minutesAgo } : null;
+        if (warning) this.mixInUse.forEach(fn => fn(warning));
+      }
       return;
     }
     if (message.config) {
@@ -424,6 +447,7 @@ export class MixerClient {
       this.attempt = 0;
       this.cancelWrites();
       const aux = config.aux.find(a => a.channel === this.desiredAux)?.channel ?? null;
+      this.arrive(aux);
       this.emit({ peers: [], config, status: 'connected', aux, values: {}, muted: {} }); this.refresh();
       return;
     }
