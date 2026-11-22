@@ -2,7 +2,7 @@ import { Alert, Platform } from 'react-native';
 import { useSession } from '../mixer/context';
 
 // Forget the levels this phone saved for each mixer and AUX. Desk levels stay
-// as they are; only the "Load saved levels?" offer goes away.
+// as they are; only the "Mix changed on the desk" question goes away.
 export function useClearSavedLevels() {
   const { session } = useSession();
   return () => {
