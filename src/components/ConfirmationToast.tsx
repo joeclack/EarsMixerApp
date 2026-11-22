@@ -7,6 +7,7 @@ import { useConfirmationState } from '../mixer/context';
 import { useTheme } from '../theme';
 import HardwarePanel from './HardwarePanel';
 import { Icon } from './ui';
+import { useToastBottom } from './useToastBottom';
 
 export default function ConfirmationToast() {
   const { session, confirmation } = useConfirmationState();
@@ -37,8 +38,9 @@ function Notice({ message, onDismiss }: { message: string; onDismiss(): void }) 
     return () => { alive = false; clearTimeout(hide); clearTimeout(remove); };
   }, [message, progress]);
   const animated = useAnimatedStyle(() => ({ opacity: progress.value, transform: [{ translateY: (1 - progress.value) * 6 }] }));
+  const bottom = useToastBottom(20);
   return <View pointerEvents="none" style={{ position: 'absolute', left: insets.left + 20, right: insets.right + 20,
-    bottom: insets.bottom + 20, alignItems: 'center', zIndex: 100 }}>
+    bottom, alignItems: 'center', zIndex: 100 }}>
     <Animated.View testID="action-confirmation" accessible accessibilityLiveRegion="polite" accessibilityLabel={message}
       style={[{ maxWidth: 420, width: '100%' }, animated]}>
       <HardwarePanel radius={18} uniformBorder style={{ paddingHorizontal: 16, paddingVertical: 14, flexDirection: 'row', alignItems: 'center', gap: 10 }}>
