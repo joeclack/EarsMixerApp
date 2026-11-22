@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, Text, View } from 'react-native';
+import { ActivityIndicator, Alert, Platform, Text, View } from 'react-native';
 import Animated, { FadeIn, ReduceMotion } from 'react-native-reanimated';
 import { useSession } from '../mixer/context';
 import { useTheme } from '../theme';
@@ -43,5 +43,15 @@ export default function TemplatesList({ onApplied, intro = true }: { onApplied?(
     </View>
     <Message error>{error}</Message>
     {!!error && <NativeButton title="Retry" disabled={applying} onPress={() => setRetry(value => value + 1)} />}
+    {/* Taking a template off puts the mixer's normal layout back. It also undoes any
+        changes made since, so it asks first. */}
+    {!!state.selectedTemplate && <View style={{ marginTop: 20, alignItems: 'flex-start' }}>
+      <NativeButton title="Remove template" destructive disabled={applying} onPress={() => {
+        const title = 'Remove template?';
+        const message = 'Your channels go back to the normal order, every channel is shown again and groups are removed. Your mix and its levels stay the same.';
+        if (Platform.OS === 'web') { if (window.confirm(title + '\n\n' + message)) session.removeTemplate(); return; }
+        Alert.alert(title, message, [{ text: 'Cancel', style: 'cancel' }, { text: 'Remove', style: 'destructive', onPress: () => session.removeTemplate() }]);
+      }} />
+    </View>}
   </>;
 }
