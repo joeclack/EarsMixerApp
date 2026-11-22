@@ -7,8 +7,8 @@ import type { MixerTemplate } from '../mixer/templates';
 import NativeButton from './NativeButton';
 import { Icon, Message } from './ui';
 
-// The mixer's shared templates, used by the Channels tab and the setup sheet.
-export default function TemplatesList({ onApplied }: { onApplied?(): void }) {
+// The mixer's shared templates, used by the Channels tab and setup's template step.
+export default function TemplatesList({ onApplied, intro = true }: { onApplied?(): void; intro?: boolean }) {
   const { session, state } = useSession(), theme = useTheme();
   const alive = useRef(true);
   useEffect(() => { alive.current = true; return () => { alive.current = false; }; }, []);
@@ -24,7 +24,7 @@ export default function TemplatesList({ onApplied }: { onApplied?(): void }) {
     return () => controller.abort();
   }, [session, state.server, retry]);
   return <>
-    <Text style={{ color: theme.muted, fontSize: 15, marginBottom: 20 }}>Choose a layout. Desk levels stay unchanged.</Text>
+    {intro && <Text style={{ color: theme.muted, fontSize: 15, marginBottom: 20 }}>Choose a layout. Desk levels stay unchanged.</Text>}
     {loading && <ActivityIndicator color={theme.tint} />}
     {!loading && !error && !templates.length && <Message>No templates available on this mixer.</Message>}
     <View>

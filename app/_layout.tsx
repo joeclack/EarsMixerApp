@@ -98,7 +98,6 @@ function Navigation() {
       <Stack.Screen name="connect" options={sheetOptions} />
       <Stack.Screen name="pin" options={sheetOptions} />
       <Stack.Screen name="nickname" options={{ ...sheetOptions, gestureEnabled: false, sheetGrabberVisible: false }} />
-      <Stack.Screen name="templates" options={sheetOptions} />
       <Stack.Screen name="request" options={sheetOptions} />
       <Stack.Screen name="scan" options={{ presentation: 'fullScreenModal', headerShown: false }} />
       <Stack.Screen name="layout" options={{ headerShown: false }} />

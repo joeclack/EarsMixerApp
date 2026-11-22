@@ -26,7 +26,8 @@ test('demo provides 20 channels, local faders, AUXes and templates without netwo
     const templates = await session.templates();
     await session.applyTemplate(templates[1].id);
     assert.equal(session.state.preferences.channelOrder[0], 15);
-    assert.equal(session.state.preferences.selectedAux, 2);
+    // A template sets the layout only; the musician stays on the mix they chose.
+    assert.equal(session.state.preferences.selectedAux, 1);
     // Templates carry their own hidden channels and groups, replacing the phone's.
     assert.deepEqual(session.state.preferences.hiddenByAux, { '2': [19, 20] });
     assert.deepEqual(session.state.preferences.globalGroups.map(group => group.name), ['Drums']);
