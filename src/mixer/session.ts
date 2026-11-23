@@ -24,6 +24,8 @@ export type SessionState = {
   preferences: Preferences; connecting: boolean; message: string;
   // Set while the connected mixer is waiting for its connection PIN.
   pinPrompt: { revoked: boolean } | null;
+  // The address being connected to while `connecting`, so loading can name it.
+  connectingTo?: string | null;
 };
 export class MixerSession {
   readonly mixer: MixerClient;
@@ -277,7 +279,7 @@ export class MixerSession {
   async connect(input: string, { probeTimeoutMs }: { probeTimeoutMs?: number } = {}) {
     const attempt = ++this.attempt;
     this.compared = '';
-    this.patch({ connecting: true, restorePrompt: null, message: '', pinPrompt: null });
+    this.patch({ connecting: true, connectingTo: input, restorePrompt: null, message: '', pinPrompt: null });
     try {
       await this.loadLevelStates();
       const { url: server, name } = input === DEMO_URL ? { url: DEMO_URL, name: '' } : await probeMixerInfo(input, { fetchImpl: this.fetcher, ...(probeTimeoutMs && { timeoutMs: probeTimeoutMs }) });
@@ -314,7 +316,7 @@ export class MixerSession {
       }
     } catch (error) {
       if (attempt === this.attempt) { this.patch({ message: error instanceof Error ? error.message : 'Could not connect.' }); throw error; }
-    } finally { if (attempt === this.attempt) this.patch({ connecting: false }); }
+    } finally { if (attempt === this.attempt) this.patch({ connecting: false, connectingTo: null }); }
   }
   disconnect(forgetConnection = true) {
     this.persistValues();

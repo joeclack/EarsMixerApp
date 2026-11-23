@@ -12,7 +12,7 @@ import { findStartupMixers, reachableMixer } from '../src/discovery/startup';
 import type { DiscoveryNative } from '../src/discovery/browser';
 import { useTheme } from '../src/theme';
 import { warmFaderArtwork } from '../src/components/faderArtwork';
-import { StartupCover, useMixerLoading } from '../src/components/MixerLoadingBoundary';
+import { StartupCover } from '../src/components/MixerLoadingBoundary';
 
 const sheetOptions = {
   headerShown: false, presentation: (Platform.OS === 'web' ? 'modal' : 'formSheet') as 'modal' | 'formSheet',
@@ -27,13 +27,13 @@ function Navigation() {
   const prompted = useRef(false);
   const setupPresented = useRef(false);
   const pathname = usePathname();
-  // One loader covers startup: loading settings, then the first connection to
-  // the last mixer. Once it lifts, the mixer screen handles later reconnects.
+  // The startup loader only covers loading saved settings. It never waits on the
+  // network: reconnecting to the last mixer shows the mixer's own loader, which
+  // says what it is doing, so an unreachable mixer doesn't hold up launch.
   const [starting, setStarting] = useState(true);
-  const mixerLoading = useMixerLoading();
   const hasNickname = session.hasNickname();
   const [startupDone, setStartupDone] = useState(false);
-  const covering = !startupDone && (!state.hydrated || starting || mixerLoading);
+  const covering = !startupDone && (!state.hydrated || starting);
   useEffect(() => { if (!covering) setStartupDone(true); }, [covering]);
   useEffect(() => {
     if (Platform.OS !== 'web') Appearance.setColorScheme(state.settings.appearance === 'system' ? 'unspecified' : state.settings.appearance);

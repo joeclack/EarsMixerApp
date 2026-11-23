@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { AccessibilityInfo, AppState, View } from 'react-native';
+import { AccessibilityInfo, AppState, Text, View } from 'react-native';
 import Animated, { cancelAnimation, cubicBezier, Easing, interpolate, ReduceMotion, useAnimatedStyle, useReducedMotion, useSharedValue, withTiming } from 'react-native-reanimated';
 import { scheduleOnRN } from 'react-native-worklets';
 import { useTheme } from '../theme';
@@ -20,7 +20,8 @@ const easing = cubicBezier(0.77, 0, 0.175, 1);
 
 // `desk` draws the loader on the mixer's desk colour, so it matches the mixer's
 // header while the mix loads. Light mode's desk is cream; dark mode's matches bg.
-export default function FaderLoading({ finishing = false, onFinished, desk = false }: { finishing?: boolean; onFinished?: () => void; desk?: boolean }) {
+// `label` says what is loading, under the faders; screen readers hear it too.
+export default function FaderLoading({ finishing = false, onFinished, desk = false, label }: { finishing?: boolean; onFinished?: () => void; desk?: boolean; label?: string }) {
   const theme = useTheme();
   const surface = desk ? theme.deskBg : theme.bg;
   const track = desk && !theme.dark ? 'rgba(90,66,45,0.16)' : theme.secondary;
@@ -56,7 +57,7 @@ export default function FaderLoading({ finishing = false, onFinished, desk = fal
   // Let the faders visibly approach before they grow beyond the screen and fade.
   const surfaceStyle = useAnimatedStyle(() => ({ opacity: reducedMotion ? 1 - exit.get() : interpolate(exit.get(), [0, 0.65, 1], [1, 1, 0]) }));
   const fadersStyle = useAnimatedStyle(() => ({ transform: [{ scale: reducedMotion ? 1 : interpolate(exit.get(), [0, 0.65, 1], [1, 3, 12]) }] }));
-  return <Animated.View testID="loading-faders" accessibilityLabel="Loading mixer" accessibilityRole="progressbar" accessibilityState={{ busy: !finishing }}
+  return <Animated.View testID="loading-faders" accessibilityLabel={label || 'Loading'} accessibilityRole="progressbar" accessibilityState={{ busy: !finishing }}
     style={[{ flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: surface, overflow: 'hidden' }, surfaceStyle]}>
     <Animated.View accessible={false} accessibilityElementsHidden importantForAccessibility="no-hide-descendants" pointerEvents="none"
       style={[{ flexDirection: 'row', gap: 30, padding: 20 }, fadersStyle]}>
@@ -69,5 +70,7 @@ export default function FaderLoading({ finishing = false, onFinished, desk = fal
             animationIterationCount: 'infinite', animationTimingFunction: easing, animationPlayState: active && !finishing ? 'running' : 'paused' } : {}) }} />
       </View>)}
     </Animated.View>
+    {!!label && <Text accessible={false} importantForAccessibility="no" numberOfLines={2}
+      style={{ marginTop: 8, maxWidth: 280, paddingHorizontal: 24, color: theme.muted, fontSize: 15, lineHeight: 20, textAlign: 'center' }}>{label}</Text>}
   </Animated.View>;
 }
