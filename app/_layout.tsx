@@ -6,6 +6,7 @@ import { Stack, ThemeProvider, DarkTheme, DefaultTheme, router, useRootNavigatio
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { StatusBar } from 'expo-status-bar';
 import { MixerProvider, useSessionState } from '../src/mixer/context';
+import { SAVED_MIXER_TIMEOUT_MS } from '../src/mixer/session';
 import { requireOptionalNativeModule } from 'expo';
 import { findStartupMixers, reachableMixer } from '../src/discovery/startup';
 import type { DiscoveryNative } from '../src/discovery/browser';
@@ -57,7 +58,9 @@ function Navigation() {
     void (async () => {
       if (session.state.server) return;
       if (session.state.lastServer) {
-        const connecting = session.connect(session.state.lastServer);
+        // A mixer on the same network answers well within this. Beyond it, stop
+        // holding the startup loader and fall back to discovery.
+        const connecting = session.connect(session.state.lastServer, { probeTimeoutMs: SAVED_MIXER_TIMEOUT_MS });
         // connect() marks the session as connecting synchronously, so the mixer
         // loading state takes over from here without a gap.
         setStarting(false);
