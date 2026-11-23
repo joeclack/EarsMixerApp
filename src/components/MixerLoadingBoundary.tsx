@@ -1,12 +1,9 @@
-import { createContext, useCallback, useContext, useSyncExternalStore, type PropsWithChildren } from 'react';
+import { useCallback, useSyncExternalStore, type PropsWithChildren } from 'react';
+import { Text, View } from 'react-native';
 import { mixerLabel, normalizeMixerAddress } from '../connection';
 import { useSession, useSessionState } from '../mixer/context';
 import { DEMO_URL } from '../mixer/demo';
-import LoadingTransition from './LoadingTransition';
-
-// True while the app's startup loader covers the screen. The mixer then skips
-// its own loader so the animation plays once rather than restarting beneath it.
-export const StartupCover = createContext(false);
+import { useTheme } from '../theme';
 
 // Whether the mixer is waiting for its first channel metadata.
 export function useMixerLoading() {
@@ -19,7 +16,7 @@ export function useMixerLoading() {
   return waiting || (state.connecting && !session.mixer.state.config);
 }
 
-// What the mixer is waiting for, in words, shown under the loading faders.
+// What the mixer is waiting for, in words.
 function useMixerLoadingLabel() {
   const { session, state, mix } = useSession();
   const target = state.connectingTo || state.server;
@@ -33,10 +30,14 @@ function useMixerLoadingLabel() {
 
 // Draw the bank as soon as metadata is available. Reading desk values must not
 // gate the artwork; each fader independently waits for fresh values before edits.
+// Until then, a single line says what the mixer is waiting for.
 export default function MixerLoadingBoundary({ children }: PropsWithChildren) {
   const loading = useMixerLoading();
-  const covered = useContext(StartupCover);
   const label = useMixerLoadingLabel();
-  // The mixer page sits on the desk colour, so its loader does too.
-  return <LoadingTransition loading={loading && !covered} desk label={label}>{children}</LoadingTransition>;
+  const theme = useTheme();
+  if (!loading) return <>{children}</>;
+  return <View accessible accessibilityRole="progressbar" accessibilityLabel={label} accessibilityState={{ busy: true }}
+    style={{ flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24 }}>
+    <Text numberOfLines={2} style={{ maxWidth: 280, color: theme.muted, fontSize: 15, lineHeight: 20, textAlign: 'center' }}>{label}</Text>
+  </View>;
 }

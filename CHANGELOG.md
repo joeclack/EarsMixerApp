@@ -3,10 +3,9 @@
 ## 1.0.0 — First App Store release
 
 - Version is now 1.0.0 for the first App Store submission. Earlier TestFlight builds were 0.1.0.
-- Removed **Test first-time setup** from Settings. The Developer tools section now only appears in development builds.
-- In light mode, the mixer's loading animation now sits on the same cream desk colour as the mixer's header, instead of the blue-grey app background.
+- Removed **Test first-time setup** from Settings.
 - Launch no longer waits for the mixer. The app opens as soon as your settings load, and reconnecting to your last mixer happens on the Mixer tab. An out-of-range mixer is given up on after 2.5 seconds instead of 7.
-- The mixer's loading screen now says what it's doing: Connecting to *mixer name*…, Loading channels… or Starting demo….
+- Removed the fader loading animation. The app opens straight away, and while the mixer connects the Mixer tab shows one line saying what it's doing: Connecting to *mixer name*…, Loading channels… or Starting demo…. The loading preview in Developer tools is gone, and with it the Developer tools section.
 - New app icon in the current fader style: thin tracks with a glowing teal level, graphite caps and the 0 dB markers. The iOS icon, Android adaptive icon foreground and web favicon are updated. The icon is native, so it reaches devices with the next build rather than an over-the-air update.
 - Settings → About shows the build number next to the version, for example 0.1.0 (5), so you can tell which TestFlight build an over-the-air update is running on.
 - Removed signal meters. Faders no longer show a meter, demo mode no longer simulates them, **Show signal meters** is gone from Settings, and the app no longer asks servers for meter readings or accepts them.
