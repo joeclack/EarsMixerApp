@@ -4,7 +4,7 @@ import { useClearSavedLevels } from './useClearSavedLevels';
 import ProfileCard from './ProfileCard';
 import { Text, View, Switch, Platform } from 'react-native';
 import { router } from 'expo-router';
-import { appUpdateDetails, appVersionLabel } from '../appVersion';
+import { appUpdateDetails } from '../appVersion';
 import { useSession } from '../mixer/context';
 import { mixerLabel } from '../connection';
 import { useTheme } from '../theme';
@@ -36,6 +36,7 @@ export default function SettingsContent() {
       <Row title="Clear saved levels" destructive onPress={clearLevels} />
     </Section>
     <Section><Row title="Reset device data" destructive onPress={reset.confirm} /></Section>
-    <Section title="About" symbol={{ ios: 'info.circle', android: 'info', web: 'info' }} footer={appUpdateDetails()}><Row title="EarsMixer"><Text style={{ color: theme.muted }}>{appVersionLabel()}</Text></Row></Section>
+    {/* What's running, centred under the list: version, update, bundle and date. */}
+    <Text style={{ color: theme.muted, fontSize: 13, lineHeight: 19, textAlign: 'center', marginHorizontal: 16 }}>{appUpdateDetails()}</Text>
   </>;
 }

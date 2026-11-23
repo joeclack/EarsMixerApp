@@ -2,10 +2,10 @@ import React from 'react';
 import Section from './HardwareSection.ios';
 import { useResetDeviceData } from './useResetDeviceData';
 import { useClearSavedLevels } from './useClearSavedLevels';
-import { Host, Form, Toggle, Picker, Text, Button, LabeledContent, VStack, HStack, Spacer, TextField, Image, useNativeState } from '@expo/ui/swift-ui';
-import { font, foregroundStyle, tag, pickerStyle, buttonStyle, lineLimit, scrollContentBackground, disabled } from '@expo/ui/swift-ui/modifiers';
+import { Host, Form, Section as FormSection, Toggle, Picker, Text, Button, VStack, HStack, Spacer, TextField, Image, useNativeState } from '@expo/ui/swift-ui';
+import { font, foregroundStyle, tag, pickerStyle, buttonStyle, lineLimit, scrollContentBackground, disabled, multilineTextAlignment, frame } from '@expo/ui/swift-ui/modifiers';
 import { router } from 'expo-router';
-import { appUpdateDetails, appVersionLabel } from '../appVersion';
+import { appUpdateDetails } from '../appVersion';
 import { useSession } from '../mixer/context';
 import { mixerLabel } from '../connection';
 import { useTheme } from '../theme';
@@ -64,9 +64,8 @@ export default function SettingsContent() {
       <Section>
         <Button label="Reset device data" role="destructive" onPress={reset.confirm} modifiers={[disabled(reset.resetting)]} />
       </Section>
-      <Section title="About" symbol="info.circle" footer={appUpdateDetails()}>
-        <LabeledContent label="EarsMixer"><Text>{appVersionLabel()}</Text></LabeledContent>
-      </Section>
+      {/* What's running, centred under the list: version, update, bundle and date. */}
+      <FormSection footer={<Text modifiers={[multilineTextAlignment('center'), frame({ maxWidth: 10000, alignment: 'center' }), foregroundStyle(theme.muted)]}>{appUpdateDetails()}</Text>} />
     </Form>
   </Host>;
 }

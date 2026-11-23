@@ -1,7 +1,7 @@
 import React from 'react';
 import { Text as PlainText, TextInput, View } from 'react-native';
 import { router } from 'expo-router';
-import { appUpdateDetails, appVersionLabel } from '../appVersion';
+import { appUpdateDetails } from '../appVersion';
 import { SegmentedButton, SingleChoiceSegmentedButtonRow, Switch, Text, TextButton } from '@expo/ui/jetpack-compose';
 import { fillMaxWidth, padding, semantics } from '@expo/ui/jetpack-compose/modifiers';
 import { useResetDeviceData } from './useResetDeviceData';
@@ -67,8 +67,7 @@ export default function SettingsContent() {
     <MaterialSection>
       <MaterialItem title="Reset device data" symbol="delete_forever" destructive onPress={reset.confirm} />
     </MaterialSection>
-    <MaterialSection title="About" symbol="info" footer={appUpdateDetails()}>
-      <MaterialItem title="EarsMixer" symbol="headphones" trailing={<Text color={theme.muted}>{appVersionLabel()}</Text>} />
-    </MaterialSection>
+    {/* What's running, centred under the list: version, update, bundle and date. */}
+    <PlainText style={{ color: theme.muted, fontSize: 13, lineHeight: 19, textAlign: 'center', marginTop: 4, marginHorizontal: 16 }}>{appUpdateDetails()}</PlainText>
   </>;
 }
