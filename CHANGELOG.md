@@ -10,6 +10,7 @@
 - Launch no longer waits for the mixer. The app opens as soon as your settings load, and reconnecting to your last mixer happens on the Mixer tab. An out-of-range mixer is given up on after 2.5 seconds instead of 7.
 - Removed the fader loading animation. The app opens straight away, and while the mixer connects the Mixer tab shows one line saying what it's doing: Connecting to *mixer name*…, Loading channels… or Starting demo…. The loading preview in Developer tools is gone, and with it the Developer tools section.
 - New app icon in the current fader style: thin tracks with a glowing teal level, graphite caps and the 0 dB markers. The iOS icon, Android adaptive icon foreground and web favicon are updated. The icon is native, so it reaches devices with the next build rather than an over-the-air update.
+- Settings → About has a footer with exactly what's running: the version and build, the over-the-air update ID (or "built in"), the commit the JavaScript was built from and when the update was published, for example *Version 1.0.0 (7) · update 01a207c1* and *Bundle 2a49949 · 23 Nov 2026, 09:33 UTC*.
 - Settings → About shows the build number next to the version, for example 0.1.0 (5), so you can tell which TestFlight build an over-the-air update is running on.
 - Removed signal meters. Faders no longer show a meter, demo mode no longer simulates them, **Show signal meters** is gone from Settings, and the app no longer asks servers for meter readings or accepts them.
 - Removed the GitHub Actions workflows for mobile builds and previews.

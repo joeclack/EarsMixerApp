@@ -5,7 +5,7 @@ import { useClearSavedLevels } from './useClearSavedLevels';
 import { Host, Form, Toggle, Picker, Text, Button, LabeledContent, VStack, HStack, Spacer, TextField, Image, useNativeState } from '@expo/ui/swift-ui';
 import { font, foregroundStyle, tag, pickerStyle, buttonStyle, lineLimit, scrollContentBackground, disabled } from '@expo/ui/swift-ui/modifiers';
 import { router } from 'expo-router';
-import { appVersionLabel } from '../appVersion';
+import { appUpdateDetails, appVersionLabel } from '../appVersion';
 import { useSession } from '../mixer/context';
 import { mixerLabel } from '../connection';
 import { useTheme } from '../theme';
@@ -64,7 +64,7 @@ export default function SettingsContent() {
       <Section>
         <Button label="Reset device data" role="destructive" onPress={reset.confirm} modifiers={[disabled(reset.resetting)]} />
       </Section>
-      <Section title="About" symbol="info.circle">
+      <Section title="About" symbol="info.circle" footer={appUpdateDetails()}>
         <LabeledContent label="EarsMixer"><Text>{appVersionLabel()}</Text></LabeledContent>
       </Section>
     </Form>
