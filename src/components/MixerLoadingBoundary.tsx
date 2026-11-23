@@ -22,5 +22,6 @@ export function useMixerLoading() {
 export default function MixerLoadingBoundary({ children }: PropsWithChildren) {
   const loading = useMixerLoading();
   const covered = useContext(StartupCover);
-  return <LoadingTransition loading={loading && !covered}>{children}</LoadingTransition>;
+  // The mixer page sits on the desk colour, so its loader does too.
+  return <LoadingTransition loading={loading && !covered} desk>{children}</LoadingTransition>;
 }
