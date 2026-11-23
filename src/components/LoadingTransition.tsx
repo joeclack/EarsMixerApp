@@ -5,7 +5,7 @@ import FaderLoading from './FaderLoading';
 // Mount ready content immediately beneath the exit. Keep only the loader alive
 // for the animation, rather than delaying metadata, assets or screen rendering.
 // `ready` mounts content beneath a loader that is still covering it.
-export default function LoadingTransition({ loading, ready = !loading, desk = false, children }: PropsWithChildren<{ loading: boolean; ready?: boolean; desk?: boolean }>) {
+export default function LoadingTransition({ loading, ready = !loading, desk = false, label, children }: PropsWithChildren<{ loading: boolean; ready?: boolean; desk?: boolean; label?: string }>) {
   const [visible, setVisible] = useState(loading);
   const current = useRef(loading);
   useLayoutEffect(() => {
@@ -16,7 +16,7 @@ export default function LoadingTransition({ loading, ready = !loading, desk = fa
   return <View style={{ flex: 1 }}>
     {ready && children}
     {(loading || visible) && <View style={StyleSheet.absoluteFill}>
-      <FaderLoading finishing={!loading} onFinished={complete} desk={desk} />
+      <FaderLoading finishing={!loading} onFinished={complete} desk={desk} label={label} />
     </View>}
   </View>;
 }

@@ -13,7 +13,7 @@ export default function LoadingPreview() {
   if (!__DEV__) return <Redirect href="/settings" />;
   return <ScreenSurface>
     <Stack.Screen options={{ animation: finishing ? 'none' : 'default' }} />
-    <FaderLoading finishing={finishing} onFinished={close} />
+    <FaderLoading finishing={finishing} onFinished={close} label="Connecting to Sound Desk…" />
     <View style={{ position: 'absolute', top: insets.top + 12, right: insets.right + 16 }}>
       <NativeButton title="Done" symbol="xmark" disabled={finishing} onPress={() => setFinishing(true)} />
     </View>

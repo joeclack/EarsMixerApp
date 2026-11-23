@@ -14,6 +14,9 @@ export type Settings = { appearance: 'system' | 'light' | 'dark'; nickname: stri
 export const DEFAULT_SETTINGS: Settings = { appearance: 'system', nickname: '', showLevels: true, textSize: 'standard' };
 /** How much larger mixer text is drawn at each text size. */
 export const TEXT_SCALE: Record<TextSize, number> = { standard: 1, large: 1.2, larger: 1.4 };
+// How long an automatic reconnect to the saved mixer waits for it to answer,
+// matching the per-server check in startup discovery.
+export const SAVED_MIXER_TIMEOUT_MS = 2500;
 export type SessionState = {
   confirmation: { id: number; message: string } | null;
   recentStates: Record<string, SavedLevelState>; restorePrompt: { key: string; generation: number; saved: SavedLevelState } | null;
@@ -21,6 +24,8 @@ export type SessionState = {
   preferences: Preferences; connecting: boolean; message: string;
   // Set while the connected mixer is waiting for its connection PIN.
   pinPrompt: { revoked: boolean } | null;
+  // The address being connected to while `connecting`, so loading can name it.
+  connectingTo?: string | null;
 };
 export class MixerSession {
   readonly mixer: MixerClient;
@@ -269,13 +274,15 @@ export class MixerSession {
     if (!this.suspended) this.mixer.connect(server, true);
   }
   startDemo() { return this.connect(DEMO_URL); }
-  async connect(input: string) {
+  // `probeTimeoutMs` shortens the first reachability check. Automatic reconnects
+  // to the saved mixer use it so an out-of-range mixer doesn't hold up launch.
+  async connect(input: string, { probeTimeoutMs }: { probeTimeoutMs?: number } = {}) {
     const attempt = ++this.attempt;
     this.compared = '';
-    this.patch({ connecting: true, restorePrompt: null, message: '', pinPrompt: null });
+    this.patch({ connecting: true, connectingTo: input, restorePrompt: null, message: '', pinPrompt: null });
     try {
       await this.loadLevelStates();
-      const { url: server, name } = input === DEMO_URL ? { url: DEMO_URL, name: '' } : await probeMixerInfo(input, { fetchImpl: this.fetcher });
+      const { url: server, name } = input === DEMO_URL ? { url: DEMO_URL, name: '' } : await probeMixerInfo(input, { fetchImpl: this.fetcher, ...(probeTimeoutMs && { timeoutMs: probeTimeoutMs }) });
       this.persistValues();
       await this.queue;
       let raw: any = {};
@@ -309,7 +316,7 @@ export class MixerSession {
       }
     } catch (error) {
       if (attempt === this.attempt) { this.patch({ message: error instanceof Error ? error.message : 'Could not connect.' }); throw error; }
-    } finally { if (attempt === this.attempt) this.patch({ connecting: false }); }
+    } finally { if (attempt === this.attempt) this.patch({ connecting: false, connectingTo: null }); }
   }
   disconnect(forgetConnection = true) {
     this.persistValues();

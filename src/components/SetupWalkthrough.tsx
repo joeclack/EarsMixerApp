@@ -7,6 +7,7 @@ import { findStartupMixers, reachableMixer } from '../discovery/startup';
 import type { DiscoveryNative } from '../discovery/browser';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useSession } from '../mixer/context';
+import { SAVED_MIXER_TIMEOUT_MS } from '../mixer/session';
 import { mixerLabel } from '../connection';
 import { useTheme } from '../theme';
 import { Message } from './ui';
@@ -34,7 +35,7 @@ export default function SetupWalkthrough() {
     setChecking(true);
     void (async () => {
       if (session.state.lastServer) {
-        try { await session.connect(session.state.lastServer); if (session.state.server) return; } catch {}
+        try { await session.connect(session.state.lastServer, { probeTimeoutMs: SAVED_MIXER_TIMEOUT_MS }); if (session.state.server) return; } catch {}
       }
       const native = Platform.OS === 'web' ? null : requireOptionalNativeModule<DiscoveryNative>('EarsMixerDiscovery');
       const mixers = await findStartupMixers(native, session.state.recent.map(item => item.url), controller.signal);

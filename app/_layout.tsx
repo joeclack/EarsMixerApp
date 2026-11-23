@@ -6,12 +6,13 @@ import { Stack, ThemeProvider, DarkTheme, DefaultTheme, router, useRootNavigatio
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { StatusBar } from 'expo-status-bar';
 import { MixerProvider, useSessionState } from '../src/mixer/context';
+import { SAVED_MIXER_TIMEOUT_MS } from '../src/mixer/session';
 import { requireOptionalNativeModule } from 'expo';
 import { findStartupMixers, reachableMixer } from '../src/discovery/startup';
 import type { DiscoveryNative } from '../src/discovery/browser';
 import { useTheme } from '../src/theme';
 import { warmFaderArtwork } from '../src/components/faderArtwork';
-import { StartupCover, useMixerLoading } from '../src/components/MixerLoadingBoundary';
+import { StartupCover } from '../src/components/MixerLoadingBoundary';
 
 const sheetOptions = {
   headerShown: false, presentation: (Platform.OS === 'web' ? 'modal' : 'formSheet') as 'modal' | 'formSheet',
@@ -26,13 +27,13 @@ function Navigation() {
   const prompted = useRef(false);
   const setupPresented = useRef(false);
   const pathname = usePathname();
-  // One loader covers startup: loading settings, then the first connection to
-  // the last mixer. Once it lifts, the mixer screen handles later reconnects.
+  // The startup loader only covers loading saved settings. It never waits on the
+  // network: reconnecting to the last mixer shows the mixer's own loader, which
+  // says what it is doing, so an unreachable mixer doesn't hold up launch.
   const [starting, setStarting] = useState(true);
-  const mixerLoading = useMixerLoading();
   const hasNickname = session.hasNickname();
   const [startupDone, setStartupDone] = useState(false);
-  const covering = !startupDone && (!state.hydrated || starting || mixerLoading);
+  const covering = !startupDone && (!state.hydrated || starting);
   useEffect(() => { if (!covering) setStartupDone(true); }, [covering]);
   useEffect(() => {
     if (Platform.OS !== 'web') Appearance.setColorScheme(state.settings.appearance === 'system' ? 'unspecified' : state.settings.appearance);
@@ -57,7 +58,9 @@ function Navigation() {
     void (async () => {
       if (session.state.server) return;
       if (session.state.lastServer) {
-        const connecting = session.connect(session.state.lastServer);
+        // A mixer on the same network answers well within this. Beyond it, stop
+        // holding the startup loader and fall back to discovery.
+        const connecting = session.connect(session.state.lastServer, { probeTimeoutMs: SAVED_MIXER_TIMEOUT_MS });
         // connect() marks the session as connecting synchronously, so the mixer
         // loading state takes over from here without a gap.
         setStarting(false);
