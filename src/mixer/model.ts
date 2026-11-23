@@ -1,5 +1,9 @@
 // colour is the server's six-digit hex for the channel, when one is set.
-export type Channel = { channel: number; label: string; order: number; colour?: string };
+// Linked channels (EarsMixer server 1.22.0+) are two desk channels with one
+// fader: the first has `partner` and shows the link's name, keeping its own
+// name as `deskLabel`; the second has `linkedTo` and only appears in pan mode.
+// The fader writes the first channel and the server copies level and mute.
+export type Channel = { channel: number; label: string; order: number; colour?: string; partner?: number; deskLabel?: string; linkedTo?: number };
 export type Aux = { channel: number; label: string; colour: string; stereo: boolean };
 export type MixerConfig = { channels: Channel[]; aux: Aux[]; snapshot: string };
 export type Parameter = 'level' | 'pan';
@@ -74,13 +78,30 @@ export function parseConfig(value: unknown): MixerConfig | null {
   if (!record(value) || !Array.isArray(value.channels) || !Array.isArray(value.aux)) return null;
   const unique = <T extends { channel: number }>(rows: T[]) => [...new Map(rows.map(row => [row.channel, row])).values()];
   return {
-    channels: unique(value.channels.filter((c: any) => record(c) && positive(c.channel) && c.enabled !== false).map((c: any) =>
+    channels: linkChannels(unique(value.channels.filter((c: any) => record(c) && positive(c.channel) && c.enabled !== false).map((c: any) =>
       ({ channel: c.channel, label: typeof c.label === 'string' ? c.label : 'Channel ' + c.channel, order: Number.isFinite(c.order) ? c.order : c.channel,
-        ...(typeof c.colour === 'string' && /^#[a-f\d]{6}$/i.test(c.colour) ? { colour: c.colour } : {}) }))).sort((a, b) => a.order - b.order),
+        ...(typeof c.colour === 'string' && /^#[a-f\d]{6}$/i.test(c.colour) ? { colour: c.colour } : {}) }))).sort((a, b) => a.order - b.order), value.links),
     aux: unique(value.aux.filter((a: any) => record(a) && positive(a.channel) && a.enabled !== false).map((a: any) =>
       ({ channel: a.channel, label: typeof a.label === 'string' ? a.label : 'Mix ' + a.channel, colour: /^#[a-f\d]{6}$/i.test(a.colour) ? a.colour : '#007AFF', stereo: !!a.stereo }))),
     snapshot: typeof value.snapshot === 'string' ? value.snapshot : '',
   };
+}
+// Mark linked pairs from the server's `links`. Each channel joins one link at
+// most, and both channels must be in the mix.
+function linkChannels(channels: Channel[], links: unknown): Channel[] {
+  if (!Array.isArray(links)) return channels;
+  const byId = new Map(channels.map(channel => [channel.channel, channel]));
+  const used = new Set<number>();
+  for (const link of links.slice(0, 500)) {
+    if (!record(link) || typeof link.name !== 'string' || !link.name.trim() || !Array.isArray(link.channels) || link.channels.length !== 2) continue;
+    const [first, second] = link.channels;
+    const a = byId.get(first), b = byId.get(second);
+    if (!a || !b || first === second || used.has(first) || used.has(second)) continue;
+    used.add(first); used.add(second);
+    byId.set(first, { ...a, label: link.name.trim().slice(0, 80), deskLabel: a.label, partner: second });
+    byId.set(second, { ...b, linkedTo: first });
+  }
+  return channels.map(channel => byId.get(channel.channel)!);
 }
 export const clamp = (value: number) => Math.max(0, Math.min(1, value));
 export const dbToPosition = (db: number) => db <= -150 ? 0 : clamp(Math.pow(100, (db + 90) / 100) / 100);
@@ -91,8 +112,9 @@ export function levelText(value: number | undefined, parameter: Parameter): stri
   const offset = Math.round(Math.abs(value * 2 - 1) * 100);
   return offset === 0 ? 'Centre' : (value < 0.5 ? 'L ' : 'R ') + offset;
 }
+// The channels musicians arrange: a linked pair counts once, as its first channel.
 export function orderedChannels(config: MixerConfig | null, preferences: Preferences): Channel[] {
-  const channels = config?.channels || [];
+  const channels = (config?.channels || []).filter(channel => channel.linkedTo === undefined);
   const order = new Map(preferences.channelOrder.map((id, index) => [id, index]));
   return [...channels].sort((a, b) => (order.get(a.channel) ?? 10000 + a.order) - (order.get(b.channel) ?? 10000 + b.order));
 }

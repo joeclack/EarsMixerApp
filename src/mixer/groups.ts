@@ -41,15 +41,22 @@ export function mixerRows(config: MixerConfig | null, preferences: Preferences, 
   // Hidden or unavailable members are never moved by a collapsed group.
   const groups = groupsForAux(preferences, aux).filter(group => group.members.every(id => channels.some(c => c.channel === id)));
   const emitted = new Set<number>();
+  // In pan mode a linked pair shows both channels under their desk names, so
+  // each side pans on its own; in level mode it's one fader.
+  const split = (row: MixerRow): MixerRow[] => {
+    const partner = pan && row.partner !== undefined ? config?.channels.find(c => c.channel === row.partner) : undefined;
+    if (!partner) return [row];
+    return [{ ...row, label: row.deskLabel || row.label, partner: undefined, deskLabel: undefined }, { ...partner, group: row.group }];
+  };
   return channels.flatMap(channel => {
     const group = groups.find(group => group.members.includes(channel.channel));
-    if (!group) return [channel];
+    if (!group) return split(channel);
     const members = group.members, id = -group.id;
     if (emitted.has(id)) return [];
     emitted.add(id);
     const label = groupLabel(group, channels);
     // A group header is not its first member, so it doesn't take that member's colour.
-    const header: MixerRow = { ...channel, channel: id, label, members, group: id, colour: undefined };
-    return expanded.includes(id) || pan ? [header, ...members.map(member => ({ ...channels.find(c => c.channel === member)!, group: id }))] : [header];
+    const header: MixerRow = { ...channel, channel: id, label, members, group: id, colour: undefined, partner: undefined, deskLabel: undefined };
+    return expanded.includes(id) || pan ? [header, ...members.flatMap(member => split({ ...channels.find(c => c.channel === member)!, group: id }))] : [header];
   });
 }
