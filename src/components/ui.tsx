@@ -60,9 +60,12 @@ export function Message({ children, error = false }: React.PropsWithChildren<{ e
   if (!children) return null;
   return <Text accessibilityLiveRegion="polite" style={{ fontSize: 14, lineHeight: 21, color: error ? theme.danger : theme.muted, marginVertical: 10 }}>{children}</Text>;
 }
+// No mixer connected: connect to one, or try the built-in demo desk.
 export function EmptyMixer() {
-  return <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24, paddingBottom: 32 }}>
+  const { session } = useSession();
+  return <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', gap: 12, padding: 24, paddingBottom: 32 }}>
     <NativeButton title="Connect" onPress={() => router.push('/connect')} prominent />
+    <NativeButton title="Try Demo Mode" onPress={() => { void session.startDemo().catch(() => {}); }} />
   </View>;
 }
 export const styles = StyleSheet.create({

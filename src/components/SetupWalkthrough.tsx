@@ -77,6 +77,8 @@ export default function SetupWalkthrough() {
               {state.pinPrompt ? 'PIN needed' : state.demo ? 'Demo mode' : mix.status === 'connected' && state.server ? 'Connected to ' + mixerLabel(state.server, state.recent) : state.connecting || mix.status === 'connecting' || mix.status === 'loading' ? 'Connecting…' : checking ? 'Looking for a mixer…' : 'Not connected'}
             </Text>
             <NativeButton title={state.server ? 'Change mixer' : 'Connect'} bordered onPress={() => router.push('/connect')} />
+            {/* No mixer to hand? The built-in demo desk works anywhere. */}
+            {!state.demo && <NativeButton title="Try Demo Mode" onPress={() => { void session.startDemo().catch(() => {}); }} />}
           </View>}
           {step === 3 && mix.status !== 'connected' && <Text style={{ color: theme.muted, fontSize: 17 }}>Connect to a mixer to see its templates.</Text>}
           <Message error>{state.message}</Message>
