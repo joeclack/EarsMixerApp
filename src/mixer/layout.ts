@@ -30,7 +30,8 @@ export function layoutItems(config: MixerConfig | null, preferences: Preferences
       return [{ key: -group.id, label: groupLabel(group, channels), members: [...group.members], group }];
     }
     const channel = channels.find(entry => entry.channel === id);
-    return channel ? [{ key: id, label: channel.label, members: [id] }] : [];
+    // A linked pair's second channel moves with the first.
+    return channel && channel.linkedTo === undefined ? [{ key: id, label: channel.label, members: [id] }] : [];
   });
 }
 
