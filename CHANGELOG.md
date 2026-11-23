@@ -4,6 +4,7 @@
 
 - Version is now 1.0.0 for the first App Store submission. Earlier TestFlight builds were 0.1.0.
 - Removed **Test first-time setup** from Settings.
+- Demo mode has a fuller desk: 26 channels including five coloured vocals (Vox 1 red, Vox 2 green, Vox 3 blue, Vox 4 orange, Vox 5 purple), a yellow MC, Cues, Spotify and Talkback. Its **Full band** template groups the drums, guitars, keys, tracks and vocals, and **Vocals** puts the singers first with backing vocals, drums and tracks grouped.
 - Launch no longer waits for the mixer. The app opens as soon as your settings load, and reconnecting to your last mixer happens on the Mixer tab. An out-of-range mixer is given up on after 2.5 seconds instead of 7.
 - Removed the fader loading animation. The app opens straight away, and while the mixer connects the Mixer tab shows one line saying what it's doing: Connecting to *mixer name*…, Loading channels… or Starting demo…. The loading preview in Developer tools is gone, and with it the Developer tools section.
 - New app icon in the current fader style: thin tracks with a glowing teal level, graphite caps and the 0 dB markers. The iOS icon, Android adaptive icon foreground and web favicon are updated. The icon is native, so it reaches devices with the next build rather than an over-the-air update.
