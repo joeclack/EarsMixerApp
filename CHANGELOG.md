@@ -3,6 +3,7 @@
 ## 1.0.0 — First App Store release
 
 - Version is now 1.0.0 for the first App Store submission. Earlier TestFlight builds were 0.1.0.
+- Removed **Test first-time setup** from Settings. The Developer tools section now only appears in development builds.
 - New app icon in the current fader style: thin tracks with a glowing teal level, graphite caps and the 0 dB markers. The iOS icon, Android adaptive icon foreground and web favicon are updated. The icon is native, so it reaches devices with the next build rather than an over-the-air update.
 - Settings → About shows the build number next to the version, for example 0.1.0 (5), so you can tell which TestFlight build an over-the-air update is running on.
 - Removed signal meters. Faders no longer show a meter, demo mode no longer simulates them, **Show signal meters** is gone from Settings, and the app no longer asks servers for meter readings or accepts them.

@@ -64,10 +64,9 @@ export default function SettingsContent() {
       <Section>
         <Button label="Reset device data" role="destructive" onPress={reset.confirm} modifiers={[disabled(reset.resetting)]} />
       </Section>
-      <Section title="Developer tools" symbol="wrench.and.screwdriver">
-        <Button label="Test first-time setup" onPress={() => void session.restartSetup()} />
-        {__DEV__ && <Button label="Preview loading animation" systemImage="slider.vertical.3" onPress={() => router.push('/loading-preview')} />}
-      </Section>
+      {__DEV__ && <Section title="Developer tools" symbol="wrench.and.screwdriver">
+        <Button label="Preview loading animation" systemImage="slider.vertical.3" onPress={() => router.push('/loading-preview')} />
+      </Section>}
       <Section title="About" symbol="info.circle">
         <LabeledContent label="EarsMixer"><Text>{appVersionLabel()}</Text></LabeledContent>
       </Section>

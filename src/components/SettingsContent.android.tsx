@@ -67,10 +67,9 @@ export default function SettingsContent() {
     <MaterialSection>
       <MaterialItem title="Reset device data" symbol="delete_forever" destructive onPress={reset.confirm} />
     </MaterialSection>
-    <MaterialSection title="Developer tools" symbol="build">
-      <MaterialItem title="Test first-time setup" symbol="restart_alt" onPress={() => void session.restartSetup()} />
-      {__DEV__ && <MaterialItem title="Preview loading animation" symbol="animation" onPress={() => router.push('/loading-preview')} />}
-    </MaterialSection>
+    {__DEV__ && <MaterialSection title="Developer tools" symbol="build">
+      <MaterialItem title="Preview loading animation" symbol="animation" onPress={() => router.push('/loading-preview')} />
+    </MaterialSection>}
     <MaterialSection title="About" symbol="info">
       <MaterialItem title="EarsMixer" symbol="headphones" trailing={<Text color={theme.muted}>{appVersionLabel()}</Text>} />
     </MaterialSection>
