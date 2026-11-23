@@ -36,10 +36,9 @@ export default function SettingsContent() {
       <Row title="Clear saved levels" destructive onPress={clearLevels} />
     </Section>
     <Section><Row title="Reset device data" destructive onPress={reset.confirm} /></Section>
-    <Section title="Developer tools" symbol={{ ios: 'wrench.and.screwdriver', android: 'build', web: 'build' }}>
-      <Row title="Test first-time setup" onPress={() => void session.restartSetup()} />
-      {__DEV__ && <Row title="Preview loading animation" onPress={() => router.push('/loading-preview')} />}
-    </Section>
+    {__DEV__ && <Section title="Developer tools" symbol={{ ios: 'wrench.and.screwdriver', android: 'build', web: 'build' }}>
+      <Row title="Preview loading animation" onPress={() => router.push('/loading-preview')} />
+    </Section>}
     <Section title="About" symbol={{ ios: 'info.circle', android: 'info', web: 'info' }}><Row title="EarsMixer"><Text style={{ color: theme.muted }}>{appVersionLabel()}</Text></Row></Section>
   </>;
 }
