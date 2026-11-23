@@ -1,7 +1,6 @@
 import ConfirmationToast from '../src/components/ConfirmationToast';
-import LoadingTransition from '../src/components/LoadingTransition';
-import React, { useEffect, useRef, useState } from 'react';
-import { Appearance, Platform } from 'react-native';
+import React, { useEffect, useRef } from 'react';
+import { Appearance, Platform, View } from 'react-native';
 import { Stack, ThemeProvider, DarkTheme, DefaultTheme, router, useRootNavigationState, usePathname } from 'expo-router';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { StatusBar } from 'expo-status-bar';
@@ -12,7 +11,6 @@ import { findStartupMixers, reachableMixer } from '../src/discovery/startup';
 import type { DiscoveryNative } from '../src/discovery/browser';
 import { useTheme } from '../src/theme';
 import { warmFaderArtwork } from '../src/components/faderArtwork';
-import { StartupCover } from '../src/components/MixerLoadingBoundary';
 
 const sheetOptions = {
   headerShown: false, presentation: (Platform.OS === 'web' ? 'modal' : 'formSheet') as 'modal' | 'formSheet',
@@ -27,19 +25,14 @@ function Navigation() {
   const prompted = useRef(false);
   const setupPresented = useRef(false);
   const pathname = usePathname();
-  // The startup loader only covers loading saved settings. It never waits on the
-  // network: reconnecting to the last mixer shows the mixer's own loader, which
-  // says what it is doing, so an unreachable mixer doesn't hold up launch.
-  const [starting, setStarting] = useState(true);
+  // The app shows as soon as saved settings load. Reconnecting to the last mixer
+  // happens on the Mixer tab, which says what it is doing, so launch never waits
+  // on the network.
   const hasNickname = session.hasNickname();
-  const [startupDone, setStartupDone] = useState(false);
-  const covering = !startupDone && (!state.hydrated || starting);
-  useEffect(() => { if (!covering) setStartupDone(true); }, [covering]);
   useEffect(() => {
     if (Platform.OS !== 'web') Appearance.setColorScheme(state.settings.appearance === 'system' ? 'unspecified' : state.settings.appearance);
   }, [state.settings.appearance]);
   useEffect(() => {
-    if (state.hydrated && (!state.setupComplete || !hasNickname || !state.lastServer || session.state.server)) setStarting(false);
     if (!state.setupComplete) {
       prompted.current = false;
       if (state.hydrated && navigation?.key && !setupPresented.current) { setupPresented.current = true; router.push('/setup'); }
@@ -58,13 +51,9 @@ function Navigation() {
     void (async () => {
       if (session.state.server) return;
       if (session.state.lastServer) {
-        // A mixer on the same network answers well within this. Beyond it, stop
-        // holding the startup loader and fall back to discovery.
-        const connecting = session.connect(session.state.lastServer, { probeTimeoutMs: SAVED_MIXER_TIMEOUT_MS });
-        // connect() marks the session as connecting synchronously, so the mixer
-        // loading state takes over from here without a gap.
-        setStarting(false);
-        try { await connecting; if (session.state.server) return; } catch {}
+        // A mixer on the same network answers well within this. Beyond it, fall
+        // back to discovery.
+        try { await session.connect(session.state.lastServer, { probeTimeoutMs: SAVED_MIXER_TIMEOUT_MS }); if (session.state.server) return; } catch {}
       }
       if (controller.signal.aborted || session.state.server || session.state.connecting) return;
       const native = Platform.OS === 'web' ? null : requireOptionalNativeModule<DiscoveryNative>('EarsMixerDiscovery');
@@ -93,7 +82,9 @@ function Navigation() {
     pinPresented.current = true;
     if (pathname !== '/pin') router.push('/pin');
   }, [pinNeeded, state.hydrated, navigation?.key, pathname]);
-  return <StartupCover.Provider value={covering}><LoadingTransition loading={covering} ready={state.hydrated}>{state.hydrated && <ThemeProvider value={theme.dark ? DarkTheme : DefaultTheme}>
+  // Saved settings load in a moment; until then, just the app's background.
+  if (!state.hydrated) return <View style={{ flex: 1, backgroundColor: theme.bg }} />;
+  return <ThemeProvider value={theme.dark ? DarkTheme : DefaultTheme}>
     <StatusBar style={theme.dark ? 'light' : 'dark'} />
     <Stack screenOptions={{ contentStyle: { backgroundColor: theme.bg }, headerTintColor: theme.tint }}>
       <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
@@ -106,9 +97,8 @@ function Navigation() {
       <Stack.Screen name="layout" options={{ headerShown: false }} />
       <Stack.Screen name="groups" options={{ headerShown: false }} />
       <Stack.Screen name="group" options={{ title: 'Edit group', headerBackTitle: 'Groups', presentation: 'card' }} />
-      <Stack.Screen name="loading-preview" options={{ presentation: 'fullScreenModal', headerShown: false }} />
     </Stack>
-  </ThemeProvider>}</LoadingTransition></StartupCover.Provider>;
+  </ThemeProvider>;
 }
 export default function RootLayout() {
   useEffect(() => { void warmFaderArtwork(); }, []);
