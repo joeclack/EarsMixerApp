@@ -1,4 +1,5 @@
 import { useCallback } from 'react';
+import { Platform } from 'react-native';
 import { useSharedValue } from 'react-native-reanimated';
 import { scheduleOnRN } from 'react-native-worklets';
 import * as Haptics from 'expo-haptics';
@@ -11,7 +12,11 @@ import { detentAt, stepDetent } from './detents';
 // than queued bursts. A handle pinned at either end of its travel is silent.
 export function useDetentHaptics() {
   const state = useSharedValue({ detent: 0, tickedAt: 0 });
-  const tick = useCallback(() => { void Haptics.selectionAsync().catch(() => {}); }, []);
+  const tick = useCallback(() => {
+    const feedback = Platform.OS === 'android' ? Haptics.performAndroidHapticsAsync(Haptics.AndroidHaptics.Segment_Frequent_Tick)
+      : Haptics.selectionAsync();
+    void feedback.catch(() => {});
+  }, []);
   // Call from the gesture's onStart with the handle's position in points.
   const start = useCallback((points: number) => {
     'worklet';

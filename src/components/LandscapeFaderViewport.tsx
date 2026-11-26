@@ -1,5 +1,5 @@
 import type { ComponentType, PropsWithChildren, ReactElement } from 'react';
-import { View, type ViewProps } from 'react-native';
+import { Platform, View, type ViewProps } from 'react-native';
 import MaskedViewClass from '@react-native-masked-view/masked-view';
 import { LinearGradient } from 'expo-linear-gradient';
 
@@ -7,7 +7,8 @@ import { LinearGradient } from 'expo-linear-gradient';
 const MaskedView = MaskedViewClass as unknown as ComponentType<ViewProps & { maskElement: ReactElement }>;
 
 export default function LandscapeFaderViewport({ enabled, children }: PropsWithChildren<{ enabled: boolean }>) {
-  if (!enabled) return <View style={{ flex: 1 }}>{children}</View>;
+  // Android updates the fader bank directly without compositing a full-screen mask.
+  if (!enabled || Platform.OS === 'android') return <View style={{ flex: 1 }}>{children}</View>;
   // Fade the faders themselves, revealing the same background as the rail.
   return <MaskedView style={{ flex: 1 }} maskElement={<View style={{ flex: 1, flexDirection: 'row' }}>
     <LinearGradient colors={['transparent', '#000000']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={{ width: 16 }} />

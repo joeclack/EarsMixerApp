@@ -10,6 +10,7 @@ import GroupsList from '../../../src/components/GroupsList';
 import TemplatesList from '../../../src/components/TemplatesList';
 import Segmented from '../../../src/components/Segmented';
 import { styles } from '../../../src/components/ui';
+import { useAndroidTabBarInset } from '../../../src/components/useAndroidTabBarInset';
 
 type Tab = 'channels' | 'groups' | 'templates';
 const TABS: { value: Tab; label: string }[] = [
@@ -22,18 +23,20 @@ const isTab = (value: unknown): value is Tab => TABS.some(item => item.value ===
 // directly with /channels?tab=groups or ?tab=templates.
 export default function Channels() {
   const { session } = useSession(), theme = useTheme();
+  const android = Platform.OS === 'android';
+  const tabBarInset = useAndroidTabBarInset('channels');
   const headerHeight = useHeaderHeight();
   const params = useLocalSearchParams<{ tab?: string }>();
   const [tab, setTab] = useState<Tab>(isTab(params.tab) ? params.tab : 'channels');
   useEffect(() => { if (isTab(params.tab)) setTab(params.tab); }, [params.tab]);
   useFocusEffect(useCallback(() => { session.mixer.cancelWrites(); }, [session]));
   const scrolled = (content: ReactNode) => <ScrollView keyboardShouldPersistTaps="handled" contentInsetAdjustmentBehavior="automatic"
-    contentContainerStyle={styles.page}>{content}</ScrollView>;
+    contentContainerStyle={[styles.page, android && { paddingBottom: 32 + tabBarInset }]}>{content}</ScrollView>;
   return <ScreenSurface>
-    <Stack.Screen options={{ title: 'Channels', headerTransparent: true, headerStyle: { backgroundColor: 'transparent' }, headerShadowVisible: false, headerTintColor: theme.tint,
+    <Stack.Screen options={{ title: 'Channels', headerTransparent: !android, headerStyle: { backgroundColor: android ? theme.bg : 'transparent' }, headerShadowVisible: false, headerTintColor: theme.tint,
       headerTitleStyle: { color: theme.text } }} />
-    <View style={{ flex: 1, paddingTop: headerHeight }}>
-      <View style={{ paddingHorizontal: 16, paddingVertical: 8 }}>
+    <View style={[{ flex: 1, paddingTop: android ? 0 : headerHeight }, android && styles.androidPage]}>
+      <View style={{ paddingHorizontal: android ? 20 : 16, paddingVertical: 8 }}>
         <Segmented label="Channels, groups or templates" value={tab} options={TABS} onChange={value => { if (isTab(value)) setTab(value); }} />
       </View>
       {tab === 'channels' ? <ChannelOrder />

@@ -1,5 +1,5 @@
 import { memo } from 'react';
-import { Pressable, Text, View } from 'react-native';
+import { Platform, Pressable, Text, View, type ViewStyle } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { useFaderSession } from '../mixer/context';
 import { useTheme } from '../theme';
@@ -14,22 +14,30 @@ export const MuteKey = memo(function MuteKey({ channel, label, width = 64, heigh
   const { session } = useFaderSession(channel);
   const mixer = session.mixer;
   const muted = mixer.isMuted(channel), available = mixer.canMute(channel);
+  const android = Platform.OS === 'android';
+  const targetHeight = android ? Math.max(height, 48) : height;
   // Keep the space so rows don't shift once the state arrives. While faders are
   // locked the key stays visible but dimmed and does nothing.
-  if (!mixer.muteKnown(channel)) return <View style={{ width, height }} />;
+  if (!mixer.muteKnown(channel)) return <View style={{ width, height: targetHeight }} />;
   const toggle = () => {
     if (!mixer.setMuted(channel, !muted)) return;
-    void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => {});
+    const feedback = android ? Haptics.performAndroidHapticsAsync(muted ? Haptics.AndroidHaptics.Toggle_Off : Haptics.AndroidHaptics.Toggle_On)
+      : Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    void feedback.catch(() => {});
   };
+  const face: ViewStyle = { width, height, borderRadius: 5, alignItems: 'center', justifyContent: 'center',
+    borderWidth: 1.5, borderColor: muted ? MUTE_RED : theme.dark ? '#4A5761' : '#8A8270',
+    backgroundColor: muted ? MUTE_RED : theme.dark ? 'rgba(0,0,0,0.35)' : 'rgba(255,255,255,0.35)',
+    boxShadow: muted ? [{ offsetX: 0, offsetY: 0, blurRadius: 8, color: 'rgba(255,69,58,0.55)' }] : undefined };
   // Grow the touch area to at least 44pt without changing the key's size.
   const slopX = Math.max(0, (44 - width) / 2), slopY = Math.max(0, (44 - height) / 2);
+  const text = <Text numberOfLines={android ? 1 : undefined} adjustsFontSizeToFit={android}
+    style={{ color: muted ? '#FFFFFF' : theme.muted, fontSize: 11, fontWeight: '800', letterSpacing: 1.2,
+      ...(android && { includeFontPadding: false }) }}>MUTE</Text>;
   return <Pressable accessibilityRole="switch" accessibilityLabel={'Mute ' + label} accessibilityState={{ checked: muted, disabled: !available }}
-    disabled={!available} onPress={toggle} hitSlop={{ left: slopX, right: slopX, top: slopY, bottom: slopY }}
-    style={({ pressed }) => ({ width, height, borderRadius: 5, alignItems: 'center', justifyContent: 'center',
-      borderWidth: 1.5, borderColor: muted ? MUTE_RED : theme.dark ? '#4A5761' : '#8A8270',
-      backgroundColor: muted ? MUTE_RED : theme.dark ? 'rgba(0,0,0,0.35)' : 'rgba(255,255,255,0.35)',
-      boxShadow: muted ? [{ offsetX: 0, offsetY: 0, blurRadius: 8, color: 'rgba(255,69,58,0.55)' }] : undefined,
-      opacity: !available ? 0.5 : pressed ? 0.7 : 1 })}>
-    <Text style={{ color: muted ? '#FFFFFF' : theme.muted, fontSize: 11, fontWeight: '800', letterSpacing: 1.2 }}>MUTE</Text>
+    disabled={!available} onPress={toggle} hitSlop={android ? undefined : { left: slopX, right: slopX, top: slopY, bottom: slopY }}
+    style={({ pressed }) => [android ? { width, height: targetHeight, justifyContent: 'center' } : face,
+      { opacity: !available ? 0.5 : pressed ? 0.7 : 1 }]}>
+    {android ? <View style={face}>{text}</View> : text}
   </Pressable>;
 });

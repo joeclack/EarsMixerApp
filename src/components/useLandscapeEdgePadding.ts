@@ -16,6 +16,7 @@ export function useLandscapeEdgePadding(left: number, right: number) {
   }, []);
   const inset = Math.max(left, right);
   const cornerPadding = 16;
+  if (Platform.OS === 'android') return { paddingLeft: Math.max(cornerPadding, left + 8), paddingRight: Math.max(cornerPadding, right + 8) };
   if (!inset) return { paddingLeft: cornerPadding, paddingRight: cornerPadding };
   // Prefer asymmetric cutout insets. iOS may reserve equal space at both edges;
   // in that case the interface orientation identifies the front-camera edge.

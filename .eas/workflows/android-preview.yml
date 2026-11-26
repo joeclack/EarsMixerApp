@@ -1,0 +1,39 @@
+name: Publish Android preview to Cloudflare R2
+
+on:
+  push:
+    branches: [main]
+
+concurrency:
+  group: android-preview-main
+
+jobs:
+  build_android:
+    name: Build signed Android preview APK
+    type: build
+    params:
+      platform: android
+      profile: preview
+
+  publish_android:
+    name: Publish Android APK and download manifest
+    needs: [build_android]
+    environment: preview
+    env:
+      R2_BUCKET: earsmixer-downloads
+      R2_S3_ENDPOINT: https://db1eae667ba994762bf18486c2846be1.r2.cloudflarestorage.com
+      APK_BUILD_ID: ${{ needs.build_android.outputs.build_id }}
+      APK_VERSION: ${{ needs.build_android.outputs.app_version }}
+      APK_VERSION_CODE: ${{ needs.build_android.outputs.app_build_version }}
+      APK_COMMIT: ${{ github.sha }}
+    steps:
+      - uses: eas/checkout
+      - uses: eas/download_build
+        id: apk
+        with:
+          build_id: ${{ needs.build_android.outputs.build_id }}
+          extensions: [apk]
+      - name: Upload APK to R2 and update the public download
+        env:
+          APK_PATH: ${{ steps.apk.outputs.artifact_path }}
+        run: bash scripts/publish-android-preview.sh

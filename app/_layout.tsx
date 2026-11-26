@@ -1,6 +1,6 @@
 import ConfirmationToast from '../src/components/ConfirmationToast';
 import React, { useEffect, useRef } from 'react';
-import { Appearance, Platform, View } from 'react-native';
+import { Appearance, Platform, View, useWindowDimensions } from 'react-native';
 import { Stack, ThemeProvider, DarkTheme, DefaultTheme, router, useRootNavigationState, usePathname } from 'expo-router';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { StatusBar } from 'expo-status-bar';
@@ -11,8 +11,9 @@ import { findStartupMixers, reachableMixer } from '../src/discovery/startup';
 import type { DiscoveryNative } from '../src/discovery/browser';
 import { useTheme } from '../src/theme';
 import { warmFaderArtwork } from '../src/components/faderArtwork';
+import { usesMixerSideRail } from '../src/components/mixerNavigation';
 
-const sheetOptions = {
+const defaultSheetOptions = {
   headerShown: false, presentation: (Platform.OS === 'web' ? 'modal' : 'formSheet') as 'modal' | 'formSheet',
   sheetAllowedDetents: [0.6, 0.9], sheetGrabberVisible: true,
 };
@@ -21,6 +22,10 @@ export const unstable_settings = { anchor: '(tabs)' };
 function Navigation() {
   const { session, state } = useSessionState();
   const theme = useTheme();
+  const { width, height } = useWindowDimensions();
+  const sheetOptions = Platform.OS === 'android' && usesMixerSideRail(width, height)
+    ? { ...defaultSheetOptions, sheetAllowedDetents: [0.9] }
+    : defaultSheetOptions;
   const navigation = useRootNavigationState();
   const prompted = useRef(false);
   const setupPresented = useRef(false);
