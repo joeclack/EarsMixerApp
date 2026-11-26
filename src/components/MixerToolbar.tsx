@@ -10,6 +10,7 @@ export default function MixerToolbar() {
   const theme = useTheme();
   const setAllLevelsOff = useSetAllLevelsOff();
   const pad = Platform.OS === 'ios' && Platform.isPad;
+  const mode = mix.parameter === 'pan' ? 'Pan' : 'Level';
   const offDisabled = mix.status !== 'connected' || !mix.aux || mix.locked;
   const modeActions = [
     <Stack.Toolbar.MenuAction key="level" icon="speaker.wave.2" isOn={mix.parameter === 'level'} onPress={() => session.mixer.setParameter('level')}>Level</Stack.Toolbar.MenuAction>,
@@ -32,9 +33,8 @@ export default function MixerToolbar() {
     </Stack.Toolbar>
     <Stack.Toolbar placement="right" tintColor={theme.tint}>
     {/* Fader mode has its own menu, apart from the tools. */}
-    {state.server && <Stack.Toolbar.Menu icon="slider.horizontal.3"
-      accessibilityLabel={'Fader mode, ' + (mix.parameter === 'pan' ? 'Pan' : 'Level')}>
-      <Stack.Toolbar.Label>Fader mode</Stack.Toolbar.Label>
+    {state.server && <Stack.Toolbar.Menu title="Fader mode" accessibilityLabel={'Fader mode, ' + mode}>
+      <Stack.Toolbar.Label>{mode}</Stack.Toolbar.Label>
       {modeActions}
     </Stack.Toolbar.Menu>}
     {pad && state.server && <Stack.Toolbar.Button icon={mix.locked ? 'lock.fill' : 'lock.open'} selected={mix.locked}

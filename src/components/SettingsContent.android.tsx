@@ -4,7 +4,7 @@ import { router } from 'expo-router';
 import { appUpdateDetails } from '../appVersion';
 import { Switch, Text, TextButton } from '@expo/ui/jetpack-compose';
 import { semantics } from '@expo/ui/jetpack-compose/modifiers';
-import { useResetDeviceData } from './useResetDeviceData';
+import { RESET_DEVICE_DATA_SUMMARY, useResetDeviceData } from './useResetDeviceData';
 import { useClearSavedLevels } from './useClearSavedLevels';
 import { useSession } from '../mixer/context';
 import { mixerLabel } from '../connection';
@@ -50,13 +50,13 @@ export default function SettingsContent() {
       <MaterialItem title="Show dB values" symbol="tag" onPress={() => session.setSettings({ showLevels: !state.settings.showLevels })}
         trailing={<Switch value={state.settings.showLevels} onCheckedChange={showLevels => session.setSettings({ showLevels })}
           modifiers={[semantics({ contentDescription: 'Show dB values' })]} />} />
-      <MaterialItem title="Clear saved levels" symbol="history" destructive onPress={clearLevels} />
+      <MaterialItem title="Clear levels saved on this device" symbol="history" destructive onPress={clearLevels} />
     </MaterialSection>
     <View style={{ marginBottom: 24 }}>
       <MaterialSectionTitle title="Text size" symbol="format_size" />
       <Segmented label="Text size" value={state.settings.textSize} options={textSizes} onChange={textSize => session.setSettings({ textSize })} />
     </View>
-    <MaterialSection>
+    <MaterialSection footer={RESET_DEVICE_DATA_SUMMARY}>
       <MaterialItem title="Reset device data" symbol="delete_forever" destructive onPress={reset.confirm} />
     </MaterialSection>
     {/* What's running, centred under the list: version, update, bundle and date. */}

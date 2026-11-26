@@ -1,6 +1,6 @@
 import { Message } from './ui';
 import { useTheme } from '../theme';
-import { groupChannelNames, groupLabel } from '../mixer/groups';
+import { groupLabel } from '../mixer/groups';
 import { useGroupsList } from './useGroupsList';
 import { MaterialIconButton, MaterialItem, MaterialSection } from './MaterialList.android';
 
@@ -13,8 +13,7 @@ export default function GroupsList() {
       <MaterialItem title="Create new group" symbol="add_circle" tint disabled={!list.canCreate} onPress={() => list.open('new')} />
       {list.groups.map(group => {
         const title = groupLabel(group, list.channels);
-        const detail = (group.allAuxes ? 'All monitor mixes' : 'This monitor mix') + ' · ' + group.members.length + ' channels'
-          + (group.name ? ' · ' + groupChannelNames(group, list.channels) : '');
+        const detail = (group.allAuxes ? 'All monitor mixes' : 'This monitor mix') + ' · ' + group.members.length + ' channels';
         return <MaterialItem key={group.id} title={title} detail={detail} onPress={() => list.open(group.id)} disabled={list.busy}
           trailing={<MaterialIconButton symbol="delete" label={'Delete ' + title} color={theme.danger} disabled={list.busy} onPress={() => list.remove([group.id])} />} />;
       })}

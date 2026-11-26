@@ -12,7 +12,7 @@ export function useChannelOrder() {
     return { ...item, visible: shown === item.members.length,
       detail: item.group ? item.members.length + ' channels' + (shown > 0 && shown < item.members.length ? ' · ' + shown + ' shown' : '') : undefined };
   }) : [];
-  return { items, error: state.message,
+  return { items, error: state.message, mixName: mix.config?.aux.find(aux => aux.channel === mix.aux)?.label,
     move: (indices: number[], destination: number) => {
       if (scope) session.moveLayoutItems(items.map(item => item.key), indices, destination, scope);
     },

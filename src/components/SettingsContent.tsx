@@ -1,5 +1,5 @@
 import React from 'react';
-import { useResetDeviceData } from './useResetDeviceData';
+import { RESET_DEVICE_DATA_SUMMARY, useResetDeviceData } from './useResetDeviceData';
 import { useClearSavedLevels } from './useClearSavedLevels';
 import ProfileCard from './ProfileCard';
 import { Text, View, Switch, Platform } from 'react-native';
@@ -33,9 +33,9 @@ export default function SettingsContent() {
       <View style={{ padding: 12 }}><Segmented label="Text size" value={state.settings.textSize}
         options={[{ value: 'standard', label: 'Standard' }, { value: 'large', label: 'Large' }, { value: 'larger', label: 'Larger' }]}
         onChange={value => session.setSettings({ textSize: value as 'standard' | 'large' | 'larger' })} /></View>
-      <Row title="Clear saved levels" destructive onPress={clearLevels} />
+      <Row title="Clear levels saved on this device" destructive onPress={clearLevels} />
     </Section>
-    <Section><Row title="Reset device data" destructive onPress={reset.confirm} /></Section>
+    <Section footer={RESET_DEVICE_DATA_SUMMARY}><Row title="Reset device data" destructive onPress={reset.confirm} /></Section>
     {/* What's running, centred under the list: version, update, bundle and date. */}
     <Text style={{ color: theme.muted, fontSize: 13, lineHeight: 19, textAlign: 'center', marginHorizontal: 16 }}>{appUpdateDetails()}</Text>
   </>;

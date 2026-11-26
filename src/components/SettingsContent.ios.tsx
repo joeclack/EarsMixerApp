@@ -1,9 +1,10 @@
 import React from 'react';
+import { Platform } from 'react-native';
 import Section from './HardwareSection.ios';
-import { useResetDeviceData } from './useResetDeviceData';
+import { RESET_DEVICE_DATA_SUMMARY, useResetDeviceData } from './useResetDeviceData';
 import { useClearSavedLevels } from './useClearSavedLevels';
 import { Host, Form, Section as FormSection, Toggle, Picker, Text, Button, VStack, HStack, Spacer, TextField, Image, useNativeState } from '@expo/ui/swift-ui';
-import { font, foregroundStyle, tag, pickerStyle, buttonStyle, lineLimit, scrollContentBackground, disabled, multilineTextAlignment, frame } from '@expo/ui/swift-ui/modifiers';
+import { font, foregroundStyle, tag, pickerStyle, buttonStyle, lineLimit, scrollContentBackground, disabled, multilineTextAlignment, frame, padding } from '@expo/ui/swift-ui/modifiers';
 import { router } from 'expo-router';
 import { appUpdateDetails } from '../appVersion';
 import { useSession } from '../mixer/context';
@@ -59,13 +60,15 @@ export default function SettingsContent() {
           onSelectionChange={textSize => session.setSettings({ textSize })} modifiers={[pickerStyle('menu')]}>
           <Text modifiers={[tag('standard')]}>Standard</Text><Text modifiers={[tag('large')]}>Large</Text><Text modifiers={[tag('larger')]}>Larger</Text>
         </Picker>
-        <Button label="Clear saved levels" systemImage="clock.arrow.circlepath" role="destructive" onPress={clearLevels} />
+        <Button label={'Clear levels saved on this ' + (Platform.isPad ? 'iPad' : 'phone')}
+          systemImage="clock.arrow.circlepath" role="destructive" onPress={clearLevels} />
       </Section>
-      <Section>
+      <Section footer={RESET_DEVICE_DATA_SUMMARY}>
         <Button label="Reset device data" role="destructive" onPress={reset.confirm} modifiers={[disabled(reset.resetting)]} />
       </Section>
       {/* What's running, centred under the list: version, update, bundle and date. */}
-      <FormSection footer={<Text modifiers={[multilineTextAlignment('center'), frame({ maxWidth: 10000, alignment: 'center' }), foregroundStyle(theme.muted)]}>{appUpdateDetails()}</Text>} />
+      <FormSection footer={<Text modifiers={[multilineTextAlignment('center'), frame({ maxWidth: 10000, alignment: 'center' }),
+        foregroundStyle(theme.muted), padding({ bottom: 14 })]}>{appUpdateDetails()}</Text>} />
     </Form>
   </Host>;
 }
