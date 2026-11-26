@@ -16,7 +16,7 @@ concurrency:
 jobs:
   build_android:
     name: Build signed Android preview APK
-    if: ${{ !inputs.release_commit }}
+    if: ${{ github.event_name == 'push' }}
     type: build
     params:
       platform: android
@@ -24,7 +24,7 @@ jobs:
 
   reuse_android:
     name: Find the completed Android preview APK
-    if: ${{ inputs.release_commit != '' }}
+    if: ${{ github.event_name == 'workflow_dispatch' }}
     type: get-build
     params:
       platform: android
@@ -35,7 +35,7 @@ jobs:
   publish_android:
     name: Publish Android APK and download manifest
     after: [build_android, reuse_android]
-    if: ${{ after.build_android.status == 'success' || after.reuse_android.status == 'success' }}
+    if: ${{ (github.event_name == 'push' && after.build_android.status == 'success') || (github.event_name == 'workflow_dispatch' && after.reuse_android.status == 'success') }}
     environment: preview
     env:
       R2_BUCKET: earsmixer-downloads
@@ -43,7 +43,7 @@ jobs:
       APK_BUILD_ID: ${{ after.build_android.outputs.build_id || after.reuse_android.outputs.build_id }}
       APK_VERSION: ${{ after.build_android.outputs.app_version || after.reuse_android.outputs.app_version }}
       APK_VERSION_CODE: ${{ after.build_android.outputs.app_build_version || after.reuse_android.outputs.app_build_version }}
-      APK_COMMIT: ${{ inputs.release_commit || github.sha }}
+      APK_COMMIT: ${{ after.build_android.outputs.git_commit_hash || after.reuse_android.outputs.git_commit_hash }}
     steps:
       - uses: eas/checkout
       - uses: eas/download_build
