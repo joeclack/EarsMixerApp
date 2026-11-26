@@ -1,7 +1,7 @@
 import { Platform } from 'react-native';
 
 export function androidTabBarHeight(fontScale: number) {
-  return 62 + Math.ceil(16 * Math.max(0, fontScale - 1));
+  return 74 + Math.ceil(16 * Math.max(0, fontScale - 1));
 }
 
 export function usesMixerSideRail(width: number, height: number) {

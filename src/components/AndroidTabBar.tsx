@@ -15,14 +15,15 @@ export default function AndroidTabBar({ state, descriptors, emitter, navigateToT
   }, []);
 
   if (keyboardOpen) return null;
-  if (hidesMixerTabs(width, height, state.routes[state.index].name)) {
+  const activeTab = state.routes[state.index].name;
+  if (hidesMixerTabs(width, height, activeTab)) {
     return <View style={{ height: insets.bottom, backgroundColor: theme.deskBg }} />;
   }
 
-  return <View style={[styles.bar, { backgroundColor: theme.panel, borderTopColor: theme.line,
-    height: androidTabBarHeight(fontScale) + insets.bottom, paddingBottom: 5 + insets.bottom,
-    paddingLeft: 12 + insets.left, paddingRight: 12 + insets.right }]}>
-    <View accessibilityRole="tablist" style={styles.row}>
+  return <View style={[styles.bar, { backgroundColor: activeTab === '(mixer)' ? theme.deskBg : theme.bg,
+    height: androidTabBarHeight(fontScale) + insets.bottom, paddingBottom: 8 + insets.bottom,
+    paddingLeft: 20 + insets.left, paddingRight: 20 + insets.right }]}>
+    <View accessibilityRole="tablist" style={[styles.pill, { backgroundColor: theme.panel, borderColor: theme.line }]}>
       {state.routes.map((route, index) => {
         const { options } = descriptors[route.key];
         const selected = state.index === index;
@@ -44,8 +45,9 @@ export default function AndroidTabBar({ state, descriptors, emitter, navigateToT
 }
 
 const styles = StyleSheet.create({
-  bar: { paddingTop: 5, borderTopWidth: StyleSheet.hairlineWidth },
-  row: { flex: 1, flexDirection: 'row', alignSelf: 'center', width: '100%', maxWidth: 520, gap: 6 },
-  tab: { flex: 1, minWidth: 0, alignItems: 'center', justifyContent: 'center', gap: 3, borderRadius: 12, paddingHorizontal: 4, overflow: 'hidden' },
+  bar: { alignItems: 'center', paddingTop: 8 },
+  pill: { flex: 1, flexDirection: 'row', width: '100%', maxWidth: 380, padding: 4, gap: 4,
+    borderWidth: StyleSheet.hairlineWidth, borderRadius: 999, elevation: 5 },
+  tab: { flex: 1, minWidth: 0, alignItems: 'center', justifyContent: 'center', gap: 3, borderRadius: 999, paddingHorizontal: 10, overflow: 'hidden' },
   label: { fontSize: 12, lineHeight: 16, includeFontPadding: false, textAlign: 'center' },
 });
