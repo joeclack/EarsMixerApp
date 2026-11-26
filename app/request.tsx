@@ -3,7 +3,7 @@ import { Keyboard, ScrollView, Text, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
 import ScreenSurface from '../src/components/ScreenSurface';
-import HardwarePanel from '../src/components/HardwarePanel';
+import FieldSurface from '../src/components/FieldSurface';
 import NativeButton from '../src/components/NativeButton';
 import { Icon } from '../src/components/ui';
 import { useTheme } from '../src/theme';
@@ -31,11 +31,11 @@ export default function Request() {
     <Text style={{ color: theme.muted, fontSize: 15, marginTop: 6, marginBottom: 20, lineHeight: 21 }}>
       {connected ? 'Your message appears on the engineer’s dashboard with your name and mix.' : 'Connect to the mixer to send a message.'}
     </Text>
-    <HardwarePanel radius={18} style={{ paddingHorizontal: 16 }}>
+    <FieldSurface multiline>
       <TextInput accessibilityLabel="Message" value={text} onChangeText={setText} maxLength={140} editable={connected} autoFocus={connected}
         placeholder="e.g. More click please" placeholderTextColor={theme.muted} returnKeyType="send" multiline submitBehavior="submit"
         onSubmitEditing={send} style={{ color: theme.text, fontSize: 17, minHeight: 52, paddingVertical: 14 }} />
-    </HardwarePanel>
+    </FieldSurface>
     <View style={{ flexDirection: 'row', justifyContent: 'flex-end', marginTop: 6 }}>
       <Text style={{ color: theme.muted, fontSize: 12 }}>{text.length}/140</Text>
     </View>

@@ -2,7 +2,9 @@
 
 ## 1.0.0 — First App Store release
 
-- Android has a floating, pill-shaped tab bar for Mixer, Channels and Settings with labelled icons, a clear selected tab and room for larger system text. The bar gives the mixer the full height in phone landscape and hides when the keyboard opens.
+- Android has a floating, pill-shaped tab bar for Mixer, Channels and Settings. The highlight slides to the selected tab, press feedback follows the pill shape and screen content is visible around it. The bar gives the mixer the full height in phone landscape and hides when the keyboard opens.
+- Android segmented controls use pill shapes for the control and each option, including the connection method, Channels sections, appearance and text size.
+- Android single-line text fields use a pill shape, including nickname, mixer address, connection PIN and group name.
 - Android mixer controls now show the selected AUX and Level or Pan directly in the toolbar. On phones in landscape, the mixer keeps a compact rail with access to Channels and Settings. Larger Android windows keep the toolbar and tabs in view. Android also gets larger fader and mute touch targets, native haptic feedback and Material selectors.
 - Version is now 1.0.0 for the first App Store submission. Earlier TestFlight builds were 0.1.0.
 - Removed **Test first-time setup** from Settings.

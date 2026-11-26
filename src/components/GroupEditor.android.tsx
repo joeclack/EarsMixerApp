@@ -3,7 +3,7 @@ import { Row, Switch } from '@expo/ui/jetpack-compose';
 import { semantics } from '@expo/ui/jetpack-compose/modifiers';
 import GroupCreateToolbar from './GroupCreateToolbar';
 import GroupScopeHeading from './GroupScopeHeading';
-import HardwarePanel from './HardwarePanel';
+import FieldSurface from './FieldSurface';
 import NativeButton from './NativeButton';
 import { Message } from './ui';
 import { useTheme } from '../theme';
@@ -29,14 +29,13 @@ export default function GroupEditor(props: GroupEditorProps) {
         trailing={<Switch value={editor.allAuxes} enabled={!scopeLocked} onCheckedChange={editor.setAllAuxes}
           modifiers={[semantics({ contentDescription: 'All monitor mixes' })]} />} />
     </MaterialSection>
-    {/* Text entry stays a React Native field, in a card matching the sections. */}
     <View style={{ marginBottom: 24 }}>
       <MaterialSectionTitle title="Group name" symbol="edit" />
-      <HardwarePanel radius={12} style={{ paddingHorizontal: 16 }}>
+      <FieldSurface>
         <TextInput accessibilityLabel="Group name" placeholder="Group name" placeholderTextColor={theme.muted} value={editor.name}
           onChangeText={editor.rename} editable={!editor.busy} maxLength={80} autoCorrect={false} autoCapitalize="words" autoComplete="off"
           style={{ position: 'relative', color: theme.text, fontSize: 17, minHeight: 56, paddingVertical: 14 }} />
-      </HardwarePanel>
+      </FieldSurface>
     </View>
     <MaterialSection title={'Channels (' + editor.members.length + ')'} symbol="graphic_eq">
       {editor.members.map((channel, index) => <MaterialItem key={channel.channel} title={channel.label}

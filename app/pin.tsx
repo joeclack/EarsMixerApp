@@ -3,7 +3,7 @@ import { Keyboard, ScrollView, Text, TextInput, View } from 'react-native';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import ScreenSurface from '../src/components/ScreenSurface';
-import HardwarePanel from '../src/components/HardwarePanel';
+import FieldSurface from '../src/components/FieldSurface';
 import CloseButton from '../src/components/CloseButton';
 import NativeButton from '../src/components/NativeButton';
 import { Message } from '../src/components/ui';
@@ -46,14 +46,14 @@ export default function Pin() {
       </View>
       <CloseButton onPress={close} />
     </View>
-    <HardwarePanel radius={18} style={{ paddingHorizontal: 16 }}>
+    <FieldSurface>
       <TextInput accessibilityLabel="Connection PIN" value={pin} editable={!busy} autoFocus
         onChangeText={text => { const digits = text.replace(/\D/g, '').slice(0, 6); setPin(digits); setError(''); if (digits.length === 6) void submit(digits); }}
         keyboardType="number-pad" inputMode="numeric" textContentType="oneTimeCode" autoComplete="one-time-code" maxLength={6}
         placeholder="000000" placeholderTextColor={theme.muted} returnKeyType="done" onSubmitEditing={() => void submit()}
         style={{ position: 'relative', color: theme.text, fontSize: 32, fontWeight: '600', letterSpacing: 10, textAlign: 'center', minHeight: 64,
           paddingVertical: 12, fontVariant: ['tabular-nums'] }} />
-    </HardwarePanel>
+    </FieldSurface>
     <Message error>{error}</Message>
     <View style={{ gap: 10, marginTop: 14 }}>
       <NativeButton title={busy ? 'Checking…' : 'Connect'} prominent fullWidth disabled={busy || pin.length !== 6} onPress={() => void submit()} />

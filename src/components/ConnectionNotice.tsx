@@ -47,9 +47,7 @@ export default function ConnectionNotice() {
     progress.set(withTiming(visible ? 1 : 0, { duration: 200, easing: Easing.out(Easing.cubic), reduceMotion: ReduceMotion.System }));
   }, [visible, progress]);
   const animated = useAnimatedStyle(() => ({ opacity: progress.get(), transform: [{ translateY: (1 - progress.get()) * 8 }] }));
-  const toastBottom = useToastBottom(16);
-  // The Android tab layout already keeps this screen above the navigation bar.
-  const bottom = Platform.OS === 'android' ? 16 : toastBottom;
+  const bottom = useToastBottom(16);
   return <View pointerEvents={visible ? 'box-none' : 'none'} style={{ position: 'absolute', left: insets.left + 16, right: insets.right + 16,
     bottom, alignItems: 'center', zIndex: 90 }}>
     <Animated.View accessible={visible} accessibilityLiveRegion="assertive" style={[{ maxWidth: 440, width: '100%' }, animated]}>

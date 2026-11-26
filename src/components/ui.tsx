@@ -14,7 +14,7 @@ export function Icon({ name, size = 22, color }: { name: SymbolViewProps['name']
   const theme = useTheme();
   return <SymbolView name={name} size={size} tintColor={color || theme.tint} style={{ width: size, height: size }} />;
 }
-export function Page({ title, children, scroll = true, compactHeader = true, toolbar, hideHeader = false, desk = false }: React.PropsWithChildren<{ title: string; scroll?: boolean; compactHeader?: boolean; toolbar?: React.ReactNode; hideHeader?: boolean; desk?: boolean }>) {
+export function Page({ title, children, scroll = true, compactHeader = true, toolbar, hideHeader = false, desk = false, bottomInset = 0 }: React.PropsWithChildren<{ title: string; scroll?: boolean; compactHeader?: boolean; toolbar?: React.ReactNode; hideHeader?: boolean; desk?: boolean; bottomInset?: number }>) {
   const theme = useTheme();
   const { state } = useSession();
   const headerHeight = useHeaderHeight();
@@ -33,7 +33,7 @@ export function Page({ title, children, scroll = true, compactHeader = true, too
     {!hideHeader && toolbar}
     {scroll ? <ScrollView contentInsetAdjustmentBehavior="automatic" keyboardShouldPersistTaps="handled" automaticallyAdjustKeyboardInsets
       contentContainerStyle={[styles.page, !hideHeader && headerTransparent && Platform.OS !== 'ios' && { paddingTop: headerHeight + 20 },
-        Platform.OS === 'android' && styles.androidPage]}>{children}</ScrollView> : <View style={{ flex: 1, paddingTop: !hideHeader && headerTransparent ? headerHeight : 0 }}>{children}</View>}
+        Platform.OS === 'android' && styles.androidPage, bottomInset > 0 && { paddingBottom: 32 + bottomInset }]}>{children}</ScrollView> : <View style={{ flex: 1, paddingTop: !hideHeader && headerTransparent ? headerHeight : 0 }}>{children}</View>}
     {!state.hydrated && <View style={styles.loading}><ActivityIndicator /></View>}
   </ScreenSurface>;
 }

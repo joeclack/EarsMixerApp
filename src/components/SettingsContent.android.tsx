@@ -2,16 +2,17 @@ import React from 'react';
 import { Text as PlainText, TextInput, View } from 'react-native';
 import { router } from 'expo-router';
 import { appUpdateDetails } from '../appVersion';
-import { SegmentedButton, SingleChoiceSegmentedButtonRow, Switch, Text, TextButton } from '@expo/ui/jetpack-compose';
-import { fillMaxWidth, padding, semantics } from '@expo/ui/jetpack-compose/modifiers';
+import { Switch, Text, TextButton } from '@expo/ui/jetpack-compose';
+import { semantics } from '@expo/ui/jetpack-compose/modifiers';
 import { useResetDeviceData } from './useResetDeviceData';
 import { useClearSavedLevels } from './useClearSavedLevels';
 import { useSession } from '../mixer/context';
 import { mixerLabel } from '../connection';
 import { useTheme } from '../theme';
 import { Message } from './ui';
-import HardwarePanel from './HardwarePanel';
+import FieldSurface from './FieldSurface';
 import { MaterialItem, MaterialSection, MaterialSectionTitle } from './MaterialList.android';
+import Segmented from './Segmented';
 
 const appearances = [{ value: 'system', label: 'System' }, { value: 'light', label: 'Light' }, { value: 'dark', label: 'Dark' }] as const;
 const textSizes = [{ value: 'standard', label: 'Standard' }, { value: 'large', label: 'Large' }, { value: 'larger', label: 'Larger' }] as const;
@@ -31,39 +32,30 @@ export default function SettingsContent() {
       {!state.demo && <MaterialItem title="Try demo" symbol="play_circle" onPress={() => void session.startDemo()} />}
       {state.server && <MaterialItem title="Disconnect" symbol="link_off" destructive onPress={() => session.disconnect()} />}
     </MaterialSection>
-    {/* Text entry stays a React Native field, in a card matching the sections. */}
     <View style={{ marginBottom: 24 }}>
       <MaterialSectionTitle title="This device" symbol="account_circle" />
-      <HardwarePanel radius={12} style={{ paddingHorizontal: 16 }}>
+      <FieldSurface>
         <TextInput accessibilityLabel="Nickname" placeholder="Nickname" placeholderTextColor={theme.muted} maxLength={80}
           value={state.settings.nickname} onChangeText={nickname => session.setSettings({ nickname })} onBlur={() => session.restoreNickname()}
           style={{ position: 'relative', color: theme.text, fontSize: 17, minHeight: 56, paddingVertical: 14 }} />
-      </HardwarePanel>
+      </FieldSurface>
       {!state.settings.nickname.trim() && <PlainText style={{ color: theme.muted, fontSize: 13, marginTop: 8, marginHorizontal: 16 }}>A nickname is required. Others on your mix see it.</PlainText>}
       <Message error>{state.message}</Message>
     </View>
-    <MaterialSection title="Appearance" symbol="contrast">
-      <SingleChoiceSegmentedButtonRow modifiers={[fillMaxWidth(), padding(16, 12, 16, 12)]}>
-        {appearances.map(option => <SegmentedButton key={option.value} selected={state.settings.appearance === option.value}
-          onClick={() => session.setSettings({ appearance: option.value })}>
-          <SegmentedButton.Label><Text>{option.label}</Text></SegmentedButton.Label>
-        </SegmentedButton>)}
-      </SingleChoiceSegmentedButtonRow>
-    </MaterialSection>
+    <View style={{ marginBottom: 24 }}>
+      <MaterialSectionTitle title="Appearance" symbol="contrast" />
+      <Segmented label="Appearance" value={state.settings.appearance} options={appearances} onChange={appearance => session.setSettings({ appearance })} />
+    </View>
     <MaterialSection title="Mixer" symbol="tune">
       <MaterialItem title="Show dB values" symbol="tag" onPress={() => session.setSettings({ showLevels: !state.settings.showLevels })}
         trailing={<Switch value={state.settings.showLevels} onCheckedChange={showLevels => session.setSettings({ showLevels })}
           modifiers={[semantics({ contentDescription: 'Show dB values' })]} />} />
       <MaterialItem title="Clear saved levels" symbol="history" destructive onPress={clearLevels} />
     </MaterialSection>
-    <MaterialSection title="Text size" symbol="format_size">
-      <SingleChoiceSegmentedButtonRow modifiers={[fillMaxWidth(), padding(16, 12, 16, 12)]}>
-        {textSizes.map(option => <SegmentedButton key={option.value} selected={state.settings.textSize === option.value}
-          onClick={() => session.setSettings({ textSize: option.value })}>
-          <SegmentedButton.Label><Text>{option.label}</Text></SegmentedButton.Label>
-        </SegmentedButton>)}
-      </SingleChoiceSegmentedButtonRow>
-    </MaterialSection>
+    <View style={{ marginBottom: 24 }}>
+      <MaterialSectionTitle title="Text size" symbol="format_size" />
+      <Segmented label="Text size" value={state.settings.textSize} options={textSizes} onChange={textSize => session.setSettings({ textSize })} />
+    </View>
     <MaterialSection>
       <MaterialItem title="Reset device data" symbol="delete_forever" destructive onPress={reset.confirm} />
     </MaterialSection>

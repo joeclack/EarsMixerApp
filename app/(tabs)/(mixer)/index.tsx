@@ -29,6 +29,7 @@ import LandscapeMixerToolbar from '../../../src/components/LandscapeMixerToolbar
 import { useStableMixerLayout } from '../../../src/components/useStableMixerLayout';
 import LandscapeFaderViewport from '../../../src/components/LandscapeFaderViewport';
 import { usesMixerSideRail } from '../../../src/components/mixerNavigation';
+import { useAndroidTabBarInset } from '../../../src/components/useAndroidTabBarInset';
 
 // Landscape strip geometry: the level row above the fader and the name row below.
 // Names are one line so the fader keeps as much height as possible.
@@ -53,6 +54,7 @@ export default function Mixer() {
   const landscape = width > height;
   const android = Platform.OS === 'android';
   const sideRail = usesMixerSideRail(width, height);
+  const tabBarInset = useAndroidTabBarInset('(mixer)');
   const groupFooter = landscape && !sideRail;
   const [bankHeight, setBankHeight] = useState(height);
   const layoutReady = useStableMixerLayout([width, height, insets.top, insets.bottom, insets.left, insets.right,
@@ -81,7 +83,7 @@ export default function Mixer() {
     [mix.config, mix.aux, mix.parameter, expanded, state.preferences]);
   const topPadding = sideRail ? insets.top + (android ? 6 : 12) : android ? 8 : 20;
   // In landscape the one-line names sit just above the home indicator.
-  const bottomPadding = android ? (landscape ? 6 : 20) : landscape ? Math.max(6, insets.bottom - 10) : insets.bottom + 20;
+  const bottomPadding = android ? tabBarInset + (landscape ? 6 : 20) : landscape ? Math.max(6, insets.bottom - 10) : insets.bottom + 20;
   // Each landscape strip has three rows: its level, the fader, and its name.
   // The fader takes all the height the level and name rows leave. An open
   // group's name and close control have their own side rail, leaving equal

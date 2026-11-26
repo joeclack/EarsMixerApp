@@ -4,12 +4,14 @@ import { semantics } from '@expo/ui/jetpack-compose/modifiers';
 import { Message } from './ui';
 import { useChannelOrder } from './useChannelOrder';
 import { MaterialIconButton, MaterialItem, MaterialSection } from './MaterialList.android';
+import { useAndroidTabBarInset } from './useAndroidTabBarInset';
 
 // Native Material rows mirroring the iOS channel order list: show/hide with a
 // switch and move with arrow buttons. Tapping a group row opens its editor.
 export default function ChannelOrder() {
   const order = useChannelOrder();
-  return <ScrollView contentContainerStyle={{ padding: 20 }}>
+  const tabBarInset = useAndroidTabBarInset('channels');
+  return <ScrollView contentContainerStyle={{ padding: 20, paddingBottom: 20 + tabBarInset }}>
     <Message error>{order.error}</Message>
     <MaterialSection>
       {order.items.map((item, index) => <MaterialItem key={item.key} title={item.label} detail={item.detail || undefined}

@@ -11,6 +11,7 @@ import { SAVED_MIXER_TIMEOUT_MS } from '../mixer/session';
 import { mixerLabel } from '../connection';
 import { useTheme } from '../theme';
 import { Message } from './ui';
+import FieldSurface from './FieldSurface';
 import SetupProgress from './SetupProgress';
 import NativeButton from './NativeButton';
 import SetupList from './SetupList';
@@ -48,6 +49,12 @@ export default function SetupWalkthrough() {
   }, [step, session]);
   const nickname = state.settings.nickname.trim();
   const next = step === steps.length - 1 ? 'Finish' : step === 0 && nickname ? 'Hi, ' + nickname : 'Next';
+  const android = Platform.OS === 'android';
+  const nicknameField = step === 0 && <TextInput accessibilityLabel="Nickname" placeholder="Nickname" placeholderTextColor={theme.muted} value={state.settings.nickname}
+    onChangeText={nickname => session.setSettings({ nickname })} maxLength={80} autoComplete="name" autoCapitalize="words" autoCorrect={false} returnKeyType="next"
+    onSubmitEditing={() => { if (!nickname) return; Keyboard.dismiss(); setStep(1); }}
+    style={{ fontSize: 20, color: theme.text, paddingVertical: 14,
+      ...(android ? { position: 'relative', minHeight: 56 } : { marginTop: 6, borderBottomWidth: 1, borderBottomColor: theme.line }) }} />;
   // Reference layout: Back and progress on top, a preview of the feature, the
   // title and short text, a native numbered list, then one full-width action.
   return <SafeAreaView edges={['top', 'bottom', 'left', 'right']} style={{ flex: 1, backgroundColor: theme.bg }}>
@@ -68,10 +75,7 @@ export default function SetupWalkthrough() {
         <View style={{ paddingHorizontal: 20, paddingTop: 20, gap: 10 }}>
           <Text accessibilityRole="header" style={{ color: theme.text, fontSize: 30, fontWeight: '700' }}>{current.title}</Text>
           {!!current.body && <Text style={{ color: theme.muted, fontSize: 17, lineHeight: 25 }}>{current.body}</Text>}
-          {step === 0 && <TextInput accessibilityLabel="Nickname" placeholder="Nickname" placeholderTextColor={theme.muted} value={state.settings.nickname}
-            onChangeText={nickname => session.setSettings({ nickname })} maxLength={80} autoComplete="name" autoCapitalize="words" autoCorrect={false} returnKeyType="next"
-            onSubmitEditing={() => { if (!nickname) return; Keyboard.dismiss(); setStep(1); }}
-            style={{ fontSize: 20, color: theme.text, paddingVertical: 14, marginTop: 6, borderBottomWidth: 1, borderBottomColor: theme.line }} />}
+          {nicknameField && (android ? <FieldSurface style={{ marginTop: 6 }}>{nicknameField}</FieldSurface> : nicknameField)}
           {step === 1 && <View style={{ gap: 14, alignItems: 'flex-start', marginTop: 6 }}>
             <Text accessibilityLiveRegion="polite" style={{ color: mix.status === 'connected' ? theme.green : theme.muted, fontSize: 17 }}>
               {state.pinPrompt ? 'PIN needed' : state.demo ? 'Demo mode' : mix.status === 'connected' && state.server ? 'Connected to ' + mixerLabel(state.server, state.recent) : state.connecting || mix.status === 'connecting' || mix.status === 'loading' ? 'Connecting…' : checking ? 'Looking for a mixer…' : 'Not connected'}

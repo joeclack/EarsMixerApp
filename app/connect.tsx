@@ -1,5 +1,5 @@
 import ScreenSurface from '../src/components/ScreenSurface';
-import HardwarePanel from '../src/components/HardwarePanel';
+import FieldSurface from '../src/components/FieldSurface';
 import React, { useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, Keyboard, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 import { router } from 'expo-router';
@@ -73,13 +73,13 @@ export default function Connect() {
         </Text>}
         {!!nearby.mixers.length && !!nearby.message && <Message>{nearby.message}</Message>}
       </View> : <>
-      <HardwarePanel radius={18} style={{ paddingHorizontal: 16, flexDirection: 'row', gap: 12, alignItems: 'center' }}>
+      <FieldSurface style={{ flexDirection: 'row', gap: 12, alignItems: 'center' }}>
         <Icon name={{ ios: 'network', android: 'wifi', web: 'wifi' }} color={theme.muted} />
         <TextInput testID="mixer-address" accessibilityLabel="Mixer address" value={address} onChangeText={setAddress} placeholder="192.168.1.100:8082" placeholderTextColor={theme.muted}
           autoCapitalize="none" autoCorrect={false} keyboardType="url" returnKeyType="go" editable={!busy} onSubmitEditing={() => { if (!busy) void connect(); }}
           // Keep the web input above the panel's positioned decorative gradient.
           style={{ position: 'relative', flex: 1, color: theme.text, fontSize: 17, minHeight: 56, paddingVertical: 16 }} />
-      </HardwarePanel>
+      </FieldSurface>
       <View style={{ gap: 10, marginTop: 14, marginBottom: 24 }}>
         <NativeButton title={busy ? 'Connecting…' : 'Connect'} symbol="wifi" prominent fullWidth disabled={busy || !address.trim()} onPress={() => void connect()} />
         <NativeButton title="Scan code" bordered fullWidth symbol="qrcode.viewfinder" disabled={busy} onPress={() => router.push('/scan')} />
