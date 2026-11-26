@@ -57,6 +57,7 @@ export default function Mixer() {
   const sideRail = usesMixerSideRail(width, height);
   const tabBarInset = useAndroidTabBarInset('(mixer)');
   const iosTabBarInset = useIOSTabBarViewportInset();
+  const tabBarViewportInset = android && !landscape ? tabBarInset : iosTabBarInset;
   const groupFooter = landscape && !sideRail;
   const [bankHeight, setBankHeight] = useState(height);
   const layoutReady = useStableMixerLayout([width, height, insets.top, insets.bottom, insets.left, insets.right,
@@ -85,8 +86,8 @@ export default function Mixer() {
     [mix.config, mix.aux, mix.parameter, expanded, state.preferences]);
   const topPadding = sideRail ? insets.top + (android ? 6 : 12) : android ? 8 : 20;
   // In landscape the one-line names sit just above the home indicator.
-  const bottomPadding = android ? tabBarInset + (landscape ? 6 : 20)
-    : landscape ? Math.max(6, insets.bottom - 10) : iosTabBarInset ? 12 : insets.bottom + 20;
+  const bottomPadding = landscape ? (android ? tabBarInset + 6 : Math.max(6, insets.bottom - 10))
+    : tabBarViewportInset ? 12 : insets.bottom + 20;
   // Each landscape strip has three rows: its level, the fader, and its name.
   // The fader takes all the height the level and name rows leave. An open
   // group's name and close control have their own side rail, leaving equal
@@ -206,7 +207,7 @@ export default function Mixer() {
     {/* <AuxPresence /> */}
     {/* The plain opacity hides stale layout within the same commit; the
         animated layer then fades the settled layout in. */}
-    <Animated.View style={[{ flex: 1, marginBottom: iosTabBarInset }, revealStyle]}>
+    <Animated.View style={[{ flex: 1, marginBottom: tabBarViewportInset }, revealStyle]}>
     <View pointerEvents={layoutReady ? 'auto' : 'none'} accessibilityElementsHidden={!layoutReady}
       importantForAccessibility={layoutReady ? 'auto' : 'no-hide-descendants'} style={{ flex: 1, flexDirection: landscape ? 'row' : 'column',
       paddingLeft: landscape ? landscapeEdges.paddingLeft : 0, paddingRight: landscape ? landscapeEdges.paddingRight : 0, opacity: layoutReady ? 1 : 0 }}>

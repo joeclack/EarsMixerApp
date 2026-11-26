@@ -25,7 +25,7 @@ const isTab = (value: unknown): value is Tab => TABS.some(item => item.value ===
 export default function Channels() {
   const { session } = useSession(), theme = useTheme();
   const android = Platform.OS === 'android';
-  const tabBarInset = useAndroidTabBarInset('channels');
+  const androidTabBarInset = useAndroidTabBarInset('channels');
   const iosTabBarInset = useIOSTabBarViewportInset();
   const headerHeight = useHeaderHeight();
   const params = useLocalSearchParams<{ tab?: string }>();
@@ -33,11 +33,11 @@ export default function Channels() {
   useEffect(() => { if (isTab(params.tab)) setTab(params.tab); }, [params.tab]);
   useFocusEffect(useCallback(() => { session.mixer.cancelWrites(); }, [session]));
   const scrolled = (content: ReactNode) => <ScrollView keyboardShouldPersistTaps="handled" contentInsetAdjustmentBehavior="automatic"
-    contentContainerStyle={[styles.page, android && { paddingBottom: 32 + tabBarInset }]}>{content}</ScrollView>;
+    contentContainerStyle={styles.page}>{content}</ScrollView>;
   return <ScreenSurface>
     <Stack.Screen options={{ title: 'Channels', headerTransparent: !android, headerStyle: { backgroundColor: android ? theme.bg : 'transparent' }, headerShadowVisible: false, headerTintColor: theme.tint,
       headerTitleStyle: { color: theme.text } }} />
-    <View style={[{ flex: 1, paddingTop: android ? 0 : headerHeight, paddingBottom: iosTabBarInset }, android && styles.androidPage]}>
+    <View style={[{ flex: 1, paddingTop: android ? 0 : headerHeight, paddingBottom: androidTabBarInset || iosTabBarInset }, android && styles.androidPage]}>
       <View style={{ paddingHorizontal: android ? 20 : 16, paddingVertical: 8 }}>
         <Segmented label="Channels, groups or templates" value={tab} options={TABS} onChange={value => { if (isTab(value)) setTab(value); }} />
       </View>

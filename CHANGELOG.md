@@ -6,6 +6,7 @@
 - Portrait faders give channel names and levels more emphasis, simplify the scale and show a written muted state with a larger mute target. The Channels list names the mix whose visibility is being edited, and Groups shows each group's scope and channel count.
 - Templates say what applying a layout replaces, mark the applied layout, and confirm reapplying it. Settings identifies which device stores the saved levels it can clear.
 - Settings explains what Reset device data clears and tells musicians they’ll go through setup again.
+- Android opens monitor mixes in an opaque Material sheet, shows when the Mixer is reconnecting, and keeps Mixer and Channels controls above the floating tab bar.
 
 - Merges to `main` build a signed Android preview APK with a higher version code and publish it to the website’s Android download link through Cloudflare R2.
 - Android has a floating, pill-shaped tab bar for Mixer, Channels and Settings. The highlight slides to the selected tab, press feedback follows the pill shape and screen content is visible around it. The bar gives the mixer the full height in phone landscape and hides when the keyboard opens.

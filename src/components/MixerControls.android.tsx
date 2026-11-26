@@ -1,7 +1,9 @@
-import { useState, type PropsWithChildren } from 'react';
+import { useEffect, useRef, useState, type PropsWithChildren } from 'react';
 import { Pressable, Text, View } from 'react-native';
 import { Host } from '@expo/ui';
-import { DropdownMenu, DropdownMenuItem, RNHostView, SelectableDropdownMenuItem, Text as MaterialText } from '@expo/ui/jetpack-compose';
+import { Column, DropdownMenu, DropdownMenuItem, LazyColumn, ListItem, ModalBottomSheet, RNHostView, Row, SelectableDropdownMenuItem,
+  Text as MaterialText, TextButton, type ModalBottomSheetRef } from '@expo/ui/jetpack-compose';
+import { clickable, fillMaxWidth, padding, semantics, weight } from '@expo/ui/jetpack-compose/modifiers';
 import { router } from 'expo-router';
 import type { SymbolViewProps } from 'expo-symbols';
 import { useSession } from '../mixer/context';
@@ -53,13 +55,65 @@ function MixerMenu({ label, symbol, text, maxWidth, rail, disabled, highlighted,
 
 export function MixerAuxMenu({ rail, maxWidth }: { rail?: boolean; maxWidth?: number }) {
   const { session, state, mix } = useSession();
+  const theme = useTheme();
+  const [presented, setPresented] = useState(false);
+  const sheet = useRef<ModalBottomSheetRef>(null);
   const auxes = mix.config?.aux || [];
-  const label = auxes.find(aux => aux.channel === mix.aux)?.label || 'Choose AUX';
-  return <MixerMenu label={'Choose AUX. ' + (mix.aux === null ? 'No AUX selected' : label)} symbol="headphones"
-    rail={rail} text={rail ? undefined : label} maxWidth={maxWidth}
-    disabled={!state.server || !auxes.length || mix.status !== 'connected'}
-    items={[{ id: 'none', label: 'No AUX', selected: mix.aux === null, onPress: () => session.preferences({ selectedAux: null }) },
-      ...auxes.map(aux => ({ id: aux.channel, label: aux.label, selected: mix.aux === aux.channel, onPress: () => session.preferences({ selectedAux: aux.channel }) }))]} />;
+  const label = auxes.find(aux => aux.channel === mix.aux)?.label || 'No AUX';
+  const unavailable = !state.server || !auxes.length || mix.status !== 'connected';
+  const status = !state.demo && !!mix.config && mix.status !== 'connected'
+    ? (state.pinPrompt ? 'PIN needed' : 'Reconnecting…')
+    : '';
+  const disabled = unavailable && !status;
+  const iconColor = disabled ? theme.muted : status ? theme.orange : theme.tint;
+  useEffect(() => { if (unavailable) setPresented(false); }, [unavailable]);
+  const dismiss = () => {
+    const hide = sheet.current?.hide();
+    if (hide) void hide.finally(() => setPresented(false)).catch(() => {});
+    else setPresented(false);
+  };
+  const pick = (channel: number | null) => {
+    if (session.state.server === state.server && session.mixer.state.status === 'connected') session.preferences({ selectedAux: channel });
+    dismiss();
+  };
+  return <Host matchContents colorScheme={theme.scheme} seedColor={theme.tint}>
+    <RNHostView matchContents>
+      <Pressable accessibilityRole="button" accessibilityLabel={status ? label + ', ' + status : 'Choose monitor mix, ' + label}
+        accessibilityState={{ disabled, expanded: presented && !unavailable }} disabled={disabled}
+        onPress={() => { if (status) router.push(state.pinPrompt ? '/pin' : '/settings'); else setPresented(true); }}
+        android_ripple={{ color: theme.line }} style={{ minWidth: 48, minHeight: 48, maxWidth, flexDirection: 'row',
+          alignItems: 'center', justifyContent: 'center', gap: 6, paddingHorizontal: rail ? 0 : 10, borderRadius: 24,
+          overflow: 'hidden', backgroundColor: rail ? theme.panel : 'transparent' }}>
+        <Icon name={{ android: 'headphones' }} size={20} color={iconColor} />
+        {!rail && <>
+          <View style={{ flexShrink: 1 }}>
+            <Text numberOfLines={1} style={{ color: disabled ? theme.muted : theme.text, fontSize: 15, fontWeight: '600' }}>{label}</Text>
+            {!!status && <Text numberOfLines={1} style={{ color: theme.orange, fontSize: 11, fontWeight: '600' }}>{status}</Text>}
+          </View>
+          <Icon name={{ android: status ? 'chevron_right' : 'arrow_drop_down' }} size={18} color={iconColor} />
+        </>}
+      </Pressable>
+    </RNHostView>
+    {presented && !unavailable && <ModalBottomSheet ref={sheet} onDismissRequest={() => setPresented(false)}
+      containerColor={theme.panel} contentColor={theme.text}>
+      <Column modifiers={[fillMaxWidth()]}>
+        <Row verticalAlignment="center" modifiers={[fillMaxWidth(), padding(20, 4, 12, 8)]}>
+          <MaterialText style={{ typography: 'titleLarge' }} modifiers={[weight(1)]}>Choose monitor mix</MaterialText>
+          <TextButton onClick={dismiss}><MaterialText color={theme.tint}>Cancel</MaterialText></TextButton>
+        </Row>
+        <LazyColumn contentPadding={{ bottom: 12 }}>
+          {[{ channel: null, label: 'No AUX' }, ...auxes].map(aux => {
+            const selected = mix.aux === aux.channel;
+            return <ListItem key={aux.channel ?? 'none'} colors={{ containerColor: selected ? theme.secondary : theme.panel }}
+              modifiers={[clickable(() => pick(aux.channel)), semantics({ contentDescription: selected ? aux.label + ', selected' : aux.label })]}>
+              <ListItem.HeadlineContent><MaterialText color={theme.text}>{aux.label}</MaterialText></ListItem.HeadlineContent>
+              {selected && <ListItem.TrailingContent><RNHostView matchContents><Icon name={{ android: 'check' }} size={20} /></RNHostView></ListItem.TrailingContent>}
+            </ListItem>;
+          })}
+        </LazyColumn>
+      </Column>
+    </ModalBottomSheet>}
+  </Host>;
 }
 
 export function MixerModeMenu({ rail }: { rail?: boolean }) {
