@@ -30,6 +30,7 @@ import { useStableMixerLayout } from '../../../src/components/useStableMixerLayo
 import LandscapeFaderViewport from '../../../src/components/LandscapeFaderViewport';
 import { usesMixerSideRail } from '../../../src/components/mixerNavigation';
 import { useAndroidTabBarInset } from '../../../src/components/useAndroidTabBarInset';
+import { useIOSTabBarViewportInset } from '../../../src/components/useIOSTabBarViewportInset';
 
 // Landscape strip geometry: the level row above the fader and the name row below.
 // Names are one line so the fader keeps as much height as possible.
@@ -55,6 +56,7 @@ export default function Mixer() {
   const android = Platform.OS === 'android';
   const sideRail = usesMixerSideRail(width, height);
   const tabBarInset = useAndroidTabBarInset('(mixer)');
+  const iosTabBarInset = useIOSTabBarViewportInset();
   const groupFooter = landscape && !sideRail;
   const [bankHeight, setBankHeight] = useState(height);
   const layoutReady = useStableMixerLayout([width, height, insets.top, insets.bottom, insets.left, insets.right,
@@ -83,7 +85,8 @@ export default function Mixer() {
     [mix.config, mix.aux, mix.parameter, expanded, state.preferences]);
   const topPadding = sideRail ? insets.top + (android ? 6 : 12) : android ? 8 : 20;
   // In landscape the one-line names sit just above the home indicator.
-  const bottomPadding = android ? tabBarInset + (landscape ? 6 : 20) : landscape ? Math.max(6, insets.bottom - 10) : insets.bottom + 20;
+  const bottomPadding = android ? tabBarInset + (landscape ? 6 : 20)
+    : landscape ? Math.max(6, insets.bottom - 10) : iosTabBarInset ? 12 : insets.bottom + 20;
   // Each landscape strip has three rows: its level, the fader, and its name.
   // The fader takes all the height the level and name rows leave. An open
   // group's name and close control have their own side rail, leaving equal
@@ -140,14 +143,14 @@ export default function Mixer() {
         </View>}
       </Animated.View>
       : <Animated.View key={channel.channel} testID={'channel-' + channel.channel} {...member}
-        style={{ gap: 2, paddingTop: grouped && !open ? 0 : android ? 4 : 10, paddingHorizontal: 8, paddingBottom: 4, ...divider(position) }}>
+        style={{ gap: 2, paddingTop: grouped && !open ? 0 : android ? 4 : 2, paddingHorizontal: 8, paddingBottom: 4, ...divider(position) }}>
         {/* The server's channel colour runs down the row from the screen edge, rounded on its inner side. */}
         {channel.colour && <LinearGradient testID={'channel-colour-' + channel.channel} colors={markerGradient(channel.colour)} start={{ x: 0.5, y: 0 }} end={{ x: 0.5, y: 1 }}
           style={{ position: 'absolute', top: 14, bottom: 14, left: 0, width: 6, borderTopRightRadius: 3, borderBottomRightRadius: 3 }} />}
         {!channel.members && <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 12 }}>
-          <Text numberOfLines={2} style={{ color: theme.text, fontSize: 15 * textScale, fontWeight: '600', flex: 1 }}>{channel.label}</Text>
-          <MuteKey channel={channel.channel} label={channel.label} width={56} height={24} />
-          {showLevels && <View style={{ minWidth: 60 * textScale, alignItems: 'flex-end' }}><FaderValue channel={channel.channel} size={13 * textScale} /></View>}
+          <Text numberOfLines={2} style={{ color: theme.text, fontSize: 16 * textScale, fontWeight: '700', flex: 1 }}>{channel.label}</Text>
+          <MuteKey channel={channel.channel} label={channel.label} width={64} height={24} roomy />
+          {showLevels && <View style={{ minWidth: 60 * textScale, alignItems: 'flex-end' }}><FaderValue channel={channel.channel} size={14 * textScale} prominent /></View>}
         </View>}
         <Fader channel={channel.channel} label={channel.label} colour={channel.colour} />
       </Animated.View>;
@@ -166,8 +169,8 @@ export default function Mixer() {
         <View style={{ minHeight: 48, paddingHorizontal: 20, paddingTop: 6, gap: 8, flexDirection: 'row', alignItems: 'center' }}>
           <Icon name={{ ios: 'link', android: 'link', web: 'link' }} size={14} />
           <Text numberOfLines={2} style={{ flex: 1, color: theme.text, fontSize: 15 * textScale, fontWeight: '700' }}>{group.label}</Text>
-          <MuteKey channel={group.channel} label={group.label} width={56} height={24} />
-          {showLevels && <View style={{ minWidth: 60 * textScale, alignItems: 'flex-end' }}><FaderValue channel={group.channel} size={13 * textScale} /></View>}
+          <MuteKey channel={group.channel} label={group.label} width={64} height={24} roomy />
+          {showLevels && <View style={{ minWidth: 60 * textScale, alignItems: 'flex-end' }}><FaderValue channel={group.channel} size={14 * textScale} prominent /></View>}
           <Icon name={{ ios: 'chevron.down', android: 'expand_more', web: 'expand_more' }} size={16} />
         </View>
       </GroupExpandTarget>)}
@@ -203,7 +206,7 @@ export default function Mixer() {
     {/* <AuxPresence /> */}
     {/* The plain opacity hides stale layout within the same commit; the
         animated layer then fades the settled layout in. */}
-    <Animated.View style={[{ flex: 1 }, revealStyle]}>
+    <Animated.View style={[{ flex: 1, marginBottom: iosTabBarInset }, revealStyle]}>
     <View pointerEvents={layoutReady ? 'auto' : 'none'} accessibilityElementsHidden={!layoutReady}
       importantForAccessibility={layoutReady ? 'auto' : 'no-hide-descendants'} style={{ flex: 1, flexDirection: landscape ? 'row' : 'column',
       paddingLeft: landscape ? landscapeEdges.paddingLeft : 0, paddingRight: landscape ? landscapeEdges.paddingRight : 0, opacity: layoutReady ? 1 : 0 }}>

@@ -11,7 +11,7 @@ export default function ChannelOrder() {
   return <Host style={{ flex: 1 }} colorScheme={theme.scheme}>
     <List modifiers={[environment('editMode', 'active'), scrollContentBackground('hidden')]}>
       {!!order.error && <Section><Text modifiers={[foregroundStyle(theme.danger)]}>{order.error}</Text></Section>}
-      <Section>
+      <Section title={order.mixName ? 'Shown in ' + order.mixName : undefined}>
         <List.ForEach data={order.items} keyExtractor={item => String(item.key)} onMove={order.move}>
           {({ item }) => <HStack spacing={10} modifiers={[listRowBackground(palette.surface), listRowSeparatorTint(palette.edge)]}>
             {item.group && <Image systemName="link" size={16} color={theme.tint} />}

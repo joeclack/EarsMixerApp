@@ -191,7 +191,7 @@ export default memo(function Fader({ channel, label, vertical = false, length = 
       : { position: 'absolute', left: inset, right: inset, top: 24, height: 8, borderRadius: 4, backgroundColor: '#010709' }}>
       {/* A muted send keeps its level; its light dims to show it is off in this mix. */}
       <Animated.View style={[vertical ? { width: 8 } : { height: 8 }, { opacity: muted ? 0.25 : 1, borderRadius: 4, backgroundColor: light,
-        boxShadow: [{ offsetX: 0, offsetY: 0, blurRadius: 6, spreadDistance: 1, color: colour ? light + '70' : '#12E6B970' }] }, fillStyle]}>
+        boxShadow: [{ offsetX: 0, offsetY: 0, blurRadius: vertical ? 6 : 3, spreadDistance: vertical ? 1 : 0, color: (colour ? light : '#12E6B9') + (vertical ? '70' : '55') }] }, fillStyle]}>
         <LinearGradient pointerEvents="none" colors={gradient}
           locations={[0, 0.3, 0.6, 1]} start={vertical ? { x: 0, y: 0.5 } : { x: 0.5, y: 0 }}
           end={vertical ? { x: 1, y: 0.5 } : { x: 0.5, y: 1 }} style={{ position: 'absolute', inset: 0, borderRadius: 4 }} />
@@ -219,11 +219,12 @@ export default memo(function Fader({ channel, label, vertical = false, length = 
 });
 
 // The level as plain text beside or above its fader.
-export const FaderValue = memo(function FaderValue({ channel, size = 13 }: { channel: number; size?: number }) {
+export const FaderValue = memo(function FaderValue({ channel, size = 13, prominent = false }: { channel: number; size?: number; prominent?: boolean }) {
   const { session, mix } = useFaderSession(channel);
   const theme = useTheme();
   const value = levelText(session.mixer.displayValue(channel), mix.parameter);
-  return <Text accessibilityLabel={value} numberOfLines={1} style={{ color: theme.muted, fontSize: size, lineHeight: Math.round(size * 1.38), fontWeight: '500', fontVariant: ['tabular-nums'] }}>{value}</Text>;
+  return <Text accessibilityLabel={value} numberOfLines={1} style={{ color: prominent ? theme.text : theme.muted, fontSize: size,
+    lineHeight: Math.round(size * 1.38), fontWeight: prominent ? '600' : '500', fontVariant: ['tabular-nums'] }}>{value}</Text>;
 });
 
 
@@ -266,26 +267,17 @@ const FaderScale = memo(function FaderScale({ width, travel, vertical, parameter
       </>}
     </View>;
   }
-  const scaleText = theme.dark ? '#849BA5' : theme.consoleMark, scaleLine = theme.dark ? '#26383F' : '#A82B4066';
+  const scaleText = theme.dark ? '#849BA5' : theme.consoleMark;
   const scale = parameter === 'level'
     ? [-40, -20, -10, 0, 10].map(db => ({ position: dbToPosition(db), label: db === 0 ? '0 dB' : db > 0 ? '+' + db : String(db), major: db === 0 }))
     : [{ position: 0, label: 'L', major: false }, { position: 0.5, label: 'C', major: true }, { position: 1, label: 'R', major: false }];
   return <View pointerEvents="none" style={{ position: 'absolute', top: 0, bottom: 0, left: 0, right: 0 }}>
-      {Array.from({ length: 21 }, (_, index) => {
-        const point = inset + travel * (vertical ? 1 - index / 20 : index / 20);
-        return <View key={index} style={vertical
-          ? { position: 'absolute', top: point, left: 23, width: index % 5 === 0 ? 9 : 5, height: 1, backgroundColor: scaleLine }
-          : { position: 'absolute', left: point, top: 42, width: 1, height: index % 5 === 0 ? 8 : 4, backgroundColor: scaleLine }} />;
-      })}
       {scale.map(mark => {
-        const point = inset + travel * (vertical ? 1 - mark.position : mark.position);
-        return <View key={mark.label} style={vertical
-          ? { position: 'absolute', top: point - 6, left: 0, width: 33, height: 12, justifyContent: 'center' }
-          : { position: 'absolute', left: Math.max(0, Math.min(width - 28, point - 14)), top: 0, width: 28, height: 25, alignItems: 'center' }}>
+        const point = inset + travel * mark.position;
+        return <View key={mark.label} style={{ position: 'absolute', left: Math.max(0, Math.min(width - 28, point - 14)),
+          top: 0, width: 28, height: 25, alignItems: 'center' }}>
           <Text style={{ color: mark.major && theme.dark ? '#E6F1F3' : scaleText, fontSize: 8, fontWeight: mark.major ? '700' : '500', fontVariant: ['tabular-nums'] }}>{mark.label}</Text>
-          <View style={vertical
-            ? { position: 'absolute', left: 23, width: 9, height: 1, backgroundColor: mark.major ? color : scaleText }
-            : { width: 1, height: 8, marginTop: 2, backgroundColor: mark.major && theme.dark ? color : scaleText }} />
+          <View style={{ width: 1, height: mark.major ? 8 : 5, marginTop: 2, backgroundColor: mark.major && theme.dark ? color : scaleText }} />
         </View>;
       })}
       {!theme.dark && parameter === 'level' && <>

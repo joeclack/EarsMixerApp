@@ -4,7 +4,7 @@ import { font, lineLimit, foregroundStyle, scrollContentBackground, disabled, li
 import Section from './HardwareSection.ios';
 import { hardwarePalette } from './hardwarePalette';
 import { useTheme } from '../theme';
-import { groupChannelNames, groupLabel } from '../mixer/groups';
+import { groupLabel } from '../mixer/groups';
 import { useGroupsList } from './useGroupsList';
 
 export default function GroupsList() {
@@ -19,7 +19,7 @@ export default function GroupsList() {
           const title = groupLabel(group, list.channels);
           const content = <VStack alignment="leading" spacing={4}>
             <Text modifiers={[lineLimit(2), foregroundStyle(theme.text)]}>{title}</Text>
-            <Text modifiers={[font({ textStyle: 'caption' }), lineLimit(2), foregroundStyle(theme.muted)]}>{group.allAuxes ? 'All monitor mixes' : 'This monitor mix'} · {group.members.length} channels{group.name ? ' · ' + groupChannelNames(group, list.channels) : ''}</Text>
+            <Text modifiers={[font({ textStyle: 'caption' }), lineLimit(2), foregroundStyle(theme.muted)]}>{group.allAuxes ? 'All monitor mixes' : 'This monitor mix'} · {group.members.length} channels</Text>
           </VStack>;
           return <Button onPress={() => list.open(group.id)} modifiers={rowStyle}>
               <HStack spacing={12}>{content}<Spacer /><Image systemName="chevron.right" size={13} color={theme.muted} /></HStack>

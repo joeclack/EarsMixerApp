@@ -1,4 +1,5 @@
 import React from 'react';
+import { Platform } from 'react-native';
 import Section from './HardwareSection.ios';
 import { useResetDeviceData } from './useResetDeviceData';
 import { useClearSavedLevels } from './useClearSavedLevels';
@@ -59,7 +60,8 @@ export default function SettingsContent() {
           onSelectionChange={textSize => session.setSettings({ textSize })} modifiers={[pickerStyle('menu')]}>
           <Text modifiers={[tag('standard')]}>Standard</Text><Text modifiers={[tag('large')]}>Large</Text><Text modifiers={[tag('larger')]}>Larger</Text>
         </Picker>
-        <Button label="Clear saved levels" systemImage="clock.arrow.circlepath" role="destructive" onPress={clearLevels} />
+        <Button label={'Clear levels saved on this ' + (Platform.isPad ? 'iPad' : 'phone')}
+          systemImage="clock.arrow.circlepath" role="destructive" onPress={clearLevels} />
       </Section>
       <Section>
         <Button label="Reset device data" role="destructive" onPress={reset.confirm} modifiers={[disabled(reset.resetting)]} />

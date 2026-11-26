@@ -9,13 +9,16 @@ const MUTE_RED = '#FF453A';
 // A desk-style MUTE key. It mutes the channel in this mix only: the desk turns
 // its send to this AUX off and keeps the level, so unmuting restores it exactly.
 // Lit red while muted. Hidden until the desk has reported the send's state.
-export const MuteKey = memo(function MuteKey({ channel, label, width = 64, height = 26 }: { channel: number; label: string; width?: number; height?: number }) {
+export const MuteKey = memo(function MuteKey({ channel, label, width = 64, height = 26, roomy = false }: {
+  channel: number; label: string; width?: number; height?: number; roomy?: boolean;
+}) {
   const theme = useTheme();
   const { session } = useFaderSession(channel);
   const mixer = session.mixer;
   const muted = mixer.isMuted(channel), available = mixer.canMute(channel);
   const android = Platform.OS === 'android';
-  const targetHeight = android ? Math.max(height, 48) : height;
+  const targetHeight = Math.max(height, android ? 48 : roomy ? 44 : 0);
+  const hasLargerTarget = targetHeight > height;
   // Keep the space so rows don't shift once the state arrives. While faders are
   // locked the key stays visible but dimmed and does nothing.
   if (!mixer.muteKnown(channel)) return <View style={{ width, height: targetHeight }} />;
@@ -31,13 +34,13 @@ export const MuteKey = memo(function MuteKey({ channel, label, width = 64, heigh
     boxShadow: muted ? [{ offsetX: 0, offsetY: 0, blurRadius: 8, color: 'rgba(255,69,58,0.55)' }] : undefined };
   // Grow the touch area to at least 44pt without changing the key's size.
   const slopX = Math.max(0, (44 - width) / 2), slopY = Math.max(0, (44 - height) / 2);
-  const text = <Text numberOfLines={android ? 1 : undefined} adjustsFontSizeToFit={android}
-    style={{ color: muted ? '#FFFFFF' : theme.muted, fontSize: 11, fontWeight: '800', letterSpacing: 1.2,
-      ...(android && { includeFontPadding: false }) }}>MUTE</Text>;
+  const text = <Text numberOfLines={1} adjustsFontSizeToFit
+    style={{ color: muted ? '#1B0806' : theme.muted, fontSize: 11, fontWeight: '800', letterSpacing: 0.9,
+      ...(android && { includeFontPadding: false }) }}>{muted ? 'MUTED' : 'MUTE'}</Text>;
   return <Pressable accessibilityRole="switch" accessibilityLabel={'Mute ' + label} accessibilityState={{ checked: muted, disabled: !available }}
-    disabled={!available} onPress={toggle} hitSlop={android ? undefined : { left: slopX, right: slopX, top: slopY, bottom: slopY }}
-    style={({ pressed }) => [android ? { width, height: targetHeight, justifyContent: 'center' } : face,
+    disabled={!available} onPress={toggle} hitSlop={hasLargerTarget ? undefined : { left: slopX, right: slopX, top: slopY, bottom: slopY }}
+    style={({ pressed }) => [hasLargerTarget ? { width, height: targetHeight, justifyContent: 'center' } : face,
       { opacity: !available ? 0.5 : pressed ? 0.7 : 1 }]}>
-    {android ? <View style={face}>{text}</View> : text}
+    {hasLargerTarget ? <View style={face}>{text}</View> : text}
   </Pressable>;
 });

@@ -15,7 +15,7 @@ export default function GroupsList() {
       <Text style={{ flex: 1, color: theme.tint, fontSize: 17 }}>Create new group</Text>
     </Pressable> : <NativeButton title="Create new group" symbol="plus" disabled={!list.canCreate} onPress={() => list.open('new')} />}
     {list.groups.map(group => <View key={group.id}>
-      <Row title={groupLabel(group, list.channels)} detail={group.members.length + ' channels'} onPress={() => list.open(group.id)} />
+      <Row title={groupLabel(group, list.channels)} detail={(group.allAuxes ? 'All monitor mixes' : 'This monitor mix') + ' · ' + group.members.length + ' channels'} onPress={() => list.open(group.id)} />
       <NativeButton compact title="Delete" destructive disabled={list.busy} onPress={() => list.remove([group.id])} />
     </View>)}
     {!list.groups.length && <Text style={{ padding: 16, color: theme.muted }}>No channel groups yet</Text>}

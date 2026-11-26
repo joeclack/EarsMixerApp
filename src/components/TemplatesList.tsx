@@ -23,23 +23,43 @@ export default function TemplatesList({ onApplied, intro = true }: { onApplied?(
       .finally(() => { if (!controller.signal.aborted) setLoading(false); });
     return () => controller.abort();
   }, [session, state.server, retry]);
+  const replacement = 'Applying a layout replaces channel order, visibility and groups. Desk levels stay unchanged.';
+  const apply = (template: MixerTemplate) => {
+    setApplying(true); setError('');
+    void session.applyTemplate(template.id).then(() => { if (alive.current) onApplied?.(); })
+      .catch(error => { if (alive.current) setError(error instanceof Error ? error.message : 'Could not load this template.'); })
+      .finally(() => { if (alive.current) setApplying(false); });
+  };
+  const reapply = (template: MixerTemplate) => {
+    const title = 'Reapply layout?';
+    if (Platform.OS === 'web') {
+      if (window.confirm(title + '\n\n' + replacement)) apply(template);
+      return;
+    }
+    Alert.alert(title, replacement, [{ text: 'Cancel', style: 'cancel' }, { text: 'Reapply layout', onPress: () => apply(template) }]);
+  };
   return <>
-    {intro && <Text style={{ color: theme.muted, fontSize: 15, marginBottom: 20 }}>Choose a layout. Desk levels stay unchanged.</Text>}
+    {intro && <Text style={{ color: theme.muted, fontSize: 15, lineHeight: 21, marginBottom: 12 }}>{replacement}</Text>}
     {loading && <ActivityIndicator color={theme.tint} />}
     {!loading && !error && !templates.length && <Message>No templates available on this mixer.</Message>}
     <View>
-      {templates.map(template => <View key={template.id} style={{ flexDirection: 'row', alignItems: 'center', gap: 16, minHeight: 60, paddingVertical: 8, borderBottomWidth: 0.5, borderBottomColor: theme.line }}>
-        <Text accessibilityLabel={template.name + (state.selectedTemplate?.id === template.id ? ', selected' : '')} style={{ flex: 1, color: theme.text, fontSize: 17 }}>{template.name}</Text>
-        {state.selectedTemplate?.id === template.id && <Animated.View entering={FadeIn.duration(140).reduceMotion(ReduceMotion.System)} pointerEvents="none" accessible={false}>
-          <Icon name={{ ios: 'checkmark', android: 'check', web: 'check' }} size={16} />
-        </Animated.View>}
-        <NativeButton title="Select" disabled={applying || loading} onPress={() => {
-          setApplying(true); setError('');
-          void session.applyTemplate(template.id).then(() => { if (alive.current) onApplied?.(); })
-            .catch(error => { if (alive.current) setError(error instanceof Error ? error.message : 'Could not load this template.'); })
-            .finally(() => { if (alive.current) setApplying(false); });
-        }} />
-      </View>)}
+      {templates.map(template => {
+        const applied = state.selectedTemplate?.id === template.id;
+        return <View key={template.id} style={{ flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 60,
+          paddingVertical: 8, borderBottomWidth: 0.5, borderBottomColor: theme.line }}>
+          <View style={{ flex: 1, gap: 4 }}>
+            <Text style={{ color: theme.text, fontSize: 17 }}>{template.name}</Text>
+            {applied && <Animated.View entering={FadeIn.duration(140).reduceMotion(ReduceMotion.System)}
+              style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
+              <Icon name={{ ios: 'checkmark', android: 'check', web: 'check' }} size={13} />
+              <Text style={{ color: theme.tint, fontSize: 13 }}>Applied</Text>
+            </Animated.View>}
+          </View>
+          <NativeButton title={applied ? 'Reapply layout' : 'Apply layout'}
+            accessibilityLabel={(applied ? 'Reapply ' : 'Apply ') + template.name}
+            disabled={applying || loading} onPress={() => applied ? reapply(template) : apply(template)} />
+        </View>;
+      })}
     </View>
     <Message error>{error}</Message>
     {!!error && <NativeButton title="Retry" disabled={applying} onPress={() => setRetry(value => value + 1)} />}

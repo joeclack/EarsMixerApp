@@ -13,7 +13,7 @@ export default function ChannelOrder() {
   const tabBarInset = useAndroidTabBarInset('channels');
   return <ScrollView contentContainerStyle={{ padding: 20, paddingBottom: 20 + tabBarInset }}>
     <Message error>{order.error}</Message>
-    <MaterialSection>
+    <MaterialSection title={order.mixName ? 'Shown in ' + order.mixName : undefined}>
       {order.items.map((item, index) => <MaterialItem key={item.key} title={item.label} detail={item.detail || undefined}
         symbol={item.group ? 'link' : undefined} onPress={item.group ? () => order.edit(item.group!.id) : undefined}
         trailing={<Row verticalAlignment="center">
