@@ -2,7 +2,7 @@
 
 ## 1.0.0 — First App Store release
 
-- On iPhone, the Mixer shows the current Level or Pan mode, flags reconnecting in the mix selector, and opens an opaque monitor-mix picker. The Mixer, Channels and Settings keep controls above the floating tab bar.
+- On iPhone, the Mixer shows the current Level or Pan mode, flags reconnecting in the mix selector, and opens an opaque monitor-mix picker. The Mixer and Channels keep controls above the floating tab bar. Settings scrolls behind the native glass tab bar.
 - Portrait faders give channel names and levels more emphasis, simplify the scale and show a written muted state with a larger mute target. The Channels list names the mix whose visibility is being edited, and Groups shows each group's scope and channel count.
 - Templates say what applying a layout replaces, mark the applied layout, and confirm reapplying it. Settings identifies which device stores the saved levels it can clear.
 

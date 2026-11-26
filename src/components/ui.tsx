@@ -33,8 +33,7 @@ export function Page({ title, children, scroll = true, compactHeader = true, too
     {!hideHeader && toolbar}
     {scroll ? <ScrollView contentInsetAdjustmentBehavior="automatic" keyboardShouldPersistTaps="handled" automaticallyAdjustKeyboardInsets
       contentContainerStyle={[styles.page, !hideHeader && headerTransparent && Platform.OS !== 'ios' && { paddingTop: headerHeight + 20 },
-        Platform.OS === 'android' && styles.androidPage, bottomInset > 0 && { paddingBottom: 32 + bottomInset }]}>{children}</ScrollView>
-      : <View style={{ flex: 1, paddingTop: !hideHeader && headerTransparent ? headerHeight : 0, paddingBottom: bottomInset }}>{children}</View>}
+        Platform.OS === 'android' && styles.androidPage, bottomInset > 0 && { paddingBottom: 32 + bottomInset }]}>{children}</ScrollView> : <View style={{ flex: 1, paddingTop: !hideHeader && headerTransparent ? headerHeight : 0 }}>{children}</View>}
     {!state.hydrated && <View style={styles.loading}><ActivityIndicator /></View>}
   </ScreenSurface>;
 }
