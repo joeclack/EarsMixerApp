@@ -28,6 +28,7 @@ import { useLandscapeEdgePadding } from '../../../src/components/useLandscapeEdg
 import LandscapeMixerToolbar from '../../../src/components/LandscapeMixerToolbar';
 import { useStableMixerLayout } from '../../../src/components/useStableMixerLayout';
 import LandscapeFaderViewport from '../../../src/components/LandscapeFaderViewport';
+import { usesMixerSideRail } from '../../../src/components/mixerNavigation';
 
 // Landscape strip geometry: the level row above the fader and the name row below.
 // Names are one line so the fader keeps as much height as possible.
@@ -46,17 +47,13 @@ const GROUP_EDGE = 2, GROUP_FOOTER = 44;
 export default function Mixer() {
   const { session, state, mix } = useSession();
   const theme = useTheme();
-  const { width, height } = useWindowDimensions();
+  const { width, height, fontScale } = useWindowDimensions();
   const insets = useSafeAreaInsets();
   const landscapeEdges = useLandscapeEdgePadding(insets.left, insets.right);
   const landscape = width > height;
-  // iPad landscape has the height for the top toolbar, so it keeps the portrait
-  // toolbar and gives the rail's width to the faders.
-  const pad = Platform.OS === 'ios' && Platform.isPad;
-  const sideRail = landscape && !pad;
-  // iPad landscape names an open group in a bar spanning its members, rather
-  // than a narrow rotated rail beside them.
-  const groupFooter = landscape && pad;
+  const android = Platform.OS === 'android';
+  const sideRail = usesMixerSideRail(width, height);
+  const groupFooter = landscape && !sideRail;
   const [bankHeight, setBankHeight] = useState(height);
   const layoutReady = useStableMixerLayout([width, height, insets.top, insets.bottom, insets.left, insets.right,
     landscapeEdges.paddingLeft, landscapeEdges.paddingRight, bankHeight].join('|'), landscape ? 'landscape' : 'portrait');
@@ -82,16 +79,17 @@ export default function Mixer() {
   const hidden = hiddenChannels(mix.config, state.preferences, mix.aux);
   const sections = useMemo(() => mixerSections(mixerRows(mix.config, state.preferences, mix.aux, expanded, mix.parameter === 'pan')),
     [mix.config, mix.aux, mix.parameter, expanded, state.preferences]);
-  const topPadding = sideRail ? insets.top + 12 : 20;
+  const topPadding = sideRail ? insets.top + (android ? 6 : 12) : android ? 8 : 20;
   // In landscape the one-line names sit just above the home indicator.
-  const bottomPadding = landscape ? Math.max(6, insets.bottom - 10) : insets.bottom + 20;
+  const bottomPadding = android ? (landscape ? 6 : 20) : landscape ? Math.max(6, insets.bottom - 10) : insets.bottom + 20;
   // Each landscape strip has three rows: its level, the fader, and its name.
   // The fader takes all the height the level and name rows leave. An open
   // group's name and close control have their own side rail, leaving equal
   // widths and travel for every member.
   const textScale = TEXT_SCALE[state.settings.textSize], showLevels = state.settings.showLevels;
-  const levelRow = showLevels ? Math.round(LEVEL_ROW * textScale) : 0, nameRow = Math.round(NAME_ROW * textScale);
-  const chrome = stripChrome(levelRow, nameRow);
+  const rowScale = textScale * (android ? fontScale : 1);
+  const levelRow = showLevels ? Math.round(LEVEL_ROW * rowScale) : 0, nameRow = Math.round(NAME_ROW * rowScale);
+  const chrome = stripChrome(levelRow, nameRow) + (android ? 48 - MUTE_ROW : 0);
   const cardHeight = Math.max(chrome + FADER_INSET * 2, bankHeight - topPadding - bottomPadding);
   const stripHeight = Math.max(FADER_INSET * 2, cardHeight - chrome);
   const renderSection = useCallback(({ item, index }: { item: MixerSection; index: number }) => {
@@ -130,17 +128,17 @@ export default function Mixer() {
         {grouped && !open ? <GroupExpandTarget label={group.label} onExpand={expand}>
           <View style={{ width: STRIP_WIDTH - 8, height: nameRow, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 3 }}>
             <Icon name={{ ios: 'link', android: 'link', web: 'link' }} size={11} />
-            <Text numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.75} style={{ flexShrink: 1, color: theme.text, fontSize: 12 * textScale, lineHeight: 16 * textScale, fontWeight: '700', textAlign: 'center' }}>{group.label}</Text>
+            <Text numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.75} style={{ flexShrink: 1, color: theme.text, fontSize: 12 * textScale, lineHeight: 16 * textScale, fontWeight: '700', textAlign: 'center', ...(android && { includeFontPadding: false }) }}>{group.label}</Text>
             <Icon name={{ ios: 'chevron.right', android: 'chevron_right', web: 'chevron_right' }} size={11} />
           </View>
         </GroupExpandTarget> : <View style={{ width: STRIP_WIDTH - 8, height: nameRow, alignItems: 'center', justifyContent: 'center' }}>
           {/* Centred in the same row box as a group's name, so both sit on one line. */}
           <Text numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.75} style={{ color: theme.text, fontSize: 12 * textScale, lineHeight: 16 * textScale,
-            fontWeight: '600', textAlign: 'center' }}>{channel.label}</Text>
+            fontWeight: '600', textAlign: 'center', ...(android && { includeFontPadding: false }) }}>{channel.label}</Text>
         </View>}
       </Animated.View>
       : <Animated.View key={channel.channel} testID={'channel-' + channel.channel} {...member}
-        style={{ gap: 2, paddingTop: grouped && !open ? 0 : 10, paddingHorizontal: 8, paddingBottom: 4, ...divider(position) }}>
+        style={{ gap: 2, paddingTop: grouped && !open ? 0 : android ? 4 : 10, paddingHorizontal: 8, paddingBottom: 4, ...divider(position) }}>
         {/* The server's channel colour runs down the row from the screen edge, rounded on its inner side. */}
         {channel.colour && <LinearGradient testID={'channel-colour-' + channel.channel} colors={markerGradient(channel.colour)} start={{ x: 0.5, y: 0 }} end={{ x: 0.5, y: 1 }}
           style={{ position: 'absolute', top: 14, bottom: 14, left: 0, width: 6, borderTopRightRadius: 3, borderBottomRightRadius: 3 }} />}
@@ -198,7 +196,7 @@ export default function Mixer() {
         </View>}
       </View>
     </Animated.View>;
-  }, [landscape, sideRail, topPadding, groupFooter, cardHeight, stripHeight, theme, mix.parameter, session, expanded, textScale, showLevels, levelRow, nameRow]);
+  }, [android, landscape, sideRail, topPadding, groupFooter, cardHeight, stripHeight, theme, mix.parameter, session, expanded, textScale, showLevels, levelRow, nameRow]);
   return <Page title={mix.config?.aux.find(aux => aux.channel === mix.aux)?.label || 'Mixer'} scroll={false} compactHeader hideHeader={sideRail} toolbar={<MixerToolbar />} desk>
     {/* <AuxPresence /> */}
     {/* The plain opacity hides stale layout within the same commit; the

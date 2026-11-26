@@ -18,21 +18,22 @@ export function Page({ title, children, scroll = true, compactHeader = true, too
   const theme = useTheme();
   const { state } = useSession();
   const headerHeight = useHeaderHeight();
-  const headerTransparent = true;
+  const headerTransparent = Platform.OS !== 'android';
   const options = {
     headerShown: !hideHeader, title, headerLargeTitleEnabled: !compactHeader, headerTransparent,
     headerTitleStyle: { color: theme.text },
     ...(toolbar && { title: '', headerTitle: '', headerBackVisible: false,
       ...(Platform.OS === 'web' && { headerLeft: () => <MixerHeading /> }) }),
     headerShadowVisible: false, headerLargeTitleShadowVisible: false, headerTintColor: theme.tint,
-    headerStyle: { backgroundColor: 'transparent' },
+    headerStyle: { backgroundColor: headerTransparent ? 'transparent' : desk ? theme.deskBg : theme.bg },
 
   };
   return <ScreenSurface desk={desk}>
     <Stack.Screen options={options} />
     {!hideHeader && toolbar}
     {scroll ? <ScrollView contentInsetAdjustmentBehavior="automatic" keyboardShouldPersistTaps="handled" automaticallyAdjustKeyboardInsets
-      contentContainerStyle={[styles.page, !hideHeader && Platform.OS !== 'ios' && { paddingTop: headerHeight + 20 }]}>{children}</ScrollView> : <View style={{ flex: 1, paddingTop: !hideHeader && headerTransparent ? headerHeight : 0 }}>{children}</View>}
+      contentContainerStyle={[styles.page, !hideHeader && headerTransparent && Platform.OS !== 'ios' && { paddingTop: headerHeight + 20 },
+        Platform.OS === 'android' && styles.androidPage]}>{children}</ScrollView> : <View style={{ flex: 1, paddingTop: !hideHeader && headerTransparent ? headerHeight : 0 }}>{children}</View>}
     {!state.hydrated && <View style={styles.loading}><ActivityIndicator /></View>}
   </ScreenSurface>;
 }
@@ -70,6 +71,7 @@ export function EmptyMixer() {
 }
 export const styles = StyleSheet.create({
   page: { padding: 20, paddingTop: 16, paddingBottom: 32 },
+  androidPage: { width: '100%', maxWidth: 720, alignSelf: 'center' },
   headerButton: { minWidth: 44, minHeight: 44, justifyContent: 'center', alignItems: 'center' },
   row: { minHeight: 56, paddingHorizontal: 16, paddingVertical: 13, flexDirection: 'row', gap: 12, alignItems: 'center' },
   sectionLabel: { fontSize: 13, textTransform: 'uppercase', marginLeft: 16, marginBottom: 8, letterSpacing: 0.4 },

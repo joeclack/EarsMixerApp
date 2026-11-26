@@ -1,5 +1,5 @@
 import React, { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { View, Text } from 'react-native';
+import { Platform, View, Text } from 'react-native';
 import Animated, { useSharedValue, useAnimatedStyle, cancelAnimation, Easing, withTiming, withSpring, withDelay, useReducedMotion, type SharedValue } from 'react-native-reanimated';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import { scheduleOnRN, scheduleOnUI } from 'react-native-worklets';
@@ -41,15 +41,18 @@ export default memo(function Fader({ channel, label, vertical = false, length = 
   const drag = useRef<DragToken | null>(null);
   const detents = useDetentHaptics();
   const inset = FADER_INSET * size;
+  const capTouchPadding = Platform.OS === 'android' ? Math.max(0, (48 - FADER_CAP_WIDTH * (vertical ? size : 1)) / 2) : 0;
   // A vertical strip's length is given, so its travel is right on the first
   // frame; only horizontal bars wait for their measured width.
   const extent = vertical ? length : width;
   const travel = Math.max(0, extent - inset * 2);
-  const begin = useCallback((initial: number, epoch: number) => {
+  const begin = useCallback((epoch: number) => {
     if (epoch !== session.mixer.state.epoch) return;
     drag.current = session.mixer.beginDrag(channel);
     if (!drag.current) return;
-    void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
+    const feedback = Platform.OS === 'android' ? Haptics.performAndroidHapticsAsync(Haptics.AndroidHaptics.Drag_Start)
+      : Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    void feedback.catch(() => {});
   }, [session, channel]);
   const update = useCallback((next: number) => {
     if (!drag.current || drag.current.epoch !== session.mixer.state.epoch) return;
@@ -151,7 +154,7 @@ export default memo(function Fader({ channel, label, vertical = false, length = 
       sampled.value = thumb.value;
       origin.value = vertical ? -event.translationY : event.translationX;
       detents.start(start.value * travel);
-      scheduleOnRN(begin, start.value, epoch);
+      scheduleOnRN(begin, epoch);
     }).onUpdate(event => {
       'worklet';
       const movement = (vertical ? -event.translationY : event.translationX) - origin.value;
@@ -175,6 +178,8 @@ export default memo(function Fader({ channel, label, vertical = false, length = 
   // A channel colour from the server lights the fill, softened, in place of the default green.
   const light = colour ? mute(colour, 0.12) : FADER_LIGHT;
   const gradient = useMemo(() => colour ? fillGradient(colour) : DEFAULT_GRADIENT, [colour]);
+  const capStyle = { borderRadius: 8, backgroundColor: '#182125', shadowColor: '#000000',
+    shadowOffset: { width: 1, height: 4 }, shadowOpacity: 0.7, shadowRadius: 4, elevation: 8 };
   return <GestureDetector gesture={enlarge}><View onLayout={vertical ? undefined : event => setWidth(event.nativeEvent.layout.width)} style={{ height: vertical ? length : 56, width: vertical ? 80 * size : undefined, alignSelf: vertical ? 'center' : undefined }}>
     {/* A slot cut through the panel, shaded at its top edge with a lit lower lip. */}
     <View pointerEvents="none" style={[vertical
@@ -202,12 +207,13 @@ export default memo(function Fader({ channel, label, vertical = false, length = 
         session.mixer.drag(token, clamp(position + (event.nativeEvent.actionName === 'increment' ? 0.02 : -0.02))); session.mixer.flush(token); session.mixer.cancelDrag(token);
         void Haptics.selectionAsync().catch(() => {});
       }}
-      style={[{ position: 'absolute', left: vertical ? (FADER_TRACK_CENTER - FADER_CAP_WIDTH / 2) * size : 4,
-        top: vertical ? 4 * size : (56 - FADER_CAP_WIDTH) / 2,
-        width: vertical ? FADER_CAP_WIDTH * size : FADER_CAP_HEIGHT, height: vertical ? FADER_CAP_HEIGHT * size : FADER_CAP_WIDTH,
-        borderRadius: 8, backgroundColor: '#182125',
-        shadowColor: '#000000', shadowOffset: { width: 1, height: 4 }, shadowOpacity: 0.7, shadowRadius: 4, elevation: 8 }, thumbStyle]}>
-      <FaderHandleSurface vertical={vertical} size={size} />
+      style={[{ position: 'absolute', left: vertical ? (FADER_TRACK_CENTER - FADER_CAP_WIDTH / 2) * size - capTouchPadding : 4,
+        top: vertical ? 4 * size : (56 - FADER_CAP_WIDTH) / 2 - capTouchPadding,
+        width: vertical ? FADER_CAP_WIDTH * size + capTouchPadding * 2 : FADER_CAP_HEIGHT,
+        height: vertical ? FADER_CAP_HEIGHT * size : FADER_CAP_WIDTH + capTouchPadding * 2 },
+        capTouchPadding ? { paddingHorizontal: vertical ? capTouchPadding : 0, paddingVertical: vertical ? 0 : capTouchPadding } : capStyle, thumbStyle]}>
+      {capTouchPadding ? <View pointerEvents="none" style={[{ flex: 1 }, capStyle]}><FaderHandleSurface vertical={vertical} size={size} /></View>
+        : <FaderHandleSurface vertical={vertical} size={size} />}
     </Animated.View></GestureDetector>
   </View></GestureDetector>;
 });
