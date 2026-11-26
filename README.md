@@ -44,6 +44,12 @@ For a real server, enter its reachable network address, such as `192.168.1.100:8
 - **Web:** `npm run web` for development; `npm run build:web` exports `dist/` for a static host with SPA route fallback. The mixer server must be reachable from the browser and allow the required CORS reads.
 - **Previously published previews:** Android APKs are available under [Releases](https://github.com/joeclack/EarsMixerApp/releases).
 
+### Android preview downloads
+
+[The Android publishing workflow](.eas/workflows/android-preview.yml) builds the signed preview APK on pushes to `main`. EAS increments the Android `versionCode` using the existing preview signing key. The app version still comes from `package.json`.
+
+The workflow uploads the APK to the `earsmixer-downloads` R2 bucket, checks the public APK URL and then replaces `android/latest.json`. The [website’s Android download](https://earsmixer.app/download/android) follows that manifest. Set `R2_ACCESS_KEY_ID` and `R2_SECRET_ACCESS_KEY` as Secret variables in this app’s EAS `preview` environment. Use an R2 Object Read & Write token scoped to `earsmixer-downloads`. [Cloudflare R2 credentials](https://developers.cloudflare.com/r2/api/tokens/)
+
 ### TestFlight and over-the-air updates
 
 [The deploy workflow](.eas/workflows/testflight.yml) runs on every push to `main`, including PR merges. It fingerprints the native project and looks for a production iOS build with the same fingerprint:

@@ -2,6 +2,7 @@
 
 ## 1.0.0 — First App Store release
 
+- Merges to `main` build a signed Android preview APK with a higher version code and publish it to the website’s Android download link through Cloudflare R2.
 - Android has a floating, pill-shaped tab bar for Mixer, Channels and Settings. The highlight slides to the selected tab, press feedback follows the pill shape and screen content is visible around it. The bar gives the mixer the full height in phone landscape and hides when the keyboard opens.
 - Android segmented controls use pill shapes for the control and each option, including the connection method, Channels sections, appearance and text size.
 - Android single-line text fields use a pill shape, including nickname, mixer address, connection PIN and group name.
