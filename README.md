@@ -46,9 +46,11 @@ For a real server, enter its reachable network address, such as `192.168.1.100:8
 
 ### Android preview downloads
 
-[The Android publishing workflow](.eas/workflows/android-preview.yml) builds the signed preview APK on pushes to `main`. EAS increments the Android `versionCode` using the existing preview signing key. The app version still comes from `package.json`.
+[The Android publishing workflow](.eas/workflows/android-preview.yml) builds the signed preview APK on pushes to `main`. EAS increments the Android `versionCode` and signs the APK with the existing preview key. The app version still comes from `package.json`.
 
 The workflow uploads the APK to the `earsmixer-downloads` R2 bucket, checks the public APK URL and then replaces `android/latest.json`. The [website’s Android download](https://earsmixer.app/download/android) follows that manifest. Set `R2_ACCESS_KEY_ID` and `R2_SECRET_ACCESS_KEY` as Secret variables in this app’s EAS `preview` environment. Use an R2 Object Read & Write token scoped to `earsmixer-downloads`. [Cloudflare R2 credentials](https://developers.cloudflare.com/r2/api/tokens/)
+
+To retry a publication using an existing APK, run the workflow manually with `release_commit` set to the full SHA of the current `main` commit whose preview build finished.
 
 ### TestFlight and over-the-air updates
 

@@ -6,10 +6,15 @@ set -euo pipefail
 : "${R2_S3_ENDPOINT:?Set the Cloudflare R2 S3 endpoint}"
 : "${R2_BUCKET:?Set the Cloudflare R2 bucket name}"
 
-if [[ ! -s "$APK_PATH" || "$APK_PATH" != *.apk || ! "$APK_VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ||
+apk_path=${1:?Expected the APK path from the EAS download step}
+if [[ "$apk_path" != *.apk || ! -s "$apk_path" ]]; then
+  printf 'Could not read the Android APK at %q\n' "$apk_path" >&2
+  exit 1
+fi
+if [[ ! "$APK_VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ||
       ! "$APK_VERSION_CODE" =~ ^[1-9][0-9]*$ || ! "$APK_BUILD_ID" =~ ^[0-9a-f]{8}(-[0-9a-f]{4}){3}-[0-9a-f]{12}$ ||
       ! "$APK_COMMIT" =~ ^[0-9a-f]{40}$ ]]; then
-  echo 'Expected a signed Android APK and its EAS build metadata.' >&2
+  echo 'Expected a valid version, version code, build ID and commit from EAS.' >&2
   exit 1
 fi
 
@@ -32,7 +37,7 @@ upload() {
 
 filename="EarsMixerApp-$APK_VERSION-preview.apk"
 object_key="android/releases/v$APK_VERSION/$APK_BUILD_ID/$filename"
-upload "$APK_PATH" "$object_key" application/vnd.android.package-archive 'public, max-age=31536000, immutable' \
+upload "$apk_path" "$object_key" application/vnd.android.package-archive 'public, max-age=31536000, immutable' \
   --header "Content-Disposition: attachment; filename=\"$filename\""
 
 # Leave the current download in place until the new APK is publicly reachable.

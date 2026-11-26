@@ -3,6 +3,12 @@ name: Publish Android preview to Cloudflare R2
 on:
   push:
     branches: [main]
+  workflow_dispatch:
+    inputs:
+      release_commit:
+        type: string
+        required: true
+        description: Current main commit with a completed Android preview build
 
 concurrency:
   group: android-preview-main
@@ -10,30 +16,40 @@ concurrency:
 jobs:
   build_android:
     name: Build signed Android preview APK
+    if: ${{ !inputs.release_commit }}
     type: build
     params:
       platform: android
       profile: preview
 
+  reuse_android:
+    name: Find the completed Android preview APK
+    if: ${{ inputs.release_commit != '' }}
+    type: get-build
+    params:
+      platform: android
+      profile: preview
+      distribution: internal
+      git_commit_hash: ${{ inputs.release_commit }}
+
   publish_android:
     name: Publish Android APK and download manifest
-    needs: [build_android]
+    after: [build_android, reuse_android]
+    if: ${{ after.build_android.status == 'success' || after.reuse_android.status == 'success' }}
     environment: preview
     env:
       R2_BUCKET: earsmixer-downloads
       R2_S3_ENDPOINT: https://db1eae667ba994762bf18486c2846be1.r2.cloudflarestorage.com
-      APK_BUILD_ID: ${{ needs.build_android.outputs.build_id }}
-      APK_VERSION: ${{ needs.build_android.outputs.app_version }}
-      APK_VERSION_CODE: ${{ needs.build_android.outputs.app_build_version }}
-      APK_COMMIT: ${{ github.sha }}
+      APK_BUILD_ID: ${{ after.build_android.outputs.build_id || after.reuse_android.outputs.build_id }}
+      APK_VERSION: ${{ after.build_android.outputs.app_version || after.reuse_android.outputs.app_version }}
+      APK_VERSION_CODE: ${{ after.build_android.outputs.app_build_version || after.reuse_android.outputs.app_build_version }}
+      APK_COMMIT: ${{ inputs.release_commit || github.sha }}
     steps:
       - uses: eas/checkout
       - uses: eas/download_build
         id: apk
         with:
-          build_id: ${{ needs.build_android.outputs.build_id }}
+          build_id: ${{ env.APK_BUILD_ID }}
           extensions: [apk]
       - name: Upload APK to R2 and update the public download
-        env:
-          APK_PATH: ${{ steps.apk.outputs.artifact_path }}
-        run: bash scripts/publish-android-preview.sh
+        run: bash scripts/publish-android-preview.sh '${{ steps.apk.outputs.artifact_path }}'
