@@ -4,7 +4,7 @@ import Section from './HardwareSection.ios';
 import { useResetDeviceData } from './useResetDeviceData';
 import { useClearSavedLevels } from './useClearSavedLevels';
 import { Host, Form, Section as FormSection, Toggle, Picker, Text, Button, VStack, HStack, Spacer, TextField, Image, useNativeState } from '@expo/ui/swift-ui';
-import { font, foregroundStyle, tag, pickerStyle, buttonStyle, lineLimit, scrollContentBackground, disabled, multilineTextAlignment, frame } from '@expo/ui/swift-ui/modifiers';
+import { font, foregroundStyle, tag, pickerStyle, buttonStyle, lineLimit, scrollContentBackground, disabled, multilineTextAlignment, frame, padding } from '@expo/ui/swift-ui/modifiers';
 import { router } from 'expo-router';
 import { appUpdateDetails } from '../appVersion';
 import { useSession } from '../mixer/context';
@@ -67,7 +67,8 @@ export default function SettingsContent() {
         <Button label="Reset device data" role="destructive" onPress={reset.confirm} modifiers={[disabled(reset.resetting)]} />
       </Section>
       {/* What's running, centred under the list: version, update, bundle and date. */}
-      <FormSection footer={<Text modifiers={[multilineTextAlignment('center'), frame({ maxWidth: 10000, alignment: 'center' }), foregroundStyle(theme.muted)]}>{appUpdateDetails()}</Text>} />
+      <FormSection footer={<Text modifiers={[multilineTextAlignment('center'), frame({ maxWidth: 10000, alignment: 'center' }),
+        foregroundStyle(theme.muted), padding({ bottom: 14 })]}>{appUpdateDetails()}</Text>} />
     </Form>
   </Host>;
 }
