@@ -7,7 +7,7 @@ import { useGroupsList } from './useGroupsList';
 export default function GroupsList() {
   const list = useGroupsList(), theme = useTheme();
   return <><Message error>{list.error}</Message><Section title="Your groups">
-    {Platform.OS === 'android' ? <Pressable accessibilityRole="button" accessibilityLabel="Create new group"
+    {Platform.OS === 'android' ? <Pressable android_disableSound accessibilityRole="button" accessibilityLabel="Create new group"
       accessibilityState={{ disabled: !list.canCreate }} disabled={!list.canCreate} onPress={() => list.open('new')}
       style={({ pressed }) => ({ minHeight: 56, paddingHorizontal: 16, paddingVertical: 14, flexDirection: 'row', alignItems: 'center', gap: 12,
         borderBottomWidth: 1, borderBottomColor: theme.line, opacity: !list.canCreate ? 0.4 : pressed ? 0.6 : 1 })}>

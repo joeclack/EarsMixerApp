@@ -37,7 +37,7 @@ export const MuteKey = memo(function MuteKey({ channel, label, width = 64, heigh
   const text = <Text numberOfLines={1} adjustsFontSizeToFit
     style={{ color: muted ? '#1B0806' : theme.muted, fontSize: 11, fontWeight: '800', letterSpacing: 0.9,
       ...(android && { includeFontPadding: false }) }}>{muted ? 'MUTED' : 'MUTE'}</Text>;
-  return <Pressable accessibilityRole="switch" accessibilityLabel={'Mute ' + label} accessibilityState={{ checked: muted, disabled: !available }}
+  return <Pressable android_disableSound accessibilityRole="switch" accessibilityLabel={'Mute ' + label} accessibilityState={{ checked: muted, disabled: !available }}
     disabled={!available} onPress={toggle} hitSlop={hasLargerTarget ? undefined : { left: slopX, right: slopX, top: slopY, bottom: slopY }}
     style={({ pressed }) => [hasLargerTarget ? { width, height: targetHeight, justifyContent: 'center' } : face,
       { opacity: !available ? 0.5 : pressed ? 0.7 : 1 }]}>

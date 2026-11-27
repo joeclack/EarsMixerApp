@@ -11,6 +11,6 @@ export default function MixerToolbar() {
   return <Stack.Screen options={{
     headerLeft: () => state.server ? <MixerAuxMenu maxWidth={Math.max(96, Math.min(320, width - 176))} />
       : <Text accessibilityRole="header" style={{ color: theme.text, fontWeight: '600', fontSize: 20 }}>Mixer</Text>,
-    headerRight: () => state.server ? <View style={{ flexDirection: 'row', alignItems: 'center' }}><MixerModeMenu /><MixerToolsMenu /></View> : null,
+    headerRight: () => state.server ? <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}><MixerModeMenu /><MixerToolsMenu /></View> : null,
   }} />;
 }

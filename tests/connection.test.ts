@@ -24,7 +24,7 @@ test('only an EarsMixer response permits connection and the entered address is p
   await assert.rejects(probeMixer('host', { fetchImpl: async () => Response.json({ hello: 'world' }) }), /EarsMixer server/);
   await assert.rejects(probeMixer('host', { fetchImpl: async () => new Response('<html>Not a mixer</html>') }), /EarsMixer connection/);
   await assert.rejects(probeMixer('host', { fetchImpl: async () => new Response('error', { status: 500 }) }), /returned an error/);
-  await assert.rejects(probeMixer('host', { fetchImpl: async () => { throw new TypeError('Network failed'); } }), /same Wi-Fi|Wi-Fi network/);
+  await assert.rejects(probeMixer('host', { fetchImpl: async () => { throw new TypeError('Network failed'); } }), /same Wi.Fi|Wi.Fi network/);
 });
 
 test('connection timeouts and cancellation stop pending requests', async () => {

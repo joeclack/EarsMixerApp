@@ -68,6 +68,6 @@ export async function reachableMixer(mixer: NearbyMixer, signal: AbortSignal,
   try {
     return await Promise.any(mixer.urls.map(url => probe(url, { timeoutMs: 4000, signal: controller.signal })));
   } catch {
-    throw new Error(signal.aborted ? 'Connection cancelled.' : 'This mixer is no longer reachable. Check your Wi-Fi or try its address.');
+    throw new Error(signal.aborted ? 'Connection cancelled.' : 'This mixer is no longer reachable. Check your Wi‑Fi or try its address.');
   } finally { controller.abort(); signal.removeEventListener('abort', abort); }
 }

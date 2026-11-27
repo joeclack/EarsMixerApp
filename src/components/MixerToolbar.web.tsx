@@ -10,7 +10,7 @@ export default function MixerToolbar() {
   const theme = useTheme();
   const setAllLevelsOff = useSetAllLevelsOff();
   return <Stack.Screen options={{ headerRight: () => <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-    <Pressable accessibilityRole="button" accessibilityLabel={(mix.status === 'connected' ? 'Connected' : 'Disconnected') + '. Connect to mixer'}
+    <Pressable android_disableSound accessibilityRole="button" accessibilityLabel={(mix.status === 'connected' ? 'Connected' : 'Disconnected') + '. Connect to mixer'}
       onPress={() => router.push('/connect')} style={styles.headerButton}>
       <Icon name={{ web: mix.status === 'connected' ? 'wifi' : 'wifi_off' }} color={mix.status === 'connected' ? theme.green : theme.danger} />
     </Pressable>

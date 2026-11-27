@@ -57,7 +57,7 @@ export default function ConnectionNotice() {
           <Text style={{ color: theme.text, fontSize: 15, fontWeight: '600' }}>{pinNeeded ? 'This mixer needs a PIN' : 'Lost connection to the mixer'}</Text>
           <Text style={{ color: theme.muted, fontSize: 13, lineHeight: 18 }}>
             {pinNeeded ? (state.pinPrompt?.revoked ? 'This device was signed out. Enter the current PIN.' : 'Enter the connection PIN to control your mix.')
-              : "Check you're on the mixer's Wi-Fi. Reconnecting…"}
+              : "Check you're on the mixer's Wi‑Fi. Reconnecting…"}
           </Text>
         </View>
         {pinNeeded ? <NativeButton title="Enter PIN" compact bordered onPress={() => router.push('/pin')} />

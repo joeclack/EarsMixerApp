@@ -2,7 +2,7 @@ import ScreenSurface from '../../../src/components/ScreenSurface';
 import { useHeaderHeight } from 'expo-router/react-navigation';
 import { useCallback, useEffect, useState, type ReactNode } from 'react';
 import { Stack, useFocusEffect, useLocalSearchParams } from 'expo-router';
-import { Platform, ScrollView, View } from 'react-native';
+import { Platform, ScrollView, Text, View } from 'react-native';
 import { useSession } from '../../../src/mixer/context';
 import { useTheme } from '../../../src/theme';
 import ChannelOrder from '../../../src/components/ChannelOrder';
@@ -10,6 +10,7 @@ import GroupsList from '../../../src/components/GroupsList';
 import TemplatesList from '../../../src/components/TemplatesList';
 import Segmented from '../../../src/components/Segmented';
 import { styles } from '../../../src/components/ui';
+import { hardwarePalette } from '../../../src/components/hardwarePalette';
 import { useAndroidTabBarInset } from '../../../src/components/useAndroidTabBarInset';
 
 type Tab = 'channels' | 'groups' | 'templates';
@@ -42,7 +43,12 @@ export default function Channels() {
       {connected && <View style={{ paddingHorizontal: android ? 20 : 16, paddingVertical: 8 }}>
         <Segmented label="Channels, groups or templates" value={tab} options={TABS} onChange={value => { if (isTab(value)) setTab(value); }} />
       </View>}
-      {!connected || tab === 'channels' ? <ChannelOrder />
+      {/* On iPhone the native list adds its own top margin, so the message is a plain card right under the title. */}
+      {!connected && Platform.OS === 'ios' ? <View style={{ marginHorizontal: 16, marginTop: 8, paddingHorizontal: 20, paddingVertical: 16,
+        borderRadius: 26, backgroundColor: hardwarePalette(theme.dark).surface }}>
+        <Text style={{ color: theme.text, fontSize: 17, lineHeight: 22 }}>Connect to a mixer and choose a monitor mix to reorder channels.</Text>
+      </View>
+      : !connected || tab === 'channels' ? <ChannelOrder />
         : tab === 'groups' ? (Platform.OS === 'ios' ? <GroupsList /> : scrolled(<GroupsList />))
         : scrolled(<TemplatesList />)}
     </View>

@@ -12,6 +12,7 @@ import type { DiscoveryNative } from '../src/discovery/browser';
 import { useTheme } from '../src/theme';
 import { warmFaderArtwork } from '../src/components/faderArtwork';
 import { usesMixerSideRail } from '../src/components/mixerNavigation';
+import { useUpdatePrompt } from '../src/useUpdatePrompt';
 
 const defaultSheetOptions = {
   headerShown: false, presentation: (Platform.OS === 'web' ? 'modal' : 'formSheet') as 'modal' | 'formSheet',
@@ -21,6 +22,7 @@ const defaultSheetOptions = {
 export const unstable_settings = { anchor: '(tabs)' };
 function Navigation() {
   const { session, state } = useSessionState();
+  useUpdatePrompt();
   const theme = useTheme();
   const { width, height } = useWindowDimensions();
   const sheetOptions = Platform.OS === 'android' && usesMixerSideRail(width, height)
@@ -55,6 +57,9 @@ function Navigation() {
     const controller = new AbortController();
     void (async () => {
       if (session.state.server) return;
+      // With no saved mixer there is nothing to reconnect to, so the connect
+      // sheet opens straight away and lists the mixers nearby itself.
+      if (!session.state.lastServer) { router.push('/connect'); return; }
       if (session.state.lastServer) {
         // A mixer on the same network answers well within this. Beyond it, fall
         // back to discovery.

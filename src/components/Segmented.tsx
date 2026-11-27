@@ -10,7 +10,7 @@ export default function Segmented<T extends string>({ value, options, onChange, 
   return <View accessibilityRole="tablist" accessibilityLabel={label}
     style={{ flexDirection: 'row', borderRadius: android ? radius : 14, padding: 3, backgroundColor: theme.secondary }}>
     {options.map(item => <View key={item.value} style={{ flex: 1, minWidth: 0, borderRadius: radius, overflow: android ? 'hidden' : 'visible' }}>
-      <Pressable accessibilityRole="tab" accessibilityState={{ selected: value === item.value }} onPress={() => onChange(item.value)}
+      <Pressable android_disableSound accessibilityRole="tab" accessibilityState={{ selected: value === item.value }} onPress={() => onChange(item.value)}
         style={({ pressed }) => ({ flex: 1, minHeight: android ? 48 : 36, justifyContent: 'center', alignItems: 'center',
           paddingHorizontal: android ? 6 : 0, opacity: pressed ? 0.8 : 1 })}>
         <Selection selected={value === item.value} color={theme.panel} radius={radius} />

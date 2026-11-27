@@ -23,7 +23,7 @@ export default function ChannelOrder() {
           <View style={{ flex: 1 }} />
           {[-1, 1].map(direction => {
             const disabled = index + direction < 0 || index + direction >= order.items.length;
-            return <Pressable key={direction} accessibilityRole="button" accessibilityLabel={'Move ' + item.label + (direction < 0 ? ' up' : ' down')}
+            return <Pressable android_disableSound key={direction} accessibilityRole="button" accessibilityLabel={'Move ' + item.label + (direction < 0 ? ' up' : ' down')}
               accessibilityState={{ disabled }} disabled={disabled} onPress={() => order.move([index], direction < 0 ? index - 1 : index + 2)}
               style={({ pressed }) => ({ minHeight: 44, minWidth: 44, opacity: disabled ? 0.3 : pressed ? 0.6 : 1, justifyContent: 'center', alignItems: 'center' })}>
               <Icon name={{ ios: direction < 0 ? 'arrow.up' : 'arrow.down', android: direction < 0 ? 'arrow_upward' : 'arrow_downward', web: direction < 0 ? 'arrow_upward' : 'arrow_downward' }} />
