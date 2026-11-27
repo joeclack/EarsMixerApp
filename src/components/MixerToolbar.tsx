@@ -26,11 +26,12 @@ export default function MixerToolbar() {
   // Channels, groups and templates live in the Channels tab, and Settings in its own tab.
   const request = <Stack.Toolbar.MenuAction key="request" icon="bubble.left" disabled={mix.status !== 'connected'} onPress={() => router.push('/request')}>Message the engineer</Stack.Toolbar.MenuAction>;
   return <>
-    <Stack.Toolbar placement="left">
+    {/* Without a mixer there are no mixes to choose from. */}
+    {state.server && <Stack.Toolbar placement="left">
       <Stack.Toolbar.View hidesSharedBackground>
         <AuxSelector />
       </Stack.Toolbar.View>
-    </Stack.Toolbar>
+    </Stack.Toolbar>}
     <Stack.Toolbar placement="right" tintColor={theme.tint}>
     {/* Fader mode has its own menu, apart from the tools. */}
     {state.server && <Stack.Toolbar.Menu title="Fader mode" accessibilityLabel={'Fader mode, ' + mode}>
