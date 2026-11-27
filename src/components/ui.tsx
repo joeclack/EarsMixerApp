@@ -53,7 +53,7 @@ export function Row({ title, detail, children, onPress, destructive, leading }: 
   const content = <>{leading}<View style={{ flex: 1, gap: 3 }}><Text style={{ fontSize: 17, color: destructive ? theme.danger : theme.text }}>{title}</Text>
     {!!detail && <Text style={{ color: theme.muted, fontSize: 13, lineHeight: 19 }}>{detail}</Text>}</View>{children}
     {!!onPress && <Icon name={{ ios: 'chevron.right', android: 'chevron_right', web: 'chevron_right' }} size={14} color={theme.muted} />}</>;
-  return onPress ? <Pressable accessibilityRole="button" onPress={onPress} style={({ pressed }) => [styles.row, { opacity: pressed ? 0.55 : 1 }]}>{content}</Pressable>
+  return onPress ? <Pressable android_disableSound accessibilityRole="button" onPress={onPress} style={({ pressed }) => [styles.row, { opacity: pressed ? 0.55 : 1 }]}>{content}</Pressable>
     : <View style={styles.row}>{content}</View>;
 }
 export function Message({ children, error = false }: React.PropsWithChildren<{ error?: boolean }>) {

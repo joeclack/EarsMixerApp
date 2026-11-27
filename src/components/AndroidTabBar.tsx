@@ -37,7 +37,7 @@ export default function AndroidTabBar({ state, descriptors, emitter, navigateToT
           const selected = state.index === index;
           const color = selected ? theme.tint : theme.muted;
           return <View key={route.key} style={styles.tabFrame}>
-            <Pressable accessibilityRole="tab" accessibilityState={{ selected }}
+            <Pressable android_disableSound accessibilityRole="tab" accessibilityState={{ selected }}
               accessibilityLabel={options.tabBarAccessibilityLabel ?? options.title} testID={options.tabBarButtonTestID}
               onPress={() => {
                 const event = emitter.emit({ type: 'tabPress', target: route.key, canPreventDefault: true });

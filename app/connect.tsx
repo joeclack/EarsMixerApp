@@ -2,7 +2,7 @@ import ScreenSurface from '../src/components/ScreenSurface';
 import FieldSurface from '../src/components/FieldSurface';
 import React, { useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, Keyboard, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
-import { router } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../src/theme';
 import { useSession } from '../src/mixer/context';
@@ -18,8 +18,10 @@ export default function Connect() {
   const theme = useTheme();
   const insets = useSafeAreaInsets();
   const [address, setAddress] = useState((!state.demo && state.server) || state.recent[0]?.url || '');
-  // Opened after a failed attempt elsewhere (a scanned code), show why it failed.
-  const [error, setError] = useState(!state.server && !state.connecting ? state.message : '');
+  // Opened after a scanned code failed to connect, show why. Opened at launch
+  // after the saved mixer didn't answer, the nearby search says what to do instead.
+  const { failed } = useLocalSearchParams<{ failed?: string }>();
+  const [error, setError] = useState(failed && !state.server && !state.connecting ? state.message : '');
   const [mode, setMode] = useState('auto');
   const nearby = useNearbyMixers();
   const [resolving, setResolving] = useState(false);
@@ -56,22 +58,27 @@ export default function Connect() {
         <CloseButton onPress={() => router.back()} />
       </View>
       <View style={{ marginBottom: 24 }}>
-        <Segmented label="Connection method" value={mode} options={[{ value: 'auto', label: 'Auto' }, { value: 'manual', label: 'Manual' }]}
+        <Segmented label="Connection method" value={mode} options={[{ value: 'auto', label: 'Discovery' }, { value: 'manual', label: 'Manual' }]}
           onChange={value => { if (!busy) { Keyboard.dismiss(); setError(''); setMode(value); } }} />
       </View>
       {mode === 'auto' ? <View style={{ marginBottom: 24 }}>
         <View style={{ marginBottom: 8 }}>
-          <PanelHeading title="Nearby mixers" trailing={nearby.status === 'searching' ? <ActivityIndicator accessibilityLabel="Searching for nearby mixers" color={theme.tint} /> :
-            nearby.status !== 'unavailable' && <Pressable accessibilityRole="button" disabled={busy} onPress={nearby.retry} hitSlop={10}>
-              <Text style={{ color: theme.tint, fontSize: 15 }}>Search again</Text>
-            </Pressable>} />
+          <PanelHeading title="Nearby mixers" trailing={nearby.status === 'searching' && !!nearby.mixers.length
+            && <ActivityIndicator accessibilityLabel="Still looking for mixers" color={theme.tint} />} />
         </View>
         {nearby.mixers.map(mixer => <Row key={mixer.id} title={mixer.name} detail={new URL(mixer.urls[0]).host}
           onPress={() => { if (!busy) void connectNearby(mixer); }} />)}
-        {!nearby.mixers.length && <Text style={{ color: theme.muted, fontSize: 15, lineHeight: 21 }}>
-          {nearby.message || (nearby.status === 'searching' ? 'Looking for mixers on your network…' : 'No mixers found. Try Manual.')}
-        </Text>}
-        {!!nearby.mixers.length && !!nearby.message && <Message>{nearby.message}</Message>}
+        {/* The search keeps going while the sheet is open, so it always looks busy. */}
+        {!nearby.mixers.length && nearby.status === 'searching' && <View accessible accessibilityLiveRegion="polite"
+          style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 18 }}>
+          <ActivityIndicator color={theme.tint} />
+          <Text style={{ flex: 1, color: theme.muted, fontSize: 15, lineHeight: 21 }}>{nearby.slow
+            ? "Still looking. Check you're on the mixer's Wi‑Fi, or try Manual." : 'Looking for mixers on your network…'}</Text>
+        </View>}
+        {nearby.status === 'error' && <>
+          <Message error>{nearby.message || 'Could not search for nearby mixers.'}</Message>
+          <View style={{ marginTop: 14 }}><NativeButton title="Try again" bordered fullWidth disabled={busy} onPress={nearby.retry} /></View>
+        </>}
       </View> : <>
       <FieldSurface style={{ flexDirection: 'row', gap: 12, alignItems: 'center' }}>
         <Icon name={{ ios: 'network', android: 'wifi', web: 'wifi' }} color={theme.muted} />
@@ -90,7 +97,7 @@ export default function Connect() {
           <View style={{ flex: 1 }}><Row title={item.name || new URL(item.url).host}
             detail={[item.name && new URL(item.url).host, state.server === item.url ? 'Current mixer' : !item.name && 'Tap to connect'].filter(Boolean).join(' · ')}
             onPress={() => { if (!busy) void connect(item.url); }} /></View>
-          <Pressable accessibilityLabel={'Forget ' + (item.name || new URL(item.url).host)} accessibilityRole="button" disabled={busy} onPress={() => void session.forget(item.url)}
+          <Pressable android_disableSound accessibilityLabel={'Forget ' + (item.name || new URL(item.url).host)} accessibilityRole="button" disabled={busy} onPress={() => void session.forget(item.url)}
             style={{ width: 44, height: 44, alignItems: 'center', justifyContent: 'center' }}><Icon name={{ ios: 'minus.circle', android: 'remove_circle_outline', web: 'remove_circle_outline' }} size={20} color={theme.muted} /></Pressable>
         </View>)}
       </>}

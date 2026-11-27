@@ -218,7 +218,7 @@ export default function Mixer() {
       contentContainerStyle={{ paddingTop: topPadding, paddingLeft: landscape ? 16 : 0, paddingRight: landscape ? 16 : 0, paddingBottom: bottomPadding }} keyboardShouldPersistTaps="handled"
       ListHeaderComponent={!landscape && sections.length && mix.locked ? <View style={{ paddingHorizontal: 16, paddingBottom: 6, gap: 6 }}>
         {/* While locked, a bar says so and unlocks with a tap, so a locked mixer is never a mystery. */}
-        {mix.locked && <Pressable accessibilityRole="button" accessibilityLabel="Faders locked. Unlock faders" onPress={() => session.mixer.setLocked(false)}
+        {mix.locked && <Pressable android_disableSound accessibilityRole="button" accessibilityLabel="Faders locked. Unlock faders" onPress={() => session.mixer.setLocked(false)}
           style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 8, minHeight: 44, paddingHorizontal: 12, borderRadius: 10,
             backgroundColor: theme.secondary, opacity: pressed ? 0.7 : 1 })}>
           <Icon name={{ ios: 'lock.fill', android: 'lock', web: 'lock' }} size={15} color={theme.tint} />

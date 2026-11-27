@@ -49,7 +49,7 @@ function Scanner() {
       // Target a route rather than blindly popping whichever nested stack is focused.
       router.dismissTo(setup ? '/setup' : '/(tabs)/(mixer)');
       // Setup shows a failed connection itself; otherwise reopen the connect sheet with the reason.
-      session.connect(address).catch(() => { if (!setup && !session.state.server) router.push('/connect'); });
+      session.connect(address).catch(() => { if (!setup && !session.state.server) router.push({ pathname: '/connect', params: { failed: '1' } }); });
     }} /><View pointerEvents="none" style={{ position: 'absolute', top: '25%', left: '18%', width: '64%', aspectRatio: 1, borderRadius: 30, borderWidth: 2, borderColor: '#FFFFFF' }} /></View>
       : <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24, gap: 20 }}>
         <Text style={{ color: theme.text, textAlign: 'center', fontSize: 18 }}>Allow camera access to scan the mixer’s connection code.</Text>

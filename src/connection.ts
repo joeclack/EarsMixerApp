@@ -79,8 +79,8 @@ export async function probeMixerInfo(input: string, { fetchImpl = fetch, timeout
     return { url, name: readMixerName(data.name) };
   } catch (error) {
     if (signal?.aborted) throw new Error('Connection cancelled.');
-    if (controller.signal.aborted) throw new Error('The mixer did not respond. Check the address and that you are on the same Wi-Fi network.');
-    if (error instanceof TypeError) throw new Error('Could not reach the mixer. Join its Wi-Fi network and check the address.');
+    if (controller.signal.aborted) throw new Error('The mixer did not respond. Check the address and that you are on the same Wi‑Fi network.');
+    if (error instanceof TypeError) throw new Error('Could not reach the mixer. Join its Wi‑Fi network and check the address.');
     throw error;
   } finally {
     clearTimeout(timeout);

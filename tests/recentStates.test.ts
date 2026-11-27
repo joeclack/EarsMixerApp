@@ -60,7 +60,8 @@ test('AUX states survive relaunch, compare fresh levels, restore all saved chann
       next.session.resolveLevelRestore(next.session.state.restorePrompt!, false);
       assert.equal(next.session.state.confirmation, null);
       assert.equal(next.sent.length, before);
-      assert.deepEqual(next.session.state.recentStates[key].levels, { 1: -10, 2: -20 });
+      // Keeping the desk levels forgets this AUX's saved levels.
+      assert.ok(!(key in next.session.state.recentStates));
       const token = next.session.mixer.beginDrag(1)!;
       next.session.mixer.drag(token, 0); next.session.mixer.flush(token);
       assert.equal(next.session.state.recentStates[key].levels[1], -150);

@@ -34,7 +34,7 @@ export default function GroupEditor(props: GroupEditorProps) {
         <Text style={{ color: theme.text, fontSize: 17 }}>{Platform.OS === 'android' ? channel.label : (index + 1) + '. ' + channel.label}</Text>
         {channel.unavailable && <Text style={{ color: theme.muted }}>Currently unavailable</Text>}
         {Platform.OS === 'android' ? <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-          <Pressable accessibilityRole="button" accessibilityLabel={'Remove ' + channel.label + ' from group'}
+          <Pressable android_disableSound accessibilityRole="button" accessibilityLabel={'Remove ' + channel.label + ' from group'}
             accessibilityState={{ disabled: !editor.canRemove }} disabled={!editor.canRemove} onPress={() => editor.removeMember(channel.channel)}
             style={({ pressed }) => ({ minHeight: 44, minWidth: 44, alignItems: 'center', justifyContent: 'center', opacity: !editor.canRemove ? 0.3 : pressed ? 0.6 : 1 })}>
             <Icon name={{ android: 'delete_outline' }} color={theme.danger} />
@@ -42,7 +42,7 @@ export default function GroupEditor(props: GroupEditorProps) {
           <View style={{ flex: 1 }} />
           {[-1, 1].map(direction => {
             const disabled = editor.busy || index + direction < 0 || index + direction >= editor.members.length;
-            return <Pressable key={direction} accessibilityRole="button" accessibilityLabel={'Move ' + channel.label + (direction < 0 ? ' up' : ' down')}
+            return <Pressable android_disableSound key={direction} accessibilityRole="button" accessibilityLabel={'Move ' + channel.label + (direction < 0 ? ' up' : ' down')}
               accessibilityState={{ disabled }} disabled={disabled} onPress={() => editor.move([index], direction < 0 ? index - 1 : index + 2)}
               style={({ pressed }) => ({ minHeight: 44, minWidth: 44, opacity: disabled ? 0.3 : pressed ? 0.6 : 1, justifyContent: 'center', alignItems: 'center' })}>
               <Icon name={{ android: direction < 0 ? 'arrow_upward' : 'arrow_downward' }} />

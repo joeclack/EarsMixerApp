@@ -8,7 +8,7 @@ export type LandscapeAuxPickerProps = { auxes: Aux[]; selected: number | null; d
 export default function LandscapeAuxPicker({ auxes, selected, disabled, onChange }: LandscapeAuxPickerProps) {
   const theme = useTheme();
   const label = auxes.find(aux => aux.channel === selected)?.label || 'No AUX';
-  return <Pressable accessibilityRole="button" accessibilityLabel={'Choose AUX, ' + label} accessibilityState={{ disabled }} disabled={disabled}
+  return <Pressable android_disableSound accessibilityRole="button" accessibilityLabel={'Choose AUX, ' + label} accessibilityState={{ disabled }} disabled={disabled}
     onPress={() => Alert.alert('Choose AUX', undefined, [{ text: (selected === null ? '✓ ' : '') + 'No AUX', onPress: () => onChange(null) },
       ...auxes.map(aux => ({ text: (aux.channel === selected ? '✓ ' : '') + aux.label, onPress: () => onChange(aux.channel) }))])}
     style={{ width: 48, height: 48, borderRadius: 24, backgroundColor: theme.panel, alignItems: 'center', justifyContent: 'center', opacity: disabled ? 0.4 : 1 }}>

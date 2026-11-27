@@ -9,7 +9,7 @@ export default function LandscapeFaderActions({ parameter, disabled, offDisabled
   const theme = useTheme();
   const haptic = useToolbarHaptic();
   return <View style={{ gap: 10 }}>
-    <Pressable accessibilityRole="button" accessibilityLabel={'Fader mode, ' + parameter} disabled={disabled}
+    <Pressable android_disableSound accessibilityRole="button" accessibilityLabel={'Fader mode, ' + parameter} disabled={disabled}
       onPress={() => { haptic(); Alert.alert('Fader mode', undefined, [
         { text: (parameter === 'level' ? '✓ ' : '') + 'Level', onPress: () => onModeChange('level') },
         { text: (parameter === 'pan' ? '✓ ' : '') + 'Pan', onPress: () => onModeChange('pan') }, { text: 'Cancel', style: 'cancel' },
@@ -17,7 +17,7 @@ export default function LandscapeFaderActions({ parameter, disabled, offDisabled
       <Icon name={{ android: 'tune', web: 'tune' }} />
     </Pressable>
     <Text style={{ color: theme.muted, fontSize: 11, textAlign: 'center' }}>{parameter === 'level' ? 'Level' : 'Pan'}</Text>
-    <Pressable accessibilityRole="button" accessibilityLabel="Set all levels to off" disabled={offDisabled} onPress={() => { haptic(); onAllOff(); }}
+    <Pressable android_disableSound accessibilityRole="button" accessibilityLabel="Set all levels to off" disabled={offDisabled} onPress={() => { haptic(); onAllOff(); }}
       style={{ width: 48, height: 48, borderRadius: 24, backgroundColor: theme.panel, alignItems: 'center', justifyContent: 'center', opacity: offDisabled ? 0.4 : 1 }}>
       <Icon name={{ android: 'all_inclusive', web: 'all_inclusive' }} color={theme.danger} />
     </Pressable>

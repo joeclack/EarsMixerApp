@@ -261,7 +261,7 @@ export class MixerSession {
     try {
       response = await this.fetcher(server + 'api/pair', { method: 'POST', headers: { 'Content-Type': 'application/json' }, signal: controller.signal,
         body: JSON.stringify({ pin, device, name: this.nickname() || null }) });
-    } catch { throw new Error('Could not reach the mixer. Check your Wi-Fi and try again.'); }
+    } catch { throw new Error('Could not reach the mixer. Check your Wi‑Fi and try again.'); }
     finally { clearTimeout(timeout); }
     let body: any = {};
     try { body = await response.json(); } catch {}

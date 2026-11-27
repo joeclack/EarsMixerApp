@@ -2,6 +2,11 @@
 
 ## 1.0.0 — First App Store release
 
+- Android no longer plays the system click sound when you tap the app's buttons, tabs, menus and rows.
+- On Android, the Mixer's monitor mix, Level or Pan, and tools buttons sit on filled pills like the iPhone toolbar. Pan mode and locked faders tint their pill. The Level or Pan and tools menus grow out of their pill into a rounded panel, headed **Mode** and **Actions**, and shrink back into it when closed.
+- The connect sheet's **Auto** option is now called **Discovery**, and it searches for as long as the sheet is open. A spinner shows *Looking for mixers on your network…*, and after 10 seconds without a mixer it suggests checking the Wi-Fi or trying Manual. Saved mixers are checked again every five seconds, so mixers appear without a tap and the **Search again** link is gone. A **Try again** button appears only if the search fails. Opening the sheet at launch after the saved mixer doesn't answer no longer shows the raw connection error; a failed scanned code still says why it failed.
+- With no saved mixer, the connect sheet opens as soon as the app starts instead of after a few seconds of looking for mixers nearby. The sheet lists nearby mixers itself. Reconnecting to a saved mixer is unchanged.
+- The app checks for an over-the-air update when it opens and each time it comes back to the foreground (at most every five minutes). Once a newer update has downloaded, an alert asks you to close and reopen the app, with **Restart now** and **Later**. Later applies the update the next time the app starts.
 - When no mixer is connected, the Mixer no longer shows the AUX selector, and Channels hides the Channels, Groups and Templates switcher and shows only the message to connect to a mixer and choose a monitor mix.
 - On iPhone, the Mixer shows the current Level or Pan mode, flags reconnecting in the mix selector, and opens an opaque monitor-mix picker. The native glass tab bar floats over the Mixer, Channels and Settings, with content visible behind it. Settings leaves more space below the version details at the end.
 - Portrait faders give channel names and levels more emphasis, simplify the scale and show a written muted state with a larger mute target. The Channels list names the mix whose visibility is being edited, and Groups shows each group's scope and channel count.

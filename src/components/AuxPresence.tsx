@@ -14,7 +14,7 @@ export default function AuxPresence() {
     if (Platform.OS === 'web') window.alert(title + '\n\n' + message);
     else Alert.alert(title, message, [{ text: 'Close', style: 'cancel' }]);
   };
-  return <Pressable accessibilityRole="button" accessibilityLabel={'Also on ' + aux + ': ' + names.join(', ')}
+  return <Pressable android_disableSound accessibilityRole="button" accessibilityLabel={'Also on ' + aux + ': ' + names.join(', ')}
     accessibilityHint="Show connected users" onPress={showNames}
     style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-end', gap: 10, minHeight: 44,
       paddingLeft: insets.left + 20, paddingRight: insets.right + 20, paddingVertical: 6 }}>
