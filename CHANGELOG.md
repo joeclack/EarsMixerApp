@@ -2,11 +2,12 @@
 
 ## 1.0.0 — First App Store release
 
-- On iPhone, the Mixer shows the current Level or Pan mode, flags reconnecting in the mix selector, and opens an opaque monitor-mix picker. The Mixer and Channels keep controls above the floating tab bar. Settings scrolls behind the native glass tab bar and leaves more space below the version details at the end.
+- When no mixer is connected, the Mixer no longer shows the AUX selector, and Channels hides the Channels, Groups and Templates switcher and shows only the message to connect to a mixer and choose a monitor mix.
+- On iPhone, the Mixer shows the current Level or Pan mode, flags reconnecting in the mix selector, and opens an opaque monitor-mix picker. The native glass tab bar floats over the Mixer, Channels and Settings, with content visible behind it. Settings leaves more space below the version details at the end.
 - Portrait faders give channel names and levels more emphasis, simplify the scale and show a written muted state with a larger mute target. The Channels list names the mix whose visibility is being edited, and Groups shows each group's scope and channel count.
 - Templates say what applying a layout replaces, mark the applied layout, and confirm reapplying it. Settings identifies which device stores the saved levels it can clear.
 - Settings explains what Reset device data clears and tells musicians they’ll go through setup again.
-- Android opens monitor mixes in an opaque Material sheet, shows when the Mixer is reconnecting, and keeps Mixer and Channels controls above the floating tab bar.
+- Android opens monitor mixes in an opaque Material sheet, shows when the Mixer is reconnecting and floats its tab bar over the Mixer and Channels, with content visible behind it.
 
 - Merges to `main` build a signed Android preview APK with a higher version code and publish it to the website’s Android download link through Cloudflare R2.
 - Android has a floating, pill-shaped tab bar for Mixer, Channels and Settings. The highlight slides to the selected tab, press feedback follows the pill shape and screen content is visible around it. The bar gives the mixer the full height in phone landscape and hides when the keyboard opens.
